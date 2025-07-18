@@ -1,0 +1,7 @@
+[project]
+name = "pycroglia"
+version = "0.1.0"
+description = "Software for isolating and analyzing microglial morphology."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
