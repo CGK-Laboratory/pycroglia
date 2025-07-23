@@ -36,4 +36,4 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: |
           set -o pipefail
-          uv run pytest ./ui/widgets/tests/ ./ui/controllers/tests/
+          uv run pytest ./pycroglia/ui/widgets/tests/ ./pycroglia/ui/controllers/tests/

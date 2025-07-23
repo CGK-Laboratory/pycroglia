@@ -33,4 +33,4 @@ jobs:
       - name: Run core package unit tests
         run: |
           set -o pipefail
-          uv run pytest ./core/tests/unit
+          uv run pytest ./pycroglia/core/tests/unit
