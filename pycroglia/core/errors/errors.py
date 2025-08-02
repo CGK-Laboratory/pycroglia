@@ -8,6 +8,10 @@ custom_error_codes = {
         "message": "Invalid channel of interest passed, must be a number  lower to the number of channels"
     },
     1005: {"message": "Invalid file, the file passed isn't supported"},
+    # Image processing errors
+    2000: {
+        "message": "Invalid label value, must be greater than 0 and lower or equal to the max number or components"
+    },
 }
 
 
