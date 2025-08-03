@@ -1,16 +1,17 @@
 import cv2
 import numpy as np
+from numpy.typing import NDArray
 
 
-def calculate_otsu_threshold(img: np.ndarray, adjust: float) -> np.ndarray:
+def calculate_otsu_threshold(img: NDArray, adjust: float) -> NDArray:
     """Calculates a binary mask for each slice of a 3D image using Otsu's method and a threshold adjustment factor.
 
     Args:
-        img (np.ndarray): 3D image array with shape (zs, height, width), where zs is the number of slices.
+        img (NDArray): 3D image array with shape (zs, height, width), where zs is the number of slices.
         adjust (float): Adjustment factor to modify the threshold computed by Otsu's method.
 
     Returns:
-        np.ndarray: Boolean 3D array (same shape as input) representing the binary thresholded mask.
+        NDArray: Boolean 3D array (same shape as input) representing the binary thresholded mask.
     """
     zs, height, width = img.shape
     binary_stack = np.zeros((zs, height, width), dtype=bool)
@@ -31,17 +32,17 @@ def calculate_otsu_threshold(img: np.ndarray, adjust: float) -> np.ndarray:
 
 
 def remove_small_objects(
-    img: np.ndarray, min_size: int, connectivity: int = 8
-) -> np.ndarray:
+    img: NDArray, min_size: int, connectivity: int = 8
+) -> NDArray:
     """Removes connected components smaller than a given size from a 3D binary mask.
 
     Args:
-        img (np.ndarray): 3D binary array (dtype=bool or uint8) with shape (zs, height, width).
+        img (NDArray): 3D binary array (dtype=bool or uint8) with shape (zs, height, width).
         min_size (int): Minimum number of pixels required to keep a component.
         connectivity (int, optional): Connectivity used by OpenCV (4 or 8). Defaults to 8.
 
     Returns:
-        np.ndarray: 3D binary array with small objects removed.
+        NDArray: 3D binary array with small objects removed.
     """
     zs, _, _ = img.shape
     binary_stack = np.zeros_like(img)

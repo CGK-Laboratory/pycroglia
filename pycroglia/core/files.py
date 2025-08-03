@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from numpy import ndarray, dstack
+from numpy import dstack
+from numpy.typing import NDArray
 from tifffile import TiffFile
 from pathlib import Path
 
@@ -10,7 +11,7 @@ class MultiChReader(ABC):
     """Abstract base class for multi-channel image readers."""
 
     @abstractmethod
-    def read(self, ch: int, ch_interest: int) -> ndarray:
+    def read(self, ch: int, ch_interest: int) -> NDArray:
         """Reads the specified channels from the image file.
 
         Args:
@@ -18,7 +19,7 @@ class MultiChReader(ABC):
             ch_interest (int): The channel of interest to extract (1-based index).
 
         Returns:
-            numpy.ndarray: The extracted channel data.
+            NDArray: The extracted channel data.
         """
         pass
 
@@ -78,7 +79,7 @@ class TiffReader(MultiChReader):
         if ch_interest - 1 >= ch:
             raise PycrogliaException(1004)
 
-    def read(self, ch: int, ch_interest: int) -> ndarray:
+    def read(self, ch: int, ch_interest: int) -> NDArray:
         """Reads the contents of the file and returns the specified channels.
 
         Args:
@@ -86,7 +87,7 @@ class TiffReader(MultiChReader):
             ch_interest (int): The channel extracted from the file.
 
         Returns:
-            numpy.ndarray: The file data.
+            NDArray: The file data.
 
         Raises:
             PycrogliaException(1003): If the channel value is invalid.
@@ -159,7 +160,7 @@ class LsmReader(MultiChReader):
         if ch_interest - 1 >= ch:
             raise PycrogliaException(1004)
 
-    def read(self, ch: int, ch_interest: int) -> ndarray:
+    def read(self, ch: int, ch_interest: int) -> NDArray:
         """Reads the contents of the file and returns the specified channels.
 
         Args:
@@ -167,7 +168,7 @@ class LsmReader(MultiChReader):
             ch_interest (int): The channel extracted from the file.
 
         Returns:
-            numpy.ndarray: The file data.
+            NDArray: The file data.
 
         Raises:
             PycrogliaException(1003): If the channel value is invalid.
