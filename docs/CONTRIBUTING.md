@@ -75,6 +75,7 @@ the results of the checks must be attached to the PR:
   uv run ruff check
   uv run ruff format
   uv run pytest
+```
 
 # Python
 ## Docstrings
