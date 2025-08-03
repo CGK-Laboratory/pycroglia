@@ -14,6 +14,16 @@ dependencies = [
 ]
 
 [dependency-groups]
+core = [
+    "numpy>=2.2.6",
+    "opencv-python>=4.11.0.86",
+    "tifffile>=2025.5.10",
+]
+core-test = [
+    "h5py>=3.14.0",
+    "pytest>=8.4.1",
+    "ruff>=0.12.4",
+]
 dev = [
     "h5py>=3.14.0",
     "pytest>=8.4.1",

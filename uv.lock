@@ -261,6 +261,18 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+core = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "opencv-python" },
+    { name = "tifffile", version = "2025.5.10", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "tifffile", version = "2025.6.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+core-test = [
+    { name = "h5py" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
 dev = [
     { name = "h5py" },
     { name = "pytest" },
@@ -279,6 +291,16 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+core = [
+    { name = "numpy", specifier = ">=2.2.6" },
+    { name = "opencv-python", specifier = ">=4.11.0.86" },
+    { name = "tifffile", specifier = ">=2025.5.10" },
+]
+core-test = [
+    { name = "h5py", specifier = ">=3.14.0" },
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "ruff", specifier = ">=0.12.4" },
+]
 dev = [
     { name = "h5py", specifier = ">=3.14.0" },
     { name = "pytest", specifier = ">=8.4.1" },
