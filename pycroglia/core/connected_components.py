@@ -1,6 +1,7 @@
 import numpy as np
 
 from enum import Enum
+from numpy.typing import NDArray
 from skimage import measure
 
 from pycroglia.core.errors.errors import PycrogliaException
@@ -21,16 +22,16 @@ class ComponentConnectivity(Enum):
 
 
 def get_connected_components(
-    img: np.ndarray, connectivity: ComponentConnectivity
-) -> np.ndarray:
+    img: NDArray, connectivity: ComponentConnectivity
+) -> NDArray:
     """Labels connected components in a 3D image using the specified connectivity.
 
     Args:
-        img (np.ndarray): 3D binary image array.
+        img (NDArray): 3D binary image array.
         connectivity (ComponentConnectivity): Connectivity type for labeling.
 
     Returns:
-        np.ndarray: Labeled image where each connected component has a unique integer label.
+        NDArray: Labeled image where each connected component has a unique integer label.
     """
     labeled_components = measure.label(img, connectivity=connectivity.value)
     return labeled_components
@@ -44,16 +45,16 @@ class ConnectedComponents:
         z (int): Number of slices in the z dimension.
         y (int): Height of the image.
         x (int): Width of the image.
-        labels (np.ndarray): Labeled image array.
+        labels (NDArray): Labeled image array.
     """
 
     ARRAY_ELEMENTS_TYPE = np.uint8
 
-    def __init__(self, img: np.ndarray, connectivity: ComponentConnectivity):
+    def __init__(self, img: NDArray, connectivity: ComponentConnectivity):
         """Initializes the ConnectedComponents object.
 
         Args:
-            img (np.ndarray): 3D binary image array.
+            img (NDArray): 3D binary image array.
             connectivity (ComponentConnectivity): Connectivity type for labeling.
         """
         self.z, self.y, self.x = img.shape
@@ -67,14 +68,14 @@ class ConnectedComponents:
         """
         return self.labels.max()
 
-    def component_to_2d(self, index: int) -> np.ndarray:
+    def component_to_2d(self, index: int) -> NDArray:
         """Projects a single connected component to a 2D array by summing along the z-axis.
 
         Args:
             index (int): Label index of the component (must be > 0 and <= number of components).
 
         Returns:
-            np.ndarray: 2D array representing the projection of the component.
+            NDArray: 2D array representing the projection of the component.
 
         Raises:
             PycrogliaException: If the index is out of valid range.
@@ -90,11 +91,11 @@ class ConnectedComponents:
 
         return flatten
 
-    def all_components_to_2d(self) -> np.ndarray:
+    def all_components_to_2d(self) -> NDArray:
         """Projects all connected components to 2D arrays.
 
         Returns:
-            np.ndarray: 3D array of shape (num_components, y, x), where each slice is a 2D projection of a component.
+            NDArray: 3D array of shape (num_components, y, x), where each slice is a 2D projection of a component.
         """
         all_components = np.zeros(
             (self.len(), self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE
@@ -105,11 +106,11 @@ class ConnectedComponents:
 
         return all_components
 
-    def overlap_components(self) -> np.ndarray:
+    def overlap_components(self) -> NDArray:
         """Computes the overlap image of all projected components.
 
         Returns:
-            np.ndarray: 2D array where each pixel value is the sum of overlapping components at that location.
+            NDArray: 2D array where each pixel value is the sum of overlapping components at that location.
         """
         all_components = self.all_components_to_2d()
         overlap_img = all_components.sum(axis=0)

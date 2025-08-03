@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from numpy.typing import NDArray
 from pycroglia.core.connected_components import (
     ComponentConnectivity,
     get_connected_components,
@@ -11,11 +12,11 @@ from pycroglia.core.errors.errors import PycrogliaException
 DEFAULT_TEST_CONNECTIVITY = ComponentConnectivity.FACES
 
 
-def simple_3d_img() -> np.ndarray:
+def simple_3d_img() -> NDArray:
     """Returns a simple 3D binary image with two separate voxels.
 
     Returns:
-        np.ndarray: 3D binary image.
+        NDArray: 3D binary image.
     """
     img = np.zeros((3, 3, 3), dtype=np.uint8)
     img[0, 0, 0] = 1
@@ -23,11 +24,11 @@ def simple_3d_img() -> np.ndarray:
     return img
 
 
-def touching_voxels_img() -> np.ndarray:
+def touching_voxels_img() -> NDArray:
     """Returns a 3D image with two voxels touching by edge or corner only.
 
     Returns:
-        np.ndarray: 3D binary image.
+        NDArray: 3D binary image.
     """
     img = np.zeros((3, 3, 3), dtype=np.uint8)
     img[1, 1, 1] = 1
@@ -35,11 +36,11 @@ def touching_voxels_img() -> np.ndarray:
     return img
 
 
-def diagonal_voxels_img() -> np.ndarray:
+def diagonal_voxels_img() -> NDArray:
     """Returns a 3D image with two voxels touching only by corner.
 
     Returns:
-        np.ndarray: 3D binary image.
+        NDArray: 3D binary image.
     """
     img = np.zeros((3, 3, 3), dtype=np.uint8)
     img[0, 0, 0] = 1
@@ -47,11 +48,11 @@ def diagonal_voxels_img() -> np.ndarray:
     return img
 
 
-def stacked_voxels_image() -> np.ndarray:
+def stacked_voxels_image() -> NDArray:
     """Returns a 3D image with three voxels stacked at the same (x, y) position.
 
     Returns:
-        np.ndarray: 3D binary image.
+        NDArray: 3D binary image.
     """
     img = np.zeros((3, 3, 3), dtype=np.uint8)
     img[0, 1, 1] = 1
@@ -60,11 +61,11 @@ def stacked_voxels_image() -> np.ndarray:
     return img
 
 
-def separate_voxels_image() -> np.ndarray:
+def separate_voxels_image() -> NDArray:
     """Returns a 3D image with three separate voxels at different (x, y) positions.
 
     Returns:
-        np.ndarray: 3D binary image.
+        NDArray: 3D binary image.
     """
     img = np.zeros((3, 3, 3), dtype=np.uint8)
     img[0, 0, 0] = 1
