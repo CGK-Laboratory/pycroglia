@@ -21,9 +21,9 @@ jobs:
         run: uv python install
 
       - name: Install core and core-test dependencies
-        run: uv sync --group core --group core-test
+        run: uv sync  --only-group core --only-group core-test
 
       - name: Run core package integration tests
         run: |
           set -o pipefail
-          uv run pytest ./pycroglia/core/tests/integration
+          uv run --no-sync pytest ./pycroglia/core/tests/integration
