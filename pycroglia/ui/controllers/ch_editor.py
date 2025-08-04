@@ -1,6 +1,7 @@
-from typing import Optional
-
 import numpy as np
+
+from typing import Optional
+from numpy.typing import NDArray
 from PyQt6 import QtCore, QtWidgets
 
 from pycroglia.core.files import create_channeled_reader, MultiChReader
@@ -12,9 +13,9 @@ class MultiChImgEditorState(QtCore.QObject):
 
     Attributes:
         reader (MultiChReader): Reader for multi-channel images.
-        _img (Optional[np.array]): Loaded image data.
-        _gray_filtered_img (Optional[np.array]): Image after gray filter.
-        _small_objects_img (Optional[np.array]): Image after small objects filter.
+        _img (Optional[NDArray]): Loaded image data.
+        _gray_filtered_img (Optional[NDArray]): Image after gray filter.
+        _small_objects_img (Optional[NDArray]): Image after small objects filter.
         imageChanged (QtCore.pyqtSignal): Signal emitted when the image changes.
         grayImageChanged (QtCore.pyqtSignal): Signal emitted when the gray-filtered image changes.
     """
@@ -34,15 +35,15 @@ class MultiChImgEditorState(QtCore.QObject):
         self.reader: MultiChReader = create_channeled_reader(file_path)
 
         self._mutex = QtCore.QMutex()
-        self._img: Optional[np.array] = None
-        self._gray_filtered_img: Optional[np.array] = None
-        self._small_objects_img: Optional[np.array] = None
+        self._img: Optional[NDArray] = None
+        self._gray_filtered_img: Optional[NDArray] = None
+        self._small_objects_img: Optional[NDArray] = None
 
-    def get_img(self) -> Optional[np.array]:
+    def get_img(self) -> Optional[NDArray]:
         """Return the original loaded image.
 
         Returns:
-            Optional[np.array]: Original image or None if not loaded.
+            Optional[NDArray]: Original image or None if not loaded.
         """
 
         self._mutex.lock()
@@ -51,11 +52,11 @@ class MultiChImgEditorState(QtCore.QObject):
         finally:
             self._mutex.unlock()
 
-    def get_gray_filtered_img(self) -> Optional[np.array]:
+    def get_gray_filtered_img(self) -> Optional[NDArray]:
         """Return the gray-filtered image.
 
         Returns:
-            Optional[np.array]: Filtered image or None if not filtered.
+            Optional[NDArray]: Filtered image or None if not filtered.
         """
         self._mutex.lock()
         try:
@@ -63,11 +64,11 @@ class MultiChImgEditorState(QtCore.QObject):
         finally:
             self._mutex.unlock()
 
-    def get_small_objects_img(self) -> Optional[np.array]:
+    def get_small_objects_img(self) -> Optional[NDArray]:
         """Return the image after removing small objects.
 
         Returns:
-            Optional[np.array]: Image with small objects removed or None if not filtered.
+            Optional[NDArray]: Image with small objects removed or None if not filtered.
         """
         self._mutex.lock()
         try:
@@ -92,25 +93,25 @@ class MultiChImgEditorState(QtCore.QObject):
         finally:
             self._mutex.unlock()
 
-    def get_midslice(self, arr: np.ndarray):
+    def get_midslice(self, arr: NDArray):
         """Get the middle slice of a 3D array.
 
         Args:
-            arr (np.ndarray): 3D image array.
+            arr (NDArray): 3D image array.
 
         Returns:
-            np.ndarray: Middle slice of the image.
+            NDArray: Middle slice of the image.
         """
         return arr[:, :, arr.shape[2] // 2]
 
-    def apply_otsu_gray_filter(self, adjust_value: float) -> Optional[np.array]:
+    def apply_otsu_gray_filter(self, adjust_value: float) -> Optional[NDArray]:
         """Apply the Otsu threshold filter with adjustment.
 
         Args:
             adjust_value (float): Adjustment value for the threshold.
 
         Returns:
-            Optional[np.array]: Filtered image or None if no image loaded.
+            Optional[NDArray]: Filtered image or None if no image loaded.
         """
         self._mutex.lock()
         try:
@@ -125,14 +126,14 @@ class MultiChImgEditorState(QtCore.QObject):
         finally:
             self._mutex.unlock()
 
-    def apply_small_object_filter(self, threshold: int) -> Optional[np.array]:
+    def apply_small_object_filter(self, threshold: int) -> Optional[NDArray]:
         """Remove small objects from the filtered image.
 
         Args:
             threshold (int): Minimum object size threshold.
 
         Returns:
-            Optional[np.array]: Filtered image or None if not filtered.
+            Optional[NDArray]: Filtered image or None if not filtered.
         """
         self._mutex.lock()
         try:

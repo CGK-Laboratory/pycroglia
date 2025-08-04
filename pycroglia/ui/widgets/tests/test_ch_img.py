@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
+from numpy.typing import NDArray
 import numpy as np
 
 from PyQt6 import QtWidgets
@@ -13,11 +14,11 @@ from pycroglia.ui.widgets.ch_img import (
 
 
 @pytest.fixture
-def fake_image():
+def fake_image() -> NDArray:
     """Fixture for a fake 3D numpy image.
 
     Returns:
-        np.ndarray: 3D array of ones.
+        NDArray: 3D array of ones.
     """
     return np.ones((5, 5, 5), dtype=np.uint8)
 
@@ -27,7 +28,7 @@ def mock_editor_state(fake_image):
     """Fixture for a mocked MultiChImgEditorState.
 
     Args:
-        fake_image (np.ndarray): The fake image fixture.
+        fake_image (NDArray): The fake image fixture.
 
     Returns:
         MagicMock: Mocked editor state.
@@ -96,7 +97,7 @@ def test_image_viewer_reads_and_displays_image(
     Args:
         multi_channel_image_viewer (MultiChannelImageViewer): The image viewer widget.
         mock_editor_state (MagicMock): Mocked editor state.
-        fake_image (np.ndarray): The fake image.
+        fake_image (NDArray): The fake image.
     """
     multi_channel_image_viewer.editor.get_channels = lambda: 1
     multi_channel_image_viewer.editor.get_channel_of_interest = lambda: 0
@@ -125,7 +126,7 @@ def test_gray_filter_updates_on_slider(
     Args:
         gray_filter_editor (GrayFilterEditor): The gray filter editor widget.
         mock_editor_state (MagicMock): Mocked editor state.
-        fake_image (np.ndarray): The fake image.
+        fake_image (NDArray): The fake image.
     """
     with patch.object(
         gray_filter_editor.viewer,
@@ -153,7 +154,7 @@ def test_small_filter_updates_on_spinbox(
     Args:
         small_objects_filter_editor (SmallObjectsFilterEditor): The small objects filter editor widget.
         mock_editor_state (MagicMock): Mocked editor state.
-        fake_image (np.ndarray): The fake image.
+        fake_image (NDArray): The fake image.
     """
     with patch.object(
         small_objects_filter_editor.viewer,
