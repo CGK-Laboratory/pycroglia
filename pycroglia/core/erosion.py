@@ -1,17 +1,19 @@
+from abc import ABC, abstractmethod
 from numpy.typing import NDArray
 from skimage import morphology
 
 
-class FootprintShape:
+class FootprintShape(ABC):
     """Abstract base class for structuring element shapes."""
 
+    @abstractmethod
     def get_shape(self) -> tuple:
         """Returns the structuring element shape.
 
         Returns:
             tuple: Structuring element for morphological operations.
         """
-        raise NotImplementedError
+        pass
 
 
 class DiamondFootprint(FootprintShape):
