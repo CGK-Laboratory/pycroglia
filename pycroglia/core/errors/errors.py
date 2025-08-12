@@ -12,6 +12,9 @@ custom_error_codes = {
     2000: {
         "message": "Invalid label value, must be greater than 0 and lower or equal to the max number or components"
     },
+    2001: {
+        "message": "No nuclei found were found after cell segmentation. Adjust the erosion parameter."
+    },
 }
 
 
