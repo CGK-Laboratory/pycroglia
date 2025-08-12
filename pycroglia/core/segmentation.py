@@ -22,7 +22,7 @@ class SegmentationConfig:
     """
 
     DEFAULT_MIN_NUCLEUS_FRACTION: ClassVar[int] = 50
-    DEFAULT_GMM_N_INIT: ClassVar[int] = 30
+    DEFAULT_GMM_N_INIT: ClassVar[int] = 3
 
     cut_off_size: int
     noise: int
