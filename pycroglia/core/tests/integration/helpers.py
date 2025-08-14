@@ -1,5 +1,5 @@
 import h5py
-from numpy import ndarray
+from numpy.typing import NDArray
 
 DEFAULT_DATASET_NAME = "imageData"
 
@@ -8,13 +8,13 @@ class HDF5TestCase:
     """Container for HDF5 test case data and metadata.
 
     Attributes:
-        data (ndarray): Image data array.
+        data (NDArray): Image data array.
         x (int): Size in X dimension (width).
         y (int): Size in Y dimension (height).
         z (int): Size in Z dimension (depth).
     """
 
-    def __init__(self, data: ndarray, x: int, y: int, z: int) -> None:
+    def __init__(self, data: NDArray, x: int, y: int, z: int) -> None:
         """Initializes HDF5 test case container.
 
         Args:
