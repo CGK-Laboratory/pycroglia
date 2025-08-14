@@ -177,6 +177,35 @@ def test_labeled_cells_get_cell_invalid_index(index):
     assert err.value.error_code == 2000
 
 
+def test_labeled_cells_get_cell_size():
+    """Test get_cell_size returns correct voxel count for a cell.
+
+    Asserts:
+        The size matches the number of voxels in the cell.
+    """
+    img = stacked_voxels_image()
+    lc = LabeledCells(img, DEFAULT_TEST_CONNECTIVITY)
+    size = lc.get_cell_size(1)
+    assert size == 3
+
+
+@pytest.mark.parametrize("index", [-1, 0, 2])
+def test_labeled_cells_get_cell_size_invalid_index(index):
+    """Test get_cell_size raises exception for invalid indices.
+
+    Args:
+        index (int): Invalid index to test.
+
+    Asserts:
+        PycrogliaException is raised with error_code 2000.
+    """
+    img = stacked_voxels_image()
+    lc = LabeledCells(img, DEFAULT_TEST_CONNECTIVITY)
+    with pytest.raises(PycrogliaException) as err:
+        lc.get_cell_size(index)
+    assert err.value.error_code == 2000
+
+
 def test_labeled_cells_cell_to_2d():
     """Test cell_to_2d for stacked voxels.
 
