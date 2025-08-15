@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from numpy.typing import NDArray
 from pycroglia.core.segmentation import segment_cell, SegmentationConfig

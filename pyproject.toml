@@ -18,6 +18,7 @@ dependencies = [
 core = [
     "numpy>=2.2.6",
     "opencv-python>=4.11.0.86",
+    "scikit-image>=0.25.2",
     "scikit-learn>=1.7.1",
     "tifffile>=2025.5.10",
 ]
