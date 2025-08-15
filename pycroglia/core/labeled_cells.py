@@ -1,5 +1,6 @@
 import numpy as np
 
+from abc import ABC, abstractmethod
 from enum import Enum
 from numpy.typing import NDArray
 from skimage import measure
@@ -21,18 +22,89 @@ class CellConnectivity(Enum):
     CORNERS = 3
 
 
-def label_cells(img: NDArray, connectivity: CellConnectivity) -> NDArray:
-    """Assigns unique integer labels to each connected cell in a 3D binary image.
+class LabelingStrategy(ABC):
+    """Abstract base class for labeling strategies.
 
-    Args:
-        img (NDArray): 3D binary array where nonzero values represent cell candidates.
-        connectivity (CellConnectivity): Connectivity rule for defining cell neighborhoods.
+    Subclasses must implement the label method to generate labeled arrays from input images.
 
-    Returns:
-        NDArray: 3D array with the same shape as `img`, where each connected cell has a unique integer label (0 is background).
+    Attributes:
+        ARRAY_ELEMENTS_TYPE (type): Data type for output arrays.
     """
-    labeled_cells = measure.label(img, connectivity=connectivity.value)
-    return labeled_cells
+
+    ARRAY_ELEMENTS_TYPE = np.uint8
+
+    @abstractmethod
+    def label(self, img: NDArray) -> NDArray:
+        """Labels the input image according to the strategy.
+
+        Args:
+            img (NDArray): Input image to label.
+
+        Returns:
+            NDArray: Labeled array.
+        """
+        pass
+
+
+class SkimageImgLabeling(LabelingStrategy):
+    """Labeling strategy using skimage.measure.label.
+
+    Attributes:
+        connectivity (CellConnectivity): Connectivity rule for labeling.
+    """
+
+    def __init__(self, connectivity: CellConnectivity):
+        """Initializes SkimageImgLabeling with the given connectivity.
+
+        Args:
+            connectivity (CellConnectivity): Connectivity rule for labeling.
+        """
+        self.connectivity = connectivity
+
+    def label(self, img: NDArray) -> NDArray:
+        """Labels the input image using skimage.measure.label.
+
+        Args:
+            img (NDArray): Input image to label.
+
+        Returns:
+            NDArray: Labeled array.
+        """
+        return measure.label(img, connectivity=self.connectivity.value)
+
+
+class MaskListLabeling(LabelingStrategy):
+    """Labeling strategy using a list of binary masks.
+
+    Attributes:
+        masks (list[NDArray]): List of binary masks.
+        shape (tuple[int, int, int]): Shape of the output labeled array.
+    """
+
+    def __init__(self, masks: list[NDArray], shape: tuple[int, int, int]):
+        """Initializes MaskListLabeling with masks and output shape.
+
+        Args:
+            masks (list[NDArray]): List of binary masks.
+            shape (tuple[int, int, int]): Shape of the output labeled array.
+        """
+        self.masks = masks
+        self.shape = shape
+
+    def label(self, img: NDArray) -> NDArray:
+        """Labels the input image using the provided masks.
+
+        Args:
+            img (NDArray): Input image to label (not used).
+
+        Returns:
+            NDArray: Labeled array.
+        """
+        labels = np.zeros(shape=self.shape, dtype=self.ARRAY_ELEMENTS_TYPE)
+        for idx, mask in enumerate(self.masks, start=1):
+            labels[mask > 0] = idx
+
+        return labels
 
 
 class LabeledCells:
@@ -45,22 +117,20 @@ class LabeledCells:
         z (int): Depth of the image.
         y (int): Height of the image.
         x (int): Width of the image.
-        connectivity (CellConnectivity): Connectivity used for labeling.
         labels (NDArray): Labeled 3D array.
     """
 
     ARRAY_ELEMENTS_TYPE = np.uint8
 
-    def __init__(self, img: NDArray, connectivity: CellConnectivity):
-        """Initializes LabeledCells with a 3D image and connectivity.
+    def __init__(self, img: NDArray, labeling_strategy: LabelingStrategy):
+        """Initializes LabeledCells with a 3D image and a labeling strategy.
 
         Args:
             img (NDArray): 3D binary image.
-            connectivity (CellConnectivity): Connectivity rule for labeling.
+            labeling_strategy (LabelingStrategy): Strategy for labeling connected components.
         """
         self.z, self.y, self.x = img.shape
-        self.connectivity = connectivity
-        self.labels = label_cells(img, connectivity)
+        self.labels = labeling_strategy.label(img)
 
     def len(self) -> int:
         """Returns the number of labeled cells.

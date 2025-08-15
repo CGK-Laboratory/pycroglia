@@ -5,7 +5,11 @@ from numpy.typing import NDArray
 from pycroglia.core.clustering import get_number_of_nuclei, gaussian_mixture_predict
 from pycroglia.core.erosion import apply_binary_erosion, FootprintShape
 from pycroglia.core.filters import remove_small_objects
-from pycroglia.core.labeled_cells import LabeledCells
+from pycroglia.core.labeled_cells import (
+    LabeledCells,
+    CellConnectivity,
+    SkimageImgLabeling,
+)
 
 
 @dataclass
@@ -17,6 +21,7 @@ class SegmentationConfig:
         DEFAULT_GMM_N_INIT (int): Default number of GMM initializations.
         cut_off_size (int): Minimum size for a cell to be segmented.
         noise (int): Minimum size for objects to keep after noise removal.
+        connectivity (CellConnectivity): Connectivity rule for labeling.
         min_nucleus_fraction (int): Minimum nucleus fraction for erosion.
         gmm_n_init (int): Number of initializations for Gaussian Mixture Model.
     """
@@ -26,6 +31,7 @@ class SegmentationConfig:
 
     cut_off_size: int
     noise: int
+    connectivity: CellConnectivity
     min_nucleus_fraction: int = DEFAULT_MIN_NUCLEUS_FRACTION
     gmm_n_init: int = DEFAULT_GMM_N_INIT
 
@@ -34,6 +40,10 @@ def segment_cell(
     cells: LabeledCells, footprint: FootprintShape, config: SegmentationConfig
 ) -> List[NDArray]:
     """Segments cells using erosion, clustering, and noise removal.
+
+    For each cell, if its size is above the cut_off_size, the function applies binary erosion,
+    removes small objects, estimates the number of nuclei, and applies Gaussian Mixture Model clustering.
+    Each resulting cluster is filtered for noise and relabeled. Small cells are returned as is.
 
     Args:
         cells (LabeledCells): LabeledCells object containing labeled cell regions.
@@ -54,14 +64,16 @@ def segment_cell(
                 eroded_matrix, round(config.cut_off_size / config.min_nucleus_fraction)
             )
 
-            number_of_nuclei = get_number_of_nuclei(eroded_matrix, cells.connectivity)
+            number_of_nuclei = get_number_of_nuclei(eroded_matrix, config.connectivity)
             clusters = gaussian_mixture_predict(
                 cell_matrix, number_of_nuclei, config.gmm_n_init
             )
 
             for cluster in clusters:
                 cluster_filtered = remove_small_objects(cluster, config.noise)
-                labeled_cluster = LabeledCells(cluster_filtered, cells.connectivity)
+                labeled_cluster = LabeledCells(
+                    cluster_filtered, SkimageImgLabeling(config.connectivity)
+                )
 
                 for j in range(1, labeled_cluster.len() + 1):
                     cells_array.append(labeled_cluster.get_cell(j))

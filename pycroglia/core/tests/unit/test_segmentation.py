@@ -3,7 +3,11 @@ import numpy as np
 from numpy.typing import NDArray
 from pycroglia.core.segmentation import segment_cell, SegmentationConfig
 from pycroglia.core.erosion import RectangleFootprint
-from pycroglia.core.labeled_cells import LabeledCells, CellConnectivity
+from pycroglia.core.labeled_cells import (
+    LabeledCells,
+    CellConnectivity,
+    SkimageImgLabeling,
+)
 
 
 def simple_cells_img() -> NDArray:
@@ -24,13 +28,16 @@ def test_segmentation_config_defaults():
     Asserts:
         The default values are set as expected.
     """
-    config = SegmentationConfig(cut_off_size=10, noise=2)
+    config = SegmentationConfig(
+        cut_off_size=10, noise=2, connectivity=CellConnectivity.FACES
+    )
     assert config.cut_off_size == 10
     assert config.noise == 2
     assert (
         config.min_nucleus_fraction == SegmentationConfig.DEFAULT_MIN_NUCLEUS_FRACTION
     )
     assert config.gmm_n_init == SegmentationConfig.DEFAULT_GMM_N_INIT
+    assert config.connectivity == CellConnectivity.FACES
 
 
 def test_segment_cell_basic():
@@ -40,8 +47,10 @@ def test_segment_cell_basic():
         The number of returned segments matches the number of cells.
     """
     img = simple_cells_img()
-    cells = LabeledCells(img, CellConnectivity.FACES)
-    config = SegmentationConfig(cut_off_size=1, noise=1)
+    cells = LabeledCells(img, SkimageImgLabeling(CellConnectivity.FACES))
+    config = SegmentationConfig(
+        cut_off_size=1, noise=1, connectivity=CellConnectivity.FACES
+    )
     footprint = RectangleFootprint(x=1, y=1)
     segments = segment_cell(cells, footprint, config)
     assert isinstance(segments, list)
@@ -60,8 +69,10 @@ def test_segment_cell_small_cell_not_split():
     """
     img = np.zeros((3, 3, 3), dtype=np.uint8)
     img[1, 1, 1] = 1
-    cells = LabeledCells(img, CellConnectivity.FACES)
-    config = SegmentationConfig(cut_off_size=2, noise=1)
+    cells = LabeledCells(img, SkimageImgLabeling(CellConnectivity.FACES))
+    config = SegmentationConfig(
+        cut_off_size=2, noise=1, connectivity=CellConnectivity.FACES
+    )
     footprint = RectangleFootprint(x=1, y=1)
     segments = segment_cell(cells, footprint, config)
     assert len(segments) == 1
