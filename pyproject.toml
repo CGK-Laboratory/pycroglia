@@ -9,6 +9,8 @@ dependencies = [
     "opencv-python>=4.11.0.86",
     "pyqt6>=6.9.1",
     "pyqtgraph>=0.13.7",
+    "scikit-image>=0.25.2",
+    "scikit-learn>=1.7.1",
     "tifffile>=2025.5.10",
 ]
 
@@ -16,6 +18,8 @@ dependencies = [
 core = [
     "numpy>=2.2.6",
     "opencv-python>=4.11.0.86",
+    "scikit-image>=0.25.2",
+    "scikit-learn>=1.7.1",
     "tifffile>=2025.5.10",
 ]
 core-test = [
