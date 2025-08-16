@@ -129,8 +129,11 @@ class LabeledCells:
             img (NDArray): 3D binary image.
             labeling_strategy (LabelingStrategy): Strategy for labeling connected components.
         """
-        self.z, self.y, self.x = img.shape
+        self.x, self.y, self.z = img.shape
         self.labels = labeling_strategy.label(img)
+
+        self._cell_sizes = np.bincount(self.labels.ravel())
+        self._n_cells = len(self._cell_sizes) - 1
 
     def len(self) -> int:
         """Returns the number of labeled cells.
@@ -138,7 +141,7 @@ class LabeledCells:
         Returns:
             int: Number of labeled cells (excluding background).
         """
-        return self.labels.max()
+        return self._n_cells
 
     def _is_valid_index(self, index: int) -> bool:
         """Checks if the given index is a valid cell label.
@@ -183,7 +186,10 @@ class LabeledCells:
         if not self._is_valid_index(index):
             raise PycrogliaException(error_code=2000)
 
-        return np.sum(self.labels == index)
+        return int(self._cell_sizes[index])
+
+    def labels_to_2d(self) -> NDArray:
+        return self.labels.max(axis=2)
 
     def cell_to_2d(self, index: int) -> NDArray:
         """Projects a 3D cell to 2D by summing along the z-axis.
@@ -200,9 +206,9 @@ class LabeledCells:
         if not self._is_valid_index(index):
             raise PycrogliaException(error_code=2000)
 
-        cell_matrix = np.zeros((self.z, self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE)
+        cell_matrix = np.zeros((self.x, self.y, self.z), dtype=self.ARRAY_ELEMENTS_TYPE)
         cell_matrix[self.labels == index] = 1
-        flatten = cell_matrix.sum(axis=0)
+        flatten = cell_matrix.sum(axis=2)
 
         return flatten
 
@@ -221,13 +227,3 @@ class LabeledCells:
             all_cells_matrix[i - 1, :, :] = cell_array
 
         return all_cells_matrix
-
-    def overlap_cells(self) -> NDArray:
-        """Computes the overlap image by summing all 2D projections of cells.
-
-        Returns:
-            NDArray: 2D array representing the overlap of all cells.
-        """
-        all_cells = self.all_cells_to_2d()
-        overlap_img = all_cells.sum(axis=0)
-        return overlap_img

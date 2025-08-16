@@ -232,7 +232,7 @@ def test_labeled_cells_cell_to_2d():
     got = lc.cell_to_2d(1)
 
     assert got.shape == (3, 3)
-    assert got[1, 1] == 3
+    assert got[1, 1] == 1
     assert np.sum(got) == 3
 
 
@@ -283,19 +283,3 @@ def test_labeled_cells_all_cells_to_2d():
     assert all_2d[0, 0, 0] == 1
     assert all_2d[2, 2, 2] == 1
     assert np.sum(all_2d) == 3
-
-
-def test_labeled_cells_overlap_cells():
-    """Test overlap_cells for simple 3D image.
-
-    Asserts:
-        The overlap image has correct shape and values.
-    """
-    img = simple_3d_img()
-    lc = LabeledCells(img, SkimageImgLabeling(DEFAULT_TEST_CONNECTIVITY))
-    overlap = lc.overlap_cells()
-
-    assert overlap.shape == (3, 3)
-    assert overlap[0, 0] == 1
-    assert overlap[2, 2] == 1
-    assert overlap.sum() == 2
