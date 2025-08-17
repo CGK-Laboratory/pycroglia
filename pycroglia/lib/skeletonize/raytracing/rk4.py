@@ -55,7 +55,24 @@ def _interpolate(field: np.ndarray, point: np.ndarray) -> np.ndarray:
 
 
 class RK4(Stepper):
+    """Runge-Kutta 4 (RK4) stepper for gradient-based tracing.
+
+    This stepper integrates along the negative gradient of a vector field
+    using the fourth-order Runge-Kutta method. It provides more accurate
+    tracing than Euler integration at the cost of additional interpolation.
+
+    Attributes:
+        step_size (float): Integration step size.
+        gradient_volume (np.ndarray): Vector field with shape (..., dim),
+        where dim is 2 or 3.
+    """
     def __init__(self, step_size: float, gradient_volume: np.ndarray) -> None:
+        """Initialize the RK4 stepper.
+
+        Args:
+            step_size (float): Integration step size.
+            gradient_volume (np.ndarray): Gradient field with shape (..., dim).
+        """
         self.step_size = step_size
         self.gradient_volume = gradient_volume
 

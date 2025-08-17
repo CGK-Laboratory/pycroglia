@@ -4,6 +4,17 @@ from .stepper import Stepper
 
 
 class Euler(Stepper):
+    """Euler integration stepper for gradient-based tracing.
+
+    This stepper implements the explicit Euler method to trace
+    along the negative gradient of a distance map or potential field.
+    It works in both 2D and 3D volumes.
+
+    Attributes:
+        step_size (float): The integration step size.
+        gradient_volume (np.ndarray): The gradient field of the distance map.
+            Shape is (..., dim), where dim is 2 or 3.
+    """
     def __init__(self, step_size: float, gradient_volume: np.ndarray) -> None:
         self.step_size = step_size
         self.gradient_volume = gradient_volume

@@ -3,7 +3,26 @@ from .stepper import Stepper
 
 
 class Simple(Stepper):
+    """Stepper implementation that selects the lowest-valued neighbor.
+
+    This class implements a simple stepping strategy for following
+    the gradient in a distance map (2D or 3D). At each step, it
+    searches in an expanding local neighborhood around a given
+    start point and moves to the coordinate with the lowest
+    distance-map value, if such a location exists.
+
+    Attributes:
+        distance_map (np.ndarray): The 2D or 3D distance map used
+            to guide stepping.
+    """
     def __init__(self, distance_map: np.ndarray) -> None:
+        """Initializes the Simple stepper.
+
+        Args:
+            distance_map (np.ndarray): A 2D or 3D array representing the
+                distance map. Each value corresponds to the cost or
+                distance at that location.
+        """       
         self.distance_map = distance_map
 
     def step(self, start_point: np.ndarray) -> np.ndarray:
