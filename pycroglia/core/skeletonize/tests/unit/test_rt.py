@@ -1,4 +1,4 @@
-from pycroglia.lib.skeletonize.raytracing import rk4, simple, euler
+from pycroglia.core.skeletonize.raytracing import rk4, simple, euler
 import numpy as np
 
 def test_euler():

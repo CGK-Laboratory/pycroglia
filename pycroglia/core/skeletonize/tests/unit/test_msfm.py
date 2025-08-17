@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from numpy import linalg as LA
-from pycroglia.lib.skeletonize.msfm import msfm2d
+from pycroglia.core.skeletonize.msfm import msfm2d
 
 
 # TODO(jab227): change to pytest parametrize
