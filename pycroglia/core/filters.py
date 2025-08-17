@@ -51,7 +51,8 @@ def remove_small_objects(
         NDArray: 3D binary array with small objects removed.
     """
     img_bool = img.astype(bool)
+    labeled_img = skimage.morphology.label(img_bool, connectivity=connectivity.value)
     filtered = skimage.morphology.remove_small_objects(
-        img_bool, min_size=min_size, connectivity=connectivity.value
+        labeled_img, min_size=min_size, connectivity=connectivity.value
     )
     return filtered.astype(img.dtype)
