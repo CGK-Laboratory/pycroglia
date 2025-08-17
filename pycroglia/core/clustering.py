@@ -6,9 +6,9 @@ from sklearn.mixture import GaussianMixture
 from pycroglia.core.errors.errors import PycrogliaException
 from pycroglia.core.labeled_cells import (
     LabeledCells,
-    SkimageCellConnectivity,
     SkimageImgLabeling,
 )
+from pycroglia.core.enums import SkimageCellConnectivity
 
 
 def get_number_of_nuclei(img: NDArray, connectivity: SkimageCellConnectivity) -> int:

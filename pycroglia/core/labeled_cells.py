@@ -1,11 +1,10 @@
-import cv2
 import numpy as np
 
 from abc import ABC, abstractmethod
-from enum import Enum
 from numpy.typing import NDArray
 from skimage import measure
 
+from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.errors.errors import PycrogliaException
 
 
@@ -33,25 +32,11 @@ class LabelingStrategy(ABC):
         pass
 
 
-class SkimageCellConnectivity(Enum):
-    """Defines connectivity options for labeling connected cell components in 3D images.
-
-    Attributes:
-        FACES (int): 6-connectivity (voxels connected by faces).
-        EDGES (int): 18-connectivity (voxels connected by faces and edges).
-        CORNERS (int): 26-connectivity (voxels connected by faces, edges, and corners).
-    """
-
-    FACES = 1
-    EDGES = 2
-    CORNERS = 3
-
-
 class SkimageImgLabeling(LabelingStrategy):
     """Labeling strategy using skimage.measure.label.
 
     Attributes:
-        connectivity (SkimageCellConnectivity): Connectivity rule for labeling.
+        connectivity (pycroglia.core.enums.SkimageCellConnectivity): Connectivity rule for labeling.
     """
 
     def __init__(self, connectivity: SkimageCellConnectivity):
@@ -130,7 +115,7 @@ class LabeledCells:
             img (NDArray): 3D binary image.
             labeling_strategy (LabelingStrategy): Strategy for labeling connected components.
         """
-        self.x, self.y, self.z = img.shape
+        self.z, self.y, self.x = img.shape
         self.labels = labeling_strategy.label(img)
 
         self._cell_sizes = np.bincount(self.labels.ravel())
@@ -190,7 +175,7 @@ class LabeledCells:
         return int(self._cell_sizes[index])
 
     def labels_to_2d(self) -> NDArray:
-        return self.labels.max(axis=2)
+        return self.labels.max(axis=0)
 
     def cell_to_2d(self, index: int) -> NDArray:
         """Projects a 3D cell to 2D by summing along the z-axis.
@@ -207,9 +192,9 @@ class LabeledCells:
         if not self._is_valid_index(index):
             raise PycrogliaException(error_code=2000)
 
-        cell_matrix = np.zeros((self.x, self.y, self.z), dtype=self.ARRAY_ELEMENTS_TYPE)
+        cell_matrix = np.zeros((self.z, self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE)
         cell_matrix[self.labels == index] = 1
-        flatten = cell_matrix.sum(axis=2)
+        flatten = cell_matrix.sum(axis=0)
 
         return flatten
 

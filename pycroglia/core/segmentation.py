@@ -7,9 +7,9 @@ from pycroglia.core.erosion import apply_binary_erosion, FootprintShape
 from pycroglia.core.filters import remove_small_objects
 from pycroglia.core.labeled_cells import (
     LabeledCells,
-    SkimageCellConnectivity,
     SkimageImgLabeling,
 )
+from pycroglia.core.enums import SkimageCellConnectivity
 
 
 @dataclass

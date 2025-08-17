@@ -5,9 +5,9 @@ from pycroglia.core.segmentation import segment_cell, SegmentationConfig
 from pycroglia.core.erosion import RectangleFootprint
 from pycroglia.core.labeled_cells import (
     LabeledCells,
-    SkimageCellConnectivity,
     SkimageImgLabeling,
 )
+from pycroglia.core.enums import SkimageCellConnectivity
 
 
 def simple_cells_img() -> NDArray:

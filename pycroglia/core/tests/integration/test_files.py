@@ -49,4 +49,6 @@ def test_tiff_reader(test_case, ch, chi):
     reader = TiffReader(str(TEST_CASE_TIFF))
     results = reader.read(ch, chi)
 
-    assert array_equal(expected.data, results)
+    # Ensure both arrays are (z, y, x)
+    assert results.shape == expected.data.shape
+    assert array_equal(expected.data.transpose(0, 2, 1), results)

@@ -1,5 +1,6 @@
+import numpy as np
+
 from abc import ABC, abstractmethod
-from numpy import dstack
 from numpy.typing import NDArray
 from tifffile import TiffFile
 from pathlib import Path
@@ -102,7 +103,7 @@ class TiffReader(MultiChReader):
             for i in range(ch_interest - 1, number_of_images, ch):
                 data.append(tiff_file.pages[i].asarray())
 
-        return dstack(data)
+        return np.stack(data, axis=0)
 
 
 class LsmReader(MultiChReader):
@@ -183,7 +184,7 @@ class LsmReader(MultiChReader):
             for i in range(ch_interest - 1, number_of_images, ch):
                 data.append(lsm_file.pages[i].asarray())
 
-        return dstack(data)
+        return np.stack(data, axis=0)
 
 
 def create_channeled_reader(path: str) -> MultiChReader:

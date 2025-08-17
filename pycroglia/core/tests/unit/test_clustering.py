@@ -3,7 +3,7 @@ import pytest
 
 from numpy.typing import NDArray
 from pycroglia.core.clustering import get_number_of_nuclei, gaussian_mixture_predict
-from pycroglia.core.labeled_cells import SkimageCellConnectivity
+from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.errors.errors import PycrogliaException
 
 

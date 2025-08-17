@@ -11,8 +11,8 @@ from pycroglia.core.labeled_cells import (
     LabeledCells,
     LabelingStrategy,
     SkimageImgLabeling,
-    SkimageCellConnectivity,
 )
+from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.files import TiffReader
 from pycroglia.core.filters import remove_small_objects, calculate_otsu_threshold
 
@@ -129,3 +129,29 @@ class SegmentationEditor(QtWidgets.QWidget):
 
         cell_2d = self.labeled_cells.cell_to_2d(selected_cell)
         self.cell_viewer.set_image(cell_2d)
+
+
+# --- Replace with your TIFF file path ---
+TIFF_PATH = "/Users/framos/Desktop/TrialControlZip.tif"
+CHANNELS = 5  # Set according to your file
+CHANNEL_OF_INTEREST = 2  # 1-based index
+
+
+def main():
+    # Read TIFF file
+    reader = TiffReader(TIFF_PATH)
+    img = reader.read(CHANNELS, CHANNEL_OF_INTEREST)
+    img = calculate_otsu_threshold(img, 1.0)
+    img = remove_small_objects(img, 10)
+
+    # Create a dummy labeling strategy (replace with your actual strategy)
+    labeling_strategy = SkimageImgLabeling(SkimageCellConnectivity.FACES)
+
+    # Create the application and widget
+    app = QtWidgets.QApplication(sys.argv)
+    editor = SegmentationEditor(img, labeling_strategy)
+    editor.show()
+    sys.exit(app.exec())
+
+
+main()

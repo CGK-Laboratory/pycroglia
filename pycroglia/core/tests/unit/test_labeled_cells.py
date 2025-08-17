@@ -6,8 +6,8 @@ from pycroglia.core.labeled_cells import (
     LabeledCells,
     SkimageImgLabeling,
     MaskListLabeling,
-    SkimageCellConnectivity,
 )
+from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.errors.errors import PycrogliaException
 
 DEFAULT_TEST_CONNECTIVITY = SkimageCellConnectivity.FACES
@@ -232,7 +232,7 @@ def test_labeled_cells_cell_to_2d():
     got = lc.cell_to_2d(1)
 
     assert got.shape == (3, 3)
-    assert got[1, 1] == 1
+    assert got[1, 1] == 3
     assert np.sum(got) == 3
 
 

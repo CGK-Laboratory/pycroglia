@@ -102,7 +102,7 @@ class MultiChImgEditorState(QtCore.QObject):
         Returns:
             NDArray: Middle slice of the image.
         """
-        return arr[:, :, arr.shape[2] // 2]
+        return arr[arr.shape[0] // 2, :, :]
 
     def apply_otsu_gray_filter(self, adjust_value: float) -> Optional[NDArray]:
         """Apply the Otsu threshold filter with adjustment.
