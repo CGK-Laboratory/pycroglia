@@ -82,6 +82,7 @@ def test_tiff_reader_validate_channels_ok(ch: int, chi: int) -> None:
         The returned data shape is as expected if read is patched.
     """
     import numpy as np
+
     with patch.object(TiffReader, "validate_path") as mock_validate:
         mock_validate.return_value = True
 
@@ -94,20 +95,9 @@ def test_tiff_reader_validate_channels_ok(ch: int, chi: int) -> None:
         # Patch read to simulate TIFF reading and check shape
         with patch.object(TiffReader, "read") as mock_read:
             # Simulate a stack of 3 slices, each 2x2
-            mock_read.return_value = np.array([
-                [
-                    [1, 2],
-                    [3, 4]
-                ],
-                [
-                    [5, 6],
-                    [7, 8]
-                ],
-                [
-                    [9, 10],
-                    [11, 12]
-                ]
-            ])
+            mock_read.return_value = np.array(
+                [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+            )
             data = reader.read(ch, chi)
             assert hasattr(data, "shape")
             assert data.shape == (3, 2, 2)
@@ -214,6 +204,7 @@ def test_lsm_reader_validate_channels_ok(ch: int, chi: int) -> None:
         The returned data shape is as expected if read is patched.
     """
     import numpy as np
+
     with patch.object(LsmReader, "validate_path") as mock_validate:
         mock_validate.return_value = True
 
@@ -226,16 +217,7 @@ def test_lsm_reader_validate_channels_ok(ch: int, chi: int) -> None:
         # Patch read to simulate LSM reading and check shape
         with patch.object(LsmReader, "read") as mock_read:
             # Simulate a 3D array (z, y, x)
-            mock_read.return_value = np.array([
-                [
-                    [1, 2],
-                    [3, 4]
-                ],
-                [
-                    [5, 6],
-                    [7, 8]
-                ]
-            ])
+            mock_read.return_value = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
             data = reader.read(ch, chi)
             assert hasattr(data, "shape")
             assert data.shape == (2, 2, 2)
