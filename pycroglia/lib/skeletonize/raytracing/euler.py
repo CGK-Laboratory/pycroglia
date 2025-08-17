@@ -31,37 +31,34 @@ class Euler(Stepper):
 
         """
         dim = start_point.size
-
-        assert start_point.ndim == 1, "Start point must be a 1D coordinate array."
+        assert start_point.ndim == 1, "Start point must be 1D."
         assert dim in (2, 3), "Start point must be 2D or 3D."
-        assert dim == len(self.gradient_volume.shape), (
-            "The coordinates should be for the same dimension as the volume"
-        )
+        assert dim == self.gradient_volume.shape[-1], "Coordinate dimension mismatch."
+         
         shape = self.gradient_volume.shape[:-1]
-
+    
+        # Out of bounds check
         if np.any(start_point < 0) or np.any(start_point >= np.array(shape)):
-            return np.zeros(dim)  # Out of bounds
-
-        # Prepare coordinates for interpolation: scipy uses (z, y, x) order
-        coords = tuple(start_point[i] for i in range(dim))
-
-        # Interpolate each gradient component at the start point
-        gradient = np.array(
-            [
-                map_coordinates(
-                    self.gradient_volume[..., i], [coords], order=1, mode="nearest"
-                )[0]
-                for i in range(dim)
-            ]
-        )
+            return np.zeros(dim)
+         
+        # Prepare coordinates for map_coordinates: shape (ndim, n_points)
+        coords = np.array(start_point, dtype=np.float64).reshape(dim, 1)
+    
+        # Interpolate each gradient component at the point
+        gradient = np.zeros(dim)
+        for i in range(dim):
+            gradient[i] = map_coordinates(
+                self.gradient_volume[..., i], coords, order=1, mode="nearest"
+            )[0]
+        
         norm = np.linalg.norm(gradient) + np.finfo(np.float64).eps
         gradient /= norm
-
-        # Euler step in negative gradient direction
-        new_point = start_point - self.step_size * gradient
-
+    
+        # Euler step
+        new_point = start_point + self.step_size * gradient
+         
         # Check bounds
         if np.any(new_point < 0) or np.any(new_point >= np.array(shape)):
             return np.zeros(dim)
-
+    
         return new_point

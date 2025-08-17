@@ -52,17 +52,15 @@ class Simple(Stepper):
         ndims = len(dims)
 
         for step_size in range(1, 4):
-            lower_bounds = np.maximum(start_point_rounded - step_size, np.zeros(ndims))
-            upper_bounds = np.minimum(start_point_rounded + step_size, dims)
-            shape = tuple(ub - lb for lb, ub in zip(lower_bounds, upper_bounds))
-            coordinates = np.indices(shape).reshape(len(shape), -1).T + np.array(
-                lower_bounds
-            )
-            sub_volume = self.distance_map[tuple(coordinates)]
-            center_value = self.distance_map[tuple(start_point_rounded)]
-            mask = sub_volume < center_value
-            if np.any(mask):
-                idx = np.min(sub_volume)
-                candidate_coordinates = coordinates[:, mask][:, idx]
-                return candidate_coordinates.astype(int)
+            lower_bounds = np.maximum(start_point_rounded - step_size, 0).astype(int)
+            upper_bounds = np.minimum(start_point_rounded + step_size + 1, dims).astype(int)  
+            grids = np.ogrid[tuple(slice(lb, ub) for lb, ub in zip(lower_bounds, upper_bounds))]
+            coordinates = np.stack(np.meshgrid(*grids, indexing='ij'), -1).reshape(-1, ndims)
+            sub_volume = self.distance_map[tuple(coordinates.T)]
+            min_idx = np.argmin(sub_volume)
+            candidate = coordinates[min_idx]
+            
+            if self.distance_map[tuple(candidate)] < self.distance_map[tuple(start_point_rounded)]:
+                return candidate.astype(int)
+
         return start_point_rounded
