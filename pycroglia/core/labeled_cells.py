@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 
 from abc import ABC, abstractmethod
@@ -6,20 +7,6 @@ from numpy.typing import NDArray
 from skimage import measure
 
 from pycroglia.core.errors.errors import PycrogliaException
-
-
-class CellConnectivity(Enum):
-    """Defines connectivity options for labeling connected cell components in 3D images.
-
-    Attributes:
-        FACES (int): 6-connectivity (voxels connected by faces).
-        EDGES (int): 18-connectivity (voxels connected by faces and edges).
-        CORNERS (int): 26-connectivity (voxels connected by faces, edges, and corners).
-    """
-
-    FACES = 1
-    EDGES = 2
-    CORNERS = 3
 
 
 class LabelingStrategy(ABC):
@@ -46,18 +33,32 @@ class LabelingStrategy(ABC):
         pass
 
 
+class SkimageCellConnectivity(Enum):
+    """Defines connectivity options for labeling connected cell components in 3D images.
+
+    Attributes:
+        FACES (int): 6-connectivity (voxels connected by faces).
+        EDGES (int): 18-connectivity (voxels connected by faces and edges).
+        CORNERS (int): 26-connectivity (voxels connected by faces, edges, and corners).
+    """
+
+    FACES = 1
+    EDGES = 2
+    CORNERS = 3
+
+
 class SkimageImgLabeling(LabelingStrategy):
     """Labeling strategy using skimage.measure.label.
 
     Attributes:
-        connectivity (CellConnectivity): Connectivity rule for labeling.
+        connectivity (SkimageCellConnectivity): Connectivity rule for labeling.
     """
 
-    def __init__(self, connectivity: CellConnectivity):
+    def __init__(self, connectivity: SkimageCellConnectivity):
         """Initializes SkimageImgLabeling with the given connectivity.
 
         Args:
-            connectivity (CellConnectivity): Connectivity rule for labeling.
+            connectivity (SkimageCellConnectivity): Connectivity rule for labeling.
         """
         self.connectivity = connectivity
 

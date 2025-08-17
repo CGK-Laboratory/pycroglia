@@ -6,12 +6,12 @@ from sklearn.mixture import GaussianMixture
 from pycroglia.core.errors.errors import PycrogliaException
 from pycroglia.core.labeled_cells import (
     LabeledCells,
-    CellConnectivity,
+    SkimageCellConnectivity,
     SkimageImgLabeling,
 )
 
 
-def get_number_of_nuclei(img: NDArray, connectivity: CellConnectivity) -> int:
+def get_number_of_nuclei(img: NDArray, connectivity: SkimageCellConnectivity) -> int:
     """Gets the number of nuclei in a 3D binary image using SkimageImgLabeling strategy.
 
     This function uses the SkimageImgLabeling strategy to label connected components
@@ -19,7 +19,7 @@ def get_number_of_nuclei(img: NDArray, connectivity: CellConnectivity) -> int:
 
     Args:
         img (NDArray): 3D binary image.
-        connectivity (CellConnectivity): Connectivity type for labeling.
+        connectivity (SkimageCellConnectivity): Connectivity type for labeling.
 
     Returns:
         int: Number of detected nuclei (returns 2 if only one nucleus is found).

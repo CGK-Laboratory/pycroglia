@@ -6,11 +6,11 @@ from pycroglia.core.labeled_cells import (
     LabeledCells,
     SkimageImgLabeling,
     MaskListLabeling,
-    CellConnectivity,
+    SkimageCellConnectivity,
 )
 from pycroglia.core.errors.errors import PycrogliaException
 
-DEFAULT_TEST_CONNECTIVITY = CellConnectivity.FACES
+DEFAULT_TEST_CONNECTIVITY = SkimageCellConnectivity.FACES
 
 
 def simple_3d_img() -> NDArray:
@@ -82,7 +82,7 @@ def test_skimage_img_labeling_label():
         The output matches skimage.measure.label for the same connectivity.
     """
     img = simple_3d_img()
-    strategy = SkimageImgLabeling(CellConnectivity.FACES)
+    strategy = SkimageImgLabeling(SkimageCellConnectivity.FACES)
     labels = strategy.label(img)
     # Should be 2 components plus background
     assert labels.shape == img.shape
@@ -135,16 +135,16 @@ def test_labeled_cells_is_valid_index(index, expected):
 @pytest.mark.parametrize(
     "connectivity, expected",
     [
-        (CellConnectivity.FACES, 2),
-        (CellConnectivity.EDGES, 2),
-        (CellConnectivity.CORNERS, 2),
+        (SkimageCellConnectivity.FACES, 2),
+        (SkimageCellConnectivity.EDGES, 2),
+        (SkimageCellConnectivity.CORNERS, 2),
     ],
 )
 def test_labeled_cells_len(connectivity, expected):
     """Test LabeledCells.len() functionality.
 
     Args:
-        connectivity (CellConnectivity): Connectivity type.
+        connectivity (SkimageCellConnectivity): Connectivity type.
         expected (int): Expected number of components.
 
     Asserts:
@@ -239,10 +239,10 @@ def test_labeled_cells_cell_to_2d():
 @pytest.mark.parametrize(
     "img_fn, connectivity, index",
     [
-        (stacked_voxels_image, CellConnectivity.FACES, -1),  # Invalid value
+        (stacked_voxels_image, SkimageCellConnectivity.FACES, -1),  # Invalid value
         (
             stacked_voxels_image,
-            CellConnectivity.FACES,
+            SkimageCellConnectivity.FACES,
             3,
         ),  # Bigger than number of cells
     ],
@@ -252,7 +252,7 @@ def test_labeled_cells_cell_to_2d_nok(img_fn, connectivity, index):
 
     Args:
         img_fn (Callable): Function that returns a 3D image.
-        connectivity (CellConnectivity): Connectivity type.
+        connectivity (SkimageCellConnectivity): Connectivity type.
         index (int): Invalid component index.
 
     Asserts:

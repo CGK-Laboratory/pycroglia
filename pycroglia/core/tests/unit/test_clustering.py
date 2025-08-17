@@ -3,7 +3,7 @@ import pytest
 
 from numpy.typing import NDArray
 from pycroglia.core.clustering import get_number_of_nuclei, gaussian_mixture_predict
-from pycroglia.core.labeled_cells import CellConnectivity
+from pycroglia.core.labeled_cells import SkimageCellConnectivity
 from pycroglia.core.errors.errors import PycrogliaException
 
 
@@ -42,11 +42,11 @@ def double_nucleus_img() -> NDArray:
 @pytest.mark.parametrize(
     "img_fn, connectivity, expected",
     [
-        (double_nucleus_img, CellConnectivity.FACES, 2),
-        (double_nucleus_img, CellConnectivity.EDGES, 2),
+        (double_nucleus_img, SkimageCellConnectivity.FACES, 2),
+        (double_nucleus_img, SkimageCellConnectivity.EDGES, 2),
         (
             single_nucleus_img,
-            CellConnectivity.FACES,
+            SkimageCellConnectivity.FACES,
             2,
         ),  # Should return 2 for single nucleus
     ],
@@ -56,7 +56,7 @@ def test_get_number_of_nuclei(img_fn, connectivity, expected):
 
     Args:
         img_fn (Callable): Function that returns a 3D image.
-        connectivity (CellConnectivity): Connectivity type.
+        connectivity (SkimageCellConnectivity): Connectivity type.
         expected (int): Expected number of nuclei.
 
     Asserts:
@@ -74,7 +74,7 @@ def test_get_number_of_nuclei_empty_image():
     """
     img = empty_img()
     with pytest.raises(PycrogliaException) as err:
-        get_number_of_nuclei(img, CellConnectivity.FACES)
+        get_number_of_nuclei(img, SkimageCellConnectivity.FACES)
     assert err.value.error_code == 2001
 
 

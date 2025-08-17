@@ -96,11 +96,11 @@ class TiffReader(MultiChReader):
         self.validate_channels(ch, ch_interest)
         data = []
 
-        with TiffFile(str(self.path)) as lsm_file:
-            number_of_images = len(lsm_file.pages)
+        with TiffFile(str(self.path)) as tiff_file:
+            number_of_images = len(tiff_file.pages)
 
             for i in range(ch_interest - 1, number_of_images, ch):
-                data.append(lsm_file.pages[i].asarray())
+                data.append(tiff_file.pages[i].asarray())
 
         return dstack(data)
 
@@ -177,11 +177,11 @@ class LsmReader(MultiChReader):
         self.validate_channels(ch, ch_interest)
         data = []
 
-        with TiffFile(str(self.path)) as tiff_file:
-            number_of_images = len(tiff_file.pages)
+        with TiffFile(str(self.path)) as lsm_file:
+            number_of_images = len(lsm_file.pages)
 
             for i in range(ch_interest - 1, number_of_images, ch):
-                data.append(tiff_file.pages[i].asarray())
+                data.append(lsm_file.pages[i].asarray())
 
         return dstack(data)
 

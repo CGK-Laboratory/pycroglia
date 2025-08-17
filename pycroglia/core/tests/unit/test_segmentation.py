@@ -5,7 +5,7 @@ from pycroglia.core.segmentation import segment_cell, SegmentationConfig
 from pycroglia.core.erosion import RectangleFootprint
 from pycroglia.core.labeled_cells import (
     LabeledCells,
-    CellConnectivity,
+    SkimageCellConnectivity,
     SkimageImgLabeling,
 )
 
@@ -29,7 +29,7 @@ def test_segmentation_config_defaults():
         The default values are set as expected.
     """
     config = SegmentationConfig(
-        cut_off_size=10, noise=2, connectivity=CellConnectivity.FACES
+        cut_off_size=10, noise=2, connectivity=SkimageCellConnectivity.FACES
     )
     assert config.cut_off_size == 10
     assert config.noise == 2
@@ -37,7 +37,7 @@ def test_segmentation_config_defaults():
         config.min_nucleus_fraction == SegmentationConfig.DEFAULT_MIN_NUCLEUS_FRACTION
     )
     assert config.gmm_n_init == SegmentationConfig.DEFAULT_GMM_N_INIT
-    assert config.connectivity == CellConnectivity.FACES
+    assert config.connectivity == SkimageCellConnectivity.FACES
 
 
 def test_segment_cell_basic():
@@ -47,9 +47,9 @@ def test_segment_cell_basic():
         The number of returned segments matches the number of cells.
     """
     img = simple_cells_img()
-    cells = LabeledCells(img, SkimageImgLabeling(CellConnectivity.FACES))
+    cells = LabeledCells(img, SkimageImgLabeling(SkimageCellConnectivity.FACES))
     config = SegmentationConfig(
-        cut_off_size=1, noise=1, connectivity=CellConnectivity.FACES
+        cut_off_size=1, noise=1, connectivity=SkimageCellConnectivity.FACES
     )
     footprint = RectangleFootprint(x=1, y=1)
     segments = segment_cell(cells, footprint, config)
@@ -69,9 +69,9 @@ def test_segment_cell_small_cell_not_split():
     """
     img = np.zeros((3, 3, 3), dtype=np.uint8)
     img[1, 1, 1] = 1
-    cells = LabeledCells(img, SkimageImgLabeling(CellConnectivity.FACES))
+    cells = LabeledCells(img, SkimageImgLabeling(SkimageCellConnectivity.FACES))
     config = SegmentationConfig(
-        cut_off_size=2, noise=1, connectivity=CellConnectivity.FACES
+        cut_off_size=2, noise=1, connectivity=SkimageCellConnectivity.FACES
     )
     footprint = RectangleFootprint(x=1, y=1)
     segments = segment_cell(cells, footprint, config)

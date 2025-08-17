@@ -7,7 +7,7 @@ from pycroglia.core.erosion import apply_binary_erosion, FootprintShape
 from pycroglia.core.filters import remove_small_objects
 from pycroglia.core.labeled_cells import (
     LabeledCells,
-    CellConnectivity,
+    SkimageCellConnectivity,
     SkimageImgLabeling,
 )
 
@@ -21,7 +21,7 @@ class SegmentationConfig:
         DEFAULT_GMM_N_INIT (int): Default number of GMM initializations.
         cut_off_size (int): Minimum size for a cell to be segmented.
         noise (int): Minimum size for objects to keep after noise removal.
-        connectivity (CellConnectivity): Connectivity rule for labeling.
+        connectivity (SkimageCellConnectivity): Connectivity rule for labeling.
         min_nucleus_fraction (int): Minimum nucleus fraction for erosion.
         gmm_n_init (int): Number of initializations for Gaussian Mixture Model.
     """
@@ -31,7 +31,7 @@ class SegmentationConfig:
 
     cut_off_size: int
     noise: int
-    connectivity: CellConnectivity
+    connectivity: SkimageCellConnectivity
     min_nucleus_fraction: int = DEFAULT_MIN_NUCLEUS_FRACTION
     gmm_n_init: int = DEFAULT_GMM_N_INIT
 

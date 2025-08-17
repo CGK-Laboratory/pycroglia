@@ -7,7 +7,14 @@ from PyQt6 import QtWidgets, QtCore
 
 from pycroglia.ui.widgets.two_column_list import TwoColumnList
 from pycroglia.ui.widgets.img_viewer import ImageViewer
-from pycroglia.core.labeled_cells import LabeledCells, LabelingStrategy
+from pycroglia.core.labeled_cells import (
+    LabeledCells,
+    LabelingStrategy,
+    SkimageImgLabeling,
+    SkimageCellConnectivity,
+)
+from pycroglia.core.files import TiffReader
+from pycroglia.core.filters import remove_small_objects, calculate_otsu_threshold
 
 
 class CellListWidget(QtWidgets.QWidget):
@@ -36,7 +43,7 @@ class CellListWidget(QtWidgets.QWidget):
         list_of_cells = sorted(
             [(i, cells.get_cell_size(i)) for i in range(1, cells.len() + 1)],
             key=lambda x: x[1],
-            reverse=True
+            reverse=True,
         )
 
         for cell in list_of_cells:
@@ -64,10 +71,13 @@ class MultiCellImageViewer(QtWidgets.QWidget):
         rng = np.random.default_rng(rgb_seed)
         lut = np.zeros((n_cells + 1, 4), dtype=np.uint8)
         lut[0] = (0, 0, 0, 255)
-        lut[1:] = np.concatenate([
-            rng.integers(0, 256, size=(n_cells, 3), dtype=np.uint8),
-            np.full((n_cells, 1), 255, dtype=np.uint8)
-        ], axis=1)
+        lut[1:] = np.concatenate(
+            [
+                rng.integers(0, 256, size=(n_cells, 3), dtype=np.uint8),
+                np.full((n_cells, 1), 255, dtype=np.uint8),
+            ],
+            axis=1,
+        )
 
         self.img_viewer.set_image(label_2d)
         self.img_viewer.set_lookup_table(lut)
@@ -76,7 +86,12 @@ class MultiCellImageViewer(QtWidgets.QWidget):
 class SegmentationEditor(QtWidgets.QWidget):
     HEADERS_TEXT = ["Cell number", "Cell size"]
 
-    def __init__(self, img: NDArray, labeling_strategy: LabelingStrategy, parent: Optional[QtWidgets.QWidget] = None):
+    def __init__(
+        self,
+        img: NDArray,
+        labeling_strategy: LabelingStrategy,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
         super().__init__(parent=parent)
 
         self.labeled_cells = LabeledCells(img=img, labeling_strategy=labeling_strategy)
