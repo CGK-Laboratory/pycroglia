@@ -142,10 +142,10 @@ def main():
     reader = TiffReader(TIFF_PATH)
     img = reader.read(CHANNELS, CHANNEL_OF_INTEREST)
     img = calculate_otsu_threshold(img, 1.0)
-    img = remove_small_objects(img, 10)
+    img = remove_small_objects(img, 100, connectivity=SkimageCellConnectivity.CORNERS)
 
     # Create a dummy labeling strategy (replace with your actual strategy)
-    labeling_strategy = SkimageImgLabeling(SkimageCellConnectivity.FACES)
+    labeling_strategy = SkimageImgLabeling(SkimageCellConnectivity.CORNERS)
 
     # Create the application and widget
     app = QtWidgets.QApplication(sys.argv)

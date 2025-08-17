@@ -57,27 +57,49 @@ def segment_cell(
 
     for i in range(1, cells.len() + 1):
         if cells.get_cell_size(i) > config.cut_off_size:
-            cell_matrix = cells.get_cell(i)
-
-            eroded_matrix = apply_binary_erosion(cell_matrix, footprint)
-            eroded_matrix = remove_small_objects(
-                eroded_matrix, round(config.cut_off_size / config.min_nucleus_fraction)
-            )
-
-            number_of_nuclei = get_number_of_nuclei(eroded_matrix, config.connectivity)
-            clusters = gaussian_mixture_predict(
-                cell_matrix, number_of_nuclei, config.gmm_n_init
-            )
-
-            for cluster in clusters:
-                cluster_filtered = remove_small_objects(cluster, config.noise)
-                labeled_cluster = LabeledCells(
-                    cluster_filtered, SkimageImgLabeling(config.connectivity)
-                )
-
-                for j in range(1, labeled_cluster.len() + 1):
-                    cells_array.append(labeled_cluster.get_cell(j))
+            segmentation_results = segment_single_cell(cells.get_cell(i), footprint, config)
+            cells_array.append(*segmentation_results)
         else:
             cells_array.append(cells.get_cell(i))
+
+    return cells_array
+
+
+def segment_single_cell(
+    cell_matrix: NDArray, footprint: FootprintShape, config: SegmentationConfig
+) -> List[NDArray]:
+    """Segments a single cell mask using erosion, clustering, and noise removal.
+
+    If the cell size is above the cut_off_size, applies binary erosion, removes small objects,
+    estimates the number of nuclei, and applies Gaussian Mixture Model clustering.
+    Each resulting cluster is filtered for noise and relabeled. Small cells are returned as is.
+
+    Args:
+        cell_matrix (NDArray): 3D binary mask of a single cell.
+        footprint (FootprintShape): Structuring element for erosion.
+        config (SegmentationConfig): Configuration parameters for segmentation.
+
+    Returns:
+        List[NDArray]: List of segmented cell masks as 3D arrays.
+    """
+    cells_array = []
+
+    eroded_matrix = apply_binary_erosion(cell_matrix, footprint)
+    eroded_matrix = remove_small_objects(
+        eroded_matrix, round(config.cut_off_size / config.min_nucleus_fraction)
+    )
+
+    number_of_nuclei = get_number_of_nuclei(eroded_matrix, config.connectivity)
+    clusters = gaussian_mixture_predict(
+        cell_matrix, number_of_nuclei, config.gmm_n_init
+    )
+
+    for cluster in clusters:
+        cluster_filtered = remove_small_objects(cluster, config.noise)
+        labeled_cluster = LabeledCells(
+            cluster_filtered, SkimageImgLabeling(config.connectivity)
+        )
+        for j in range(1, labeled_cluster.len() + 1):
+            cells_array.append(labeled_cluster.get_cell(j))
 
     return cells_array
