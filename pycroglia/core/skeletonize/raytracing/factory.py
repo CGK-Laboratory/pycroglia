@@ -1,11 +1,14 @@
 from . import rk4, euler, simple, stepper
 from enum import Enum
+from itertools import product
 import numpy as np
+
 
 class StepperType(Enum):
     RK4 = (0,)
     Euler = 1
     Simple = 2
+
 
 def _point_min(
     image: np.ndarray,
@@ -59,8 +62,8 @@ def _point_min(
                 fz[mask] = dz / norm
 
     return (fy, fx, fz) if image.ndim == 3 and fz else (fy, fx)
-    
-    
+
+
 def make_stepper(
     distance_map: np.ndarray,
     type: StepperType = StepperType.RK4,

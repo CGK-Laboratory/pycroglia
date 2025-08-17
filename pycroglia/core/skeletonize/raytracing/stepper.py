@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from itertools import product
 import numpy as np
 
 
-class Stepper(ABC): 
+class Stepper(ABC):
     """Abstract base class for stepper strategies.
 
     A stepper defines how to move from a given starting point
@@ -12,7 +11,8 @@ class Stepper(ABC):
     Euler, Runge-Kutta).
 
     Subclasses must implement the :meth:`step` method.
-    """   
+    """
+
     @abstractmethod
     def step(self, start_point: np.ndarray) -> np.ndarray:
         """Compute the next point from a given starting location.
@@ -25,5 +25,3 @@ class Stepper(ABC):
             np.ndarray: The next location as a coordinate array.
         """
         pass
-
-

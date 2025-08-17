@@ -15,6 +15,7 @@ class Simple(Stepper):
         distance_map (np.ndarray): The 2D or 3D distance map used
             to guide stepping.
     """
+
     def __init__(self, distance_map: np.ndarray) -> None:
         """Initializes the Simple stepper.
 
@@ -22,7 +23,7 @@ class Simple(Stepper):
             distance_map (np.ndarray): A 2D or 3D array representing the
                 distance map. Each value corresponds to the cost or
                 distance at that location.
-        """       
+        """
         self.distance_map = distance_map
 
     def step(self, start_point: np.ndarray) -> np.ndarray:
@@ -53,14 +54,23 @@ class Simple(Stepper):
 
         for step_size in range(1, 4):
             lower_bounds = np.maximum(start_point_rounded - step_size, 0).astype(int)
-            upper_bounds = np.minimum(start_point_rounded + step_size + 1, dims).astype(int)  
-            grids = np.ogrid[tuple(slice(lb, ub) for lb, ub in zip(lower_bounds, upper_bounds))]
-            coordinates = np.stack(np.meshgrid(*grids, indexing='ij'), -1).reshape(-1, ndims)
+            upper_bounds = np.minimum(start_point_rounded + step_size + 1, dims).astype(
+                int
+            )
+            grids = np.ogrid[
+                tuple(slice(lb, ub) for lb, ub in zip(lower_bounds, upper_bounds))
+            ]
+            coordinates = np.stack(np.meshgrid(*grids, indexing="ij"), -1).reshape(
+                -1, ndims
+            )
             sub_volume = self.distance_map[tuple(coordinates.T)]
             min_idx = np.argmin(sub_volume)
             candidate = coordinates[min_idx]
-            
-            if self.distance_map[tuple(candidate)] < self.distance_map[tuple(start_point_rounded)]:
+
+            if (
+                self.distance_map[tuple(candidate)]
+                < self.distance_map[tuple(start_point_rounded)]
+            ):
                 return candidate.astype(int)
 
         return start_point_rounded

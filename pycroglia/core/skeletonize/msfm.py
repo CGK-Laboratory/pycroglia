@@ -50,7 +50,7 @@ def roots(coeffs: np.ndarray) -> np.ndarray:
 
         a * x^2 + b * x + c = 0
 
-    If `a == 0`, falls back to a linearized solution.  
+    If `a == 0`, falls back to a linearized solution.
     The discriminant is clamped to non-negative values to avoid NaN results.
     Matches custom matlab implementation.
     Args:
@@ -86,6 +86,7 @@ def roots(coeffs: np.ndarray) -> np.ndarray:
 @dataclass
 class DerivativeResult:
     """Container for derivative results in MSFM2D."""
+
     tm: np.ndarray = np.zeros(4)
     order: BoolArray = np.zeros(4, dtype=np.uint8)
 
@@ -101,7 +102,7 @@ def _tpatch(t: np.ndarray, i: int, j: int, frozen: BoolArray) -> F64:
 
     Returns:
         np.float64: Value of `t[i, j]` if frozen and in bounds, else `np.inf`.
-    """    
+    """
     tpatch = np.float64(np.inf)
     if bounds_check(frozen.shape, i, j) and is_frozen2d(i, j, frozen):
         tpatch = t[i, j]
@@ -118,8 +119,8 @@ def _compute_second_order(
         second (Tuple[np.float64, np.float64]): Second neighbor values `(t0, t1)`.
 
     Returns:
-        Tuple[np.float64, Optional[np.uint8]]:  
-        - The computed second-order value (or 0.0 if not computable).  
+        Tuple[np.float64, Optional[np.uint8]]:
+        - The computed second-order value (or 0.0 if not computable).
         - The derivative order used (`2` if valid, else `None`).
     """
     value = F64(0.0)
@@ -145,7 +146,8 @@ def _compute_second_order(
 
 
 class FirstOrderStencil:
-    """First-order stencil for computing derivatives in the MSFM2D algorithm."""    
+    """First-order stencil for computing derivatives in the MSFM2D algorithm."""
+
     def __init__(self, t: np.ndarray, i: int, j: int, frozen: BoolArray) -> None:
         """Initialize first-order neighborhood values.
 
@@ -195,6 +197,7 @@ class FirstOrderStencil:
 
 class SecondOrderStencil:
     """Second-order stencil for refining derivatives in the MSFM2D algorithm."""
+
     def __init__(
         self,
         first_order: FirstOrderStencil,

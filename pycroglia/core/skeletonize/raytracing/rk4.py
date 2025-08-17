@@ -66,6 +66,7 @@ class RK4(Stepper):
         gradient_volume (np.ndarray): Vector field with shape (..., dim),
         where dim is 2 or 3.
     """
+
     def __init__(self, step_size: float, gradient_volume: np.ndarray) -> None:
         """Initialize the RK4 stepper.
 
