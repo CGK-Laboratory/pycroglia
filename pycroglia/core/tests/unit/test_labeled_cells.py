@@ -13,6 +13,15 @@ from pycroglia.core.errors.errors import PycrogliaException
 DEFAULT_TEST_CONNECTIVITY = SkimageCellConnectivity.FACES
 
 
+def empty_img() -> NDArray:
+    """Returns an empty 3D image (all zeros).
+
+    Returns:
+        NDArray: 3D binary image.
+    """
+    return np.zeros((3, 3, 3), dtype=np.uint8)
+
+
 def simple_3d_img() -> NDArray:
     """Returns a simple 3D binary image with two separate voxels.
 
@@ -75,6 +84,54 @@ def separate_voxels_image() -> NDArray:
     return img
 
 
+def single_large_cell_img() -> NDArray:
+    """Returns a 3D image with a single large cell.
+
+    Returns:
+        NDArray: 3D binary image.
+    """
+    return np.ones((2, 2, 2), dtype=np.uint8)
+
+
+def overlapping_masks() -> list:
+    """Returns two overlapping masks for MaskListLabeling tests.
+
+    Returns:
+        list: List of two overlapping masks.
+    """
+    mask1 = np.zeros((2, 2, 2), dtype=np.uint8)
+    mask2 = np.zeros((2, 2, 2), dtype=np.uint8)
+    mask1[0, 0, 0] = 1
+    mask2[0, 0, 0] = 1  # overlap
+    mask2[1, 1, 1] = 1
+    return [mask1, mask2]
+
+
+def bool_dtype_img() -> NDArray:
+    """Returns a 3D boolean image with two separate voxels.
+
+    Returns:
+        NDArray: 3D boolean image.
+    """
+    img = np.zeros((3, 3, 3), dtype=bool)
+    img[0, 0, 0] = True
+    img[2, 2, 2] = True
+    return img
+
+
+def multi_cell_img() -> NDArray:
+    """Returns a 3D image with three separate cells.
+
+    Returns:
+        NDArray: 3D binary image.
+    """
+    img = np.zeros((3, 3, 3), dtype=np.uint8)
+    img[0, 0, 0] = 1
+    img[1, 1, 1] = 1
+    img[2, 2, 2] = 1
+    return img
+
+
 def test_skimage_img_labeling_label():
     """Test SkimageImgLabeling labels connected components as expected.
 
@@ -84,6 +141,7 @@ def test_skimage_img_labeling_label():
     img = simple_3d_img()
     strategy = SkimageImgLabeling(SkimageCellConnectivity.FACES)
     labels = strategy.label(img)
+
     # Should be 2 components plus background
     assert labels.shape == img.shape
     assert labels.max() == 2
@@ -101,17 +159,90 @@ def test_mask_list_labeling_label():
     mask1[0, 0, 0] = 1
     mask2[2, 2, 2] = 1
     masks = [mask1, mask2]
-    shape = (3, 3, 3)
-    strategy = MaskListLabeling(masks, shape)
-    # Pass any array (e.g., zeros) as img, since it's not used
-    dummy_img = np.zeros(shape, dtype=np.uint8)
+    dummy_img = np.zeros((3, 3, 3), dtype=np.uint8)
+
+    strategy = MaskListLabeling(masks)
     labels = strategy.label(dummy_img)
-    assert labels.shape == shape
+
+    assert labels.shape == dummy_img.shape
     assert labels[0, 0, 0] == 1
     assert labels[2, 2, 2] == 2
     assert np.sum(labels == 1) == 1
     assert np.sum(labels == 2) == 1
     assert np.sum(labels == 0) == (3 * 3 * 3 - 2)
+
+
+def test_labeled_cells_empty_image():
+    """Test LabeledCells with an empty image (all zeros).
+
+    Asserts:
+        No cells are detected.
+    """
+    img = empty_img()
+    lc = LabeledCells(img, SkimageImgLabeling(DEFAULT_TEST_CONNECTIVITY))
+    assert lc.len() == 0
+
+
+def test_labeled_cells_single_large_cell():
+    """Test LabeledCells with a single large cell.
+
+    Asserts:
+        The cell size and mask are correct.
+    """
+    img = single_large_cell_img()
+    lc = LabeledCells(img, SkimageImgLabeling(DEFAULT_TEST_CONNECTIVITY))
+
+    assert lc.len() == 1
+    assert lc.get_cell_size(1) == 8
+
+    mask = lc.get_cell(1)
+    assert np.all(mask == 1)
+
+
+def test_mask_list_labeling_overlapping_masks():
+    """Test MaskListLabeling with overlapping masks.
+
+    Asserts:
+        Overlapping region is assigned the last mask's label.
+    """
+    masks = overlapping_masks()
+    dummy_img = np.zeros((2, 2, 2), dtype=np.uint8)
+
+    strategy = MaskListLabeling(masks)
+    labels = strategy.label(dummy_img)
+
+    assert labels[0, 0, 0] == 2  # last mask wins
+    assert labels[1, 1, 1] == 2
+    assert np.sum(labels == 1) == 0
+    assert np.sum(labels == 2) == 2
+
+
+def test_labeled_cells_different_dtype():
+    """Test LabeledCells with a boolean image.
+
+    Asserts:
+        The number of cells is correct.
+    """
+    img = bool_dtype_img()
+    lc = LabeledCells(img, SkimageImgLabeling(DEFAULT_TEST_CONNECTIVITY))
+
+    assert lc.len() == 2
+
+
+def test_labeled_cells_multi_cell_indices_and_masks():
+    """Test LabeledCells with multiple cells and check indices and masks.
+
+    Asserts:
+        Each cell index produces a mask with a single voxel at the correct location.
+    """
+    img = multi_cell_img()
+    lc = LabeledCells(img, SkimageImgLabeling(DEFAULT_TEST_CONNECTIVITY))
+
+    assert lc.len() == 3
+    for idx, pos in enumerate([(0, 0, 0), (1, 1, 1), (2, 2, 2)], start=1):
+        mask = lc.get_cell(idx)
+        assert np.sum(mask) == 1
+        assert mask[pos] == 1
 
 
 @pytest.mark.parametrize(
@@ -129,6 +260,7 @@ def test_labeled_cells_is_valid_index(index, expected):
     """
     img = simple_3d_img()
     lc = LabeledCells(img, SkimageImgLabeling(DEFAULT_TEST_CONNECTIVITY))
+
     assert lc._is_valid_index(index) == expected
 
 
@@ -152,6 +284,7 @@ def test_labeled_cells_len(connectivity, expected):
     """
     img = simple_3d_img()
     lc = LabeledCells(img, SkimageImgLabeling(connectivity))
+
     assert lc.len() == expected
 
 
@@ -199,6 +332,7 @@ def test_labeled_cells_get_cell_size():
     img = stacked_voxels_image()
     lc = LabeledCells(img, SkimageImgLabeling(DEFAULT_TEST_CONNECTIVITY))
     size = lc.get_cell_size(1)
+
     assert size == 3
 
 
@@ -214,6 +348,7 @@ def test_labeled_cells_get_cell_size_invalid_index(index):
     """
     img = stacked_voxels_image()
     lc = LabeledCells(img, SkimageImgLabeling(DEFAULT_TEST_CONNECTIVITY))
+
     with pytest.raises(PycrogliaException) as err:
         lc.get_cell_size(index)
     assert err.value.error_code == 2000

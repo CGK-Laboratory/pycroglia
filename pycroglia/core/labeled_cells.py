@@ -62,34 +62,27 @@ class SkimageImgLabeling(LabelingStrategy):
 class MaskListLabeling(LabelingStrategy):
     """Labeling strategy using a list of binary masks.
 
-    Attributes:
-        masks (list[NDArray]): List of binary masks.
-        shape (tuple[int, int, int]): Shape of the output labeled array.
+    Each mask should have the same shape as the target image.
     """
 
-    def __init__(self, masks: list[NDArray], shape: tuple[int, int, int]):
-        """Initializes MaskListLabeling with masks and output shape.
-
+    def __init__(self, masks: list[NDArray]):
+        """
         Args:
-            masks (list[NDArray]): List of binary masks.
-            shape (tuple[int, int, int]): Shape of the output labeled array.
+            masks (list[NDArray]): List of binary masks (same shape as the target image).
         """
         self.masks = masks
-        self.shape = shape
 
     def label(self, img: NDArray) -> NDArray:
-        """Labels the input image using the provided masks.
-
+        """
         Args:
-            img (NDArray): Input image to label (not used).
+            img (NDArray): Reference image to determine output shape.
 
         Returns:
             NDArray: Labeled array.
         """
-        labels = np.zeros(shape=self.shape, dtype=self.ARRAY_ELEMENTS_TYPE)
+        labels = np.zeros_like(img, dtype=self.ARRAY_ELEMENTS_TYPE)
         for idx, mask in enumerate(self.masks, start=1):
             labels[mask > 0] = idx
-
         return labels
 
 
