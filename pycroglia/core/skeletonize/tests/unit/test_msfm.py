@@ -4,9 +4,8 @@ from numpy import linalg as LA
 from pycroglia.core.skeletonize.msfm import msfm2d
 
 
-# TODO(jab227): change to pytest parametrize
 def test_msfm2d():
-    eps = 1e-2  # TODO(jab227): increment precision
+    eps = 1e-2  
     source_points = np.array([[51, 51]])
     speed_image = np.ones((101, 101))
     ys, xs = np.meshgrid(np.arange(0, 101), np.arange(0, 101))  # shape = (101, 101)

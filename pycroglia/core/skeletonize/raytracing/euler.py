@@ -20,7 +20,7 @@ class Euler(Stepper):
         self.step_size = step_size
         self.gradient_volume = gradient_volume
 
-    def step(self, start_point: np.ndarray) -> np.ndarray:
+    def step(self, start_point: np.ndarray) -> np.ndarray | None:
         """
         Performs one Euler ray tracing step in a 2D or 3D gradient field.
 
@@ -32,7 +32,6 @@ class Euler(Stepper):
 
         """
         dim = start_point.size
-        assert start_point.ndim == 1, "Start point must be 1D."
         assert dim in (2, 3), "Start point must be 2D or 3D."
         assert dim == self.gradient_volume.shape[-1], "Coordinate dimension mismatch."
 
@@ -40,7 +39,7 @@ class Euler(Stepper):
 
         # Out of bounds check
         if np.any(start_point < 0) or np.any(start_point >= np.array(shape)):
-            return np.zeros(dim)
+            return None
 
         # Prepare coordinates for map_coordinates: shape (ndim, n_points)
         coords = np.array(start_point, dtype=np.float64).reshape(dim, 1)
@@ -60,6 +59,6 @@ class Euler(Stepper):
 
         # Check bounds
         if np.any(new_point < 0) or np.any(new_point >= np.array(shape)):
-            return np.zeros(dim)
+            return None
 
         return new_point

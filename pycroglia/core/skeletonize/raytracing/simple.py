@@ -26,7 +26,7 @@ class Simple(Stepper):
         """
         self.distance_map = distance_map
 
-    def step(self, start_point: np.ndarray) -> np.ndarray:
+    def step(self, start_point: np.ndarray) -> np.ndarray | None:
         """
         Finds a lower pixel location in a local neighborhood.
 
@@ -42,35 +42,59 @@ class Simple(Stepper):
                         otherwise, returns the original start point.
 
         """
-        assert start_point.ndim == 1, "Start point must be a 1D coordinate array."
         assert start_point.size in (2, 3), "Start point must be 2D or 3D."
         assert start_point.size == len(self.distance_map.shape), (
             "The coordinates should be for the same dimension as the volume"
         )
 
-        start_point_rounded = np.round(start_point).astype(int)
-        dims = self.distance_map.shape
-        ndims = len(dims)
 
-        for step_size in range(1, 4):
-            lower_bounds = np.maximum(start_point_rounded - step_size, 0).astype(int)
-            upper_bounds = np.minimum(start_point_rounded + step_size + 1, dims).astype(
-                int
-            )
-            grids = np.ogrid[
-                tuple(slice(lb, ub) for lb, ub in zip(lower_bounds, upper_bounds))
-            ]
-            coordinates = np.stack(np.meshgrid(*grids, indexing="ij"), -1).reshape(
-                -1, ndims
-            )
-            sub_volume = self.distance_map[tuple(coordinates.T)]
-            min_idx = np.argmin(sub_volume)
-            candidate = coordinates[min_idx]
+        s = np.round(start_point).astype(int)
+        end_point = s.copy()
+        dims = s.size
+        check = False
 
-            if (
-                self.distance_map[tuple(candidate)]
-                < self.distance_map[tuple(start_point_rounded)]
-            ):
-                return candidate.astype(int)
+        if dims == 2:
+            for step_size in range(1, 4):
+                sxm = max(s[0] - step_size, 0)
+                sym = max(s[1] - step_size, 0)
+                sxp = min(s[0] + step_size, self.distance_map.shape[0] - 1)
+                syp = min(s[1] + step_size, self.distance_map.shape[1] - 1)
 
-        return start_point_rounded
+                x = np.arange(sxm, sxp + 1)
+                y = np.arange(sym, syp + 1)
+
+                sub_volume = self.distance_map[sxm:sxp+1, sym:syp+1]
+                c_volume = sub_volume < self.distance_map[s[0], s[1]]
+                check = np.any(c_volume)
+                if check:
+                    ind = np.argmin(sub_volume)
+                    i, j = np.unravel_index(ind, sub_volume.shape)
+                    end_point = np.array([x[i], y[j]])
+                    
+                elif dims == 3:
+                    for step_size in range(1, 4):
+                        sxm = max(s[0] - step_size, 0)
+                        sym = max(s[1] - step_size, 0)
+                        szm = max(s[2] - step_size, 0)
+
+                        sxp = min(s[0] + step_size, self.distance_map.shape[0] - 1)
+                        syp = min(s[1] + step_size, self.distance_map.shape[1] - 1)
+                        szp = min(s[2] + step_size, self.distance_map.shape[2] - 1)
+
+                        x = np.arange(sxm, sxp + 1)
+                        y = np.arange(sym, syp + 1)
+                        z = np.arange(szm, szp + 1)
+
+                        sub_volume = self.distance_map[sxm:sxp+1, sym:syp+1, szm:szp+1]
+                        c_volume = sub_volume < self.distance_map[s[0], s[1], s[2]]
+                        check = np.any(c_volume)
+                        if check:
+                            break
+
+                        if check:
+                            ind = np.argmin(sub_volume)
+                            i, j, k = np.unravel_index(ind, sub_volume.shape)
+                            end_point = np.array([x[i], y[j], z[k]])
+                            
+            return end_point
+    

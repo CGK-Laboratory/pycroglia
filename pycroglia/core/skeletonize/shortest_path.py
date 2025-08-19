@@ -1,4 +1,4 @@
-from .raytracing import stepper
+from .raytracing import factory
 import numpy as np
 
 
@@ -21,7 +21,7 @@ class ShortestPath:
 
     def __init__(
         self,
-        stepper_type: stepper.StepperType = stepper.StepperType.RK4,
+        stepper_type: factory.StepperType = factory.StepperType.RK4,
         step_size: float = 0.5,
     ):
         """
@@ -65,7 +65,7 @@ class ShortestPath:
 
         """
         assert distance_map.ndim in (2, 3), "Distance map should be 2D or 3D"
-        s = stepper.make_stepper(distance_map, self.type, self.step_size)
+        s = factory.make_stepper(distance_map, self.type, self.step_size)
         max_length = 10000
 
         ndim = distance_map.ndim
@@ -78,14 +78,15 @@ class ShortestPath:
             # Step forward using the given integration method
             current_point = s.step(current_point)
             # Distance to nearest source point
-            if source_point:
+            distance_to_source = np.inf
+            nearest_source = None            
+            if current_point is None:
+                break
+            if source_point is not None:
                 deltas = source_point - current_point  # shape (N, D)
-                distances = np.linalg.norm(deltas, axis=1)
+                distances = np.linalg.norm(deltas, axis=0)
                 distance_to_source = np.min(distances)
                 nearest_source = source_point[np.argmin(distances)]
-            else:
-                distance_to_source = np.inf
-                nearest_source = None
 
             # Movement compared to 10 steps ago
             if i >= 10:
@@ -110,14 +111,13 @@ class ShortestPath:
             i += 1
 
             # Stop if we're close enough to a source point
-            if nearest_source and distance_to_source < self.step_size:
+            if nearest_source is not None and distance_to_source < self.step_size:
                 if i >= max_length:
                     max_length += 10000
                     path = np.vstack([path, np.zeros((10000, ndim), dtype=np.float64)])
                 path[i] = nearest_source
-                i += 1
                 break
 
-        path_reached_source_point = not (distance_to_source > 1 and source_point)
+        path_reached_source_point = not (distance_to_source > 1 and source_point is not None)
 
         return (path[:i], not path_reached_source_point)

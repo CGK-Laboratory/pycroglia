@@ -77,7 +77,7 @@ class RK4(Stepper):
         self.step_size = step_size
         self.gradient_volume = gradient_volume
 
-    def step(self, start_point: np.ndarray) -> np.ndarray:
+    def step(self, start_point: np.ndarray) -> np.ndarray | None:
         """
         Efficient single RK4 step in a 2D or 3D vector field.
 
@@ -97,19 +97,19 @@ class RK4(Stepper):
         k1 = _interpolate(self.gradient_volume, start_point)
         mid1 = start_point + 0.5 * self.step_size * k1
         if not inside(mid1):
-            return np.zeros_like(start_point)
+            return None
 
         k2 = _interpolate(self.gradient_volume, mid1)
         mid2 = start_point + 0.5 * self.step_size * k2
         if not inside(mid2):
-            return np.zeros_like(start_point)
+            return None
 
         k3 = _interpolate(self.gradient_volume, mid2)
         end = start_point + self.step_size * k3
         if not inside(end):
-            return np.zeros_like(start_point)
+            return None
 
         k4 = _interpolate(self.gradient_volume, end)
 
         result = start_point + (self.step_size / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
-        return result if inside(result) else np.zeros_like(result)
+        return result if inside(result) else None

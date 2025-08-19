@@ -11,6 +11,7 @@ def test_euler():
     step_size = 0.1
     stepper = euler.Euler(step_size, gradient_volume)
     result = stepper.step(start_point)
+    assert result is not None    
     expected = np.array([50.9293, 50.9293])  # small step toward center
     assert np.allclose(expected, result, atol=1e-2)
 
@@ -21,6 +22,7 @@ def test_simple():
     stepper = simple.Simple(distance_map)
     start_point = np.array([51.0, 51.0])
     result = stepper.step(start_point)
+    assert result is not None        
     expected = np.array([50, 50])  # simple step goes to lowest neighbor
     assert np.allclose(expected, result, atol=1)
 
@@ -34,5 +36,6 @@ def test_rk4():
     step_size = 0.1
     stepper = rk4.RK4(step_size, gradient_volume)
     result = stepper.step(start_point)
+    assert result is not None
     expected = np.array([50.9293, 50.9293])  # small step toward center
     assert np.allclose(expected, result, atol=1e-2)

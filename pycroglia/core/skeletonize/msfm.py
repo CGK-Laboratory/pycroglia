@@ -404,7 +404,7 @@ def msfm2d(
         if 0 <= x < dims[0] and 0 <= y < dims[1]:
             frozen[x, y] = 1
             output_distance_image[x, y] = 0.0
-            if euclidean_distance_image:
+            if euclidean_distance_image is not None:
                 euclidean_distance_image[x, y] = 0.0
 
     # Neighbors: 4-connected
@@ -422,7 +422,7 @@ def msfm2d(
                 ):
                     output_distance_image[i, j] = t_val
                     heapq.heappush(heap, (t_val, i, j))
-                    if euclidean_distance_image:
+                    if euclidean_distance_image is not None:
                         euclidean_distance_image[i, j] = 1.0
 
     # Fast marching loop
@@ -433,7 +433,7 @@ def msfm2d(
         frozen[x, y] = 1
         output_distance_image[x, y] = t_val
 
-        if euclidean_distance_image:
+        if euclidean_distance_image is not None:
             # Assume distance 1 for uniform skeleton metric
             euclidean_distance_image[x, y] = euclidean_distance_image[x, y]
 
@@ -455,7 +455,7 @@ def msfm2d(
                 ):
                     output_distance_image[i, j] = t_new
                     heapq.heappush(heap, (t_new, i, j))
-                    if euclidean_distance_image:
+                    if euclidean_distance_image is not None:
                         y_new = _calculate_distance(
                             euclidean_distance_image,
                             F64(1.0),
