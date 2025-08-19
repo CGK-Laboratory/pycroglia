@@ -18,6 +18,7 @@ core = [
     "numpy>=2.2.6",
     "opencv-python>=4.11.0.86",
     "tifffile>=2025.5.10",
+    "scipy>=1.15.3",    
 ]
 core-test = [
     "h5py>=3.14.0",
