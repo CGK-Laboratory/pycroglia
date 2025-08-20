@@ -47,7 +47,6 @@ class Simple(Stepper):
             "The coordinates should be for the same dimension as the volume"
         )
 
-
         s = np.round(start_point).astype(int)
         end_point = s.copy()
         dims = s.size
@@ -63,14 +62,14 @@ class Simple(Stepper):
                 x = np.arange(sxm, sxp + 1)
                 y = np.arange(sym, syp + 1)
 
-                sub_volume = self.distance_map[sxm:sxp+1, sym:syp+1]
+                sub_volume = self.distance_map[sxm : sxp + 1, sym : syp + 1]
                 c_volume = sub_volume < self.distance_map[s[0], s[1]]
                 check = np.any(c_volume)
                 if check:
                     ind = np.argmin(sub_volume)
                     i, j = np.unravel_index(ind, sub_volume.shape)
                     end_point = np.array([x[i], y[j]])
-                    
+
                 elif dims == 3:
                     for step_size in range(1, 4):
                         sxm = max(s[0] - step_size, 0)
@@ -85,7 +84,9 @@ class Simple(Stepper):
                         y = np.arange(sym, syp + 1)
                         z = np.arange(szm, szp + 1)
 
-                        sub_volume = self.distance_map[sxm:sxp+1, sym:syp+1, szm:szp+1]
+                        sub_volume = self.distance_map[
+                            sxm : sxp + 1, sym : syp + 1, szm : szp + 1
+                        ]
                         c_volume = sub_volume < self.distance_map[s[0], s[1], s[2]]
                         check = np.any(c_volume)
                         if check:
@@ -95,6 +96,5 @@ class Simple(Stepper):
                             ind = np.argmin(sub_volume)
                             i, j, k = np.unravel_index(ind, sub_volume.shape)
                             end_point = np.array([x[i], y[j], z[k]])
-                            
+
             return end_point
-    

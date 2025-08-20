@@ -21,7 +21,7 @@ def _get_boundary_distance(image: np.ndarray, is3d: bool) -> np.ndarray:
     B = np.logical_xor(image, binary_dilation(image, structure=structure))
 
     source_indices = np.argwhere(B).astype(np.int64)  # shape: (2, N) or (3, N)
-    
+
     speed_image = np.ones_like(image, dtype=np.float64)
     boundary_distance = msfm2d(
         speed_image, source_indices, use_second=False, use_cross=True
@@ -34,26 +34,31 @@ def _get_boundary_distance(image: np.ndarray, is3d: bool) -> np.ndarray:
 
 
 def _max_distance_point(
-        boundary_distance: np.ndarray, image: np.ndarray, is_3d: bool
+    boundary_distance: np.ndarray, image: np.ndarray, is_3d: bool
 ) -> tuple[np.ndarray, float]:
     """
     Finds the coordinates of the maximum distance value in the masked volume.
 
     Args:
         boundary_distance (np.ndarray): Distance map.
+        image (np.ndarray): Binary image mask.
+        is_3d (bool): Whether the image is 3D.
+
     Returns:
         tuple[np.ndarray, float]: Coordinates of the maximum distance point and its value.
     """
-    boundary_distance[np.logical_not(image)] = 0
-    max_d = np.max(boundary_distance)
+    # Create a copy to avoid modifying the original
+    masked_distance = boundary_distance.copy()
+    masked_distance[np.logical_not(image)] = 0
+
+    max_d = np.max(masked_distance)
     if not np.isfinite(max_d):
         raise ValueError("Maximum from MSFM is infinite!")
 
-    ind = np.argmax(boundary_distance)
-    if is_3d:
-        pos_d = np.array(np.unravel_index(ind, image.shape))
-    else:
-        pos_d = np.array(np.unravel_index(ind, image.shape))
+    ind = np.argmax(masked_distance)
+    pos_d = np.array(np.unravel_index(ind, image.shape))
+
+    # Return coordinates as row vector for consistency with msfm2d expectations
     return pos_d.reshape(1, -1), max_d
 
 
@@ -82,6 +87,8 @@ def _organize_skeleton(
     """
     Breaks skeleton segments into subsegments based on proximity of endpoints.
 
+    This matches the MATLAB OrganizeSkeleton function behavior.
+
     Args:
         skeleton_segments (List[np.ndarray]): List of skeleton segments (each (N, 2) or (N, 3)).
         is_3d (bool): Whether the segments are in 3D (True) or 2D (False).
@@ -89,18 +96,22 @@ def _organize_skeleton(
     Returns:
         List[np.ndarray]: List of broken segments.
     """
-    length = len(skeleton_segments)
-    dims = 3 if is_3d else 2
-    endpoints = np.zeros((length * 2, dims))
-    max_len = 10000
+    n = len(skeleton_segments)
+    if n == 0:
+        return []
 
+    dims = 3 if is_3d else 2
+    endpoints = np.zeros((n * 2, dims))
+    max_len = 1
+
+    # Build endpoints array - using MATLAB indexing convention
     for w, segment in enumerate(skeleton_segments):
         max_len = max(max_len, len(segment))
-        endpoints[2 * w] = segment[0, :]
-        endpoints[2 * w + 1] = segment[-1, :]
+        endpoints[w * 2, :] = segment[0, :]  # w*2-1 in MATLAB (0-indexed here)
+        endpoints[w * 2 + 1, :] = segment[-1, :]  # w*2 in MATLAB (1-indexed here)
 
-    cut_skel = lil_matrix((len(endpoints), max_len), dtype=bool)
-    connect_distance_sq = 4  # squared distance threshold
+    cut_skel = lil_matrix((n, max_len), dtype=bool)
+    connect_distance_sq = 4  # 2^2 to match MATLAB ConnectDistance
 
     for w, ss in enumerate(skeleton_segments):
         ex = np.tile(endpoints[:, 0][:, None], (1, ss.shape[0]))
@@ -114,7 +125,9 @@ def _organize_skeleton(
         else:
             D = (ex - sx) ** 2 + (ey - sy) ** 2
 
+        # Find endpoints that are close to this segment
         check = np.min(D, axis=1) < connect_distance_sq
+        # Exclude endpoints of current segment (MATLAB: check(w*2-1)=false; check(w*2)=false;)
         check[w * 2] = False
         check[w * 2 + 1] = False
 
@@ -123,21 +136,31 @@ def _organize_skeleton(
             for jj in j:
                 line = D[jj, :]
                 k = np.argmin(line)
-                if 2 < k < (len(line) - 2):
-                    cut_skel[w, k] = 1
+                # Only cut if not too close to endpoints (MATLAB: k>2 && k<length(line)-2)
+                if 1 < k < (len(line) - 1):  # Adjusted for 0-indexing
+                    cut_skel[w, k] = True
 
+    # Build final segments
     cell_array = []
     for w, ss in enumerate(skeleton_segments):
-        r = [0] + list(np.where(cut_skel[w, :].toarray()[0])[0]) + [len(ss) - 1]
+        # Get cut points (MATLAB: r=[1 find(CutSkel(w,:)) length(ss)])
+        cut_points = np.where(cut_skel[w, :].toarray()[0])[0]
+        r = [0] + list(cut_points) + [len(ss) - 1]
+
         for i in range(len(r) - 1):
-            cell_array.append(ss[r[i]:r[i + 1] + 1, :])
+            start_idx = r[i]
+            end_idx = r[i + 1]
+            if start_idx <= end_idx:  # Ensure valid range
+                cell_array.append(ss[start_idx : end_idx + 1, :])
 
     return cell_array
 
 
-def skeleton(image: np.ndarray, stepper_type: factory.StepperType = factory.StepperType.RK4 ) -> list[np.ndarray]:
+def skeleton(
+    image: np.ndarray, stepper_type: factory.StepperType = factory.StepperType.RK4
+) -> list[np.ndarray]:
     """
-     Computes the skeleton (centerlines) of a 2D or 3D binary object using
+    Computes the skeleton (centerlines) of a 2D or 3D binary object using
     the Multistencil Fast Marching (MSFM) distance transform.
 
     This function returns subvoxel-accurate centerlines of the object by
@@ -150,6 +173,7 @@ def skeleton(image: np.ndarray, stepper_type: factory.StepperType = factory.Step
         list[np.ndarray]: A list of (N x D) arrays, each representing one skeleton branch.
                           D is 2 for 2D input and 3 for 3D input.
     """
+    raise NotImplementedError
     assert image.ndim in (2, 3), "Image should be 2D or 3D"
     is_3d = image.ndim == 3
     boundary_distance = _get_boundary_distance(image, is_3d)
@@ -161,6 +185,8 @@ def skeleton(image: np.ndarray, stepper_type: factory.StepperType = factory.Step
     # Initialize list for skeleton segments (preallocated to 1000 entries)
     skeleton_segments = []
     shortest_path = ShortestPath(step_size=1.0, stepper_type=stepper_type)
+    iteration = 0
+
     while True:
         # Do fast marching using the maximum distance value in the image
         # and the points describing all found branches are sourcepoints.
@@ -171,21 +197,36 @@ def skeleton(image: np.ndarray, stepper_type: factory.StepperType = factory.Step
             use_cross=False,
             skeletonize=True,
         )
+
         # Trace a branch back to the used sourcepoints
         start_point, _ = _max_distance_point(euclidean_distance_image, image, is_3d)
+
+        # Calculate shortest path (match MATLAB: shortestpath(T,StartPoint,SourcePoint,1,'rk4'))
         shortest_line, _ = shortest_path.calculate(
-            output_distance_image, start_point[0], source_point
+            output_distance_image, start_point.flatten(), source_point
         )
+
         # Calculate the length of the new skeleton segment
         line_length = _get_line_length(shortest_line, is_3d)
-        # Stop finding branches, if the lenght of the new branch is smaller
-        # then the diameter of the largest vessel
+
+        # Stop finding branches, if the length of the new branch is smaller
+        # than the diameter of the largest vessel
         if line_length < max_distance * 2:
             break
-        
+
         # Store the found branch skeleton
         skeleton_segments.append(shortest_line)
-        # Add found branch to the list of fast marching source points
-        source_point = np.vstack([source_point, shortest_line.astype(int)])        
-    return _organize_skeleton(skeleton_segments, is_3d)
+        iteration += 1
 
+        # Add found branch to the list of fast marching source points
+        # Match MATLAB: SourcePoint=[SourcePoint ShortestLine'];
+        # Convert shortest_line to source points format (N, 2)
+        if source_point.size == 0:
+            source_point = shortest_line.astype(int)
+        else:
+            source_point = np.vstack([source_point, shortest_line.astype(int)])
+
+    # Organize skeleton segments (matches MATLAB OrganizeSkeleton)
+    result = _organize_skeleton(skeleton_segments, is_3d)
+
+    return result

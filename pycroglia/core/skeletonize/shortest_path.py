@@ -79,7 +79,7 @@ class ShortestPath:
             current_point = s.step(current_point)
             # Distance to nearest source point
             distance_to_source = np.inf
-            nearest_source = None            
+            nearest_source = None
             if current_point is None:
                 break
             if source_point is not None:
@@ -118,6 +118,8 @@ class ShortestPath:
                 path[i] = nearest_source
                 break
 
-        path_reached_source_point = not (distance_to_source > 1 and source_point is not None)
+        path_reached_source_point = not (
+            distance_to_source > 1 and source_point is not None
+        )
 
         return (path[:i], not path_reached_source_point)
