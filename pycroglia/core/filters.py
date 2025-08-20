@@ -31,7 +31,9 @@ def calculate_otsu_threshold(img: NDArray, adjust: float) -> NDArray:
     return binary_stack
 
 
-def remove_small_objects(img: NDArray, min_size: int, connectivity: int = 8) -> NDArray:
+def remove_small_objects(
+    img: NDArray, min_size: int, connectivity: int = 8
+) -> NDArray:
     """Removes connected components smaller than a given size from a 3D binary mask.
 
     Args:
