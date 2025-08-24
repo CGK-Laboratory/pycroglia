@@ -1,6 +1,8 @@
 import numpy as np
 
 from abc import ABC, abstractmethod
+
+import skimage.segmentation
 from numpy.typing import NDArray
 from skimage import measure
 
@@ -31,7 +33,8 @@ class LabelingStrategy(ABC):
         """
         pass
 
-
+# TODO - Add start_label value validation
+# TODO - Add specification of unique labels if used start_label
 class SkimageImgLabeling(LabelingStrategy):
     """Labeling strategy using skimage.measure.label.
 
@@ -39,13 +42,14 @@ class SkimageImgLabeling(LabelingStrategy):
         connectivity (pycroglia.core.enums.SkimageCellConnectivity): Connectivity rule for labeling.
     """
 
-    def __init__(self, connectivity: SkimageCellConnectivity):
+    def __init__(self, connectivity: SkimageCellConnectivity, start_label: int = 1):
         """Initializes SkimageImgLabeling with the given connectivity.
 
         Args:
             connectivity (SkimageCellConnectivity): Connectivity rule for labeling.
         """
         self.connectivity = connectivity
+        self.start_label = start_label
 
     def label(self, img: NDArray) -> NDArray:
         """Labels the input image using skimage.measure.label.
@@ -56,7 +60,14 @@ class SkimageImgLabeling(LabelingStrategy):
         Returns:
             NDArray: Labeled array.
         """
-        return measure.label(img, connectivity=self.connectivity.value)
+        labels = measure.label(img, connectivity=self.connectivity.value)
+
+        # Adjust labels to start from start_label
+        if self.start_label != 1:
+            mask = labels > 0
+            labels[mask] = labels[mask] + (self.start_label - 1)
+
+        return labels
 
 
 class MaskListLabeling(LabelingStrategy):
@@ -83,7 +94,9 @@ class MaskListLabeling(LabelingStrategy):
         labels = np.zeros_like(img, dtype=self.ARRAY_ELEMENTS_TYPE)
         for idx, mask in enumerate(self.masks, start=1):
             labels[mask > 0] = idx
-        return labels
+
+        relabeled, _, _ = skimage.segmentation.relabel_sequential(labels)
+        return relabeled
 
 
 class LabeledCells:
