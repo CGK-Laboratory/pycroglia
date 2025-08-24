@@ -20,7 +20,7 @@ class SegmentationConfig:
         DEFAULT_MIN_NUCLEUS_FRACTION (int): Default minimum nucleus fraction.
         DEFAULT_GMM_N_INIT (int): Default number of GMM initializations.
         cut_off_size (int): Minimum size for a cell to be segmented.
-        noise (int): Minimum size for objects to keep after noise removal.
+        min_size (int): Minimum size for objects to keep after noise removal.
         connectivity (SkimageCellConnectivity): Connectivity rule for labeling.
         min_nucleus_fraction (int): Minimum nucleus fraction for erosion.
         gmm_n_init (int): Number of initializations for Gaussian Mixture Model.
@@ -30,7 +30,7 @@ class SegmentationConfig:
     DEFAULT_GMM_N_INIT: ClassVar[int] = 3
 
     cut_off_size: int
-    noise: int
+    min_size: int
     connectivity: SkimageCellConnectivity
     min_nucleus_fraction: int = DEFAULT_MIN_NUCLEUS_FRACTION
     gmm_n_init: int = DEFAULT_GMM_N_INIT
@@ -100,7 +100,7 @@ def segment_single_cell(
     )
 
     for cluster in clusters:
-        cluster_filtered = remove_small_objects(cluster, config.noise)
+        cluster_filtered = remove_small_objects(cluster, config.min_size)
         labeled_cluster = LabeledCells(
             cluster_filtered, SkimageImgLabeling(config.connectivity, start_label)
         )

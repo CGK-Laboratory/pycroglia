@@ -5,7 +5,7 @@ from PyQt6 import QtWidgets
 from pyqtgraph import ImageView
 
 
-class ImageViewer(QtWidgets.QWidget):
+class CustomImageViewer(QtWidgets.QWidget):
     def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
         super().__init__(parent=parent)
 

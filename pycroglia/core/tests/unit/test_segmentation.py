@@ -33,10 +33,10 @@ def test_segmentation_config_defaults():
         The default values are set as expected.
     """
     config = SegmentationConfig(
-        cut_off_size=10, noise=2, connectivity=SkimageCellConnectivity.FACES
+        cut_off_size=10, min_size=2, connectivity=SkimageCellConnectivity.FACES
     )
     assert config.cut_off_size == 10
-    assert config.noise == 2
+    assert config.min_size == 2
     assert (
         config.min_nucleus_fraction == SegmentationConfig.DEFAULT_MIN_NUCLEUS_FRACTION
     )
@@ -53,7 +53,7 @@ def test_segment_cell_basic():
     img = simple_cells_img()
     cells = LabeledCells(img, SkimageImgLabeling(SkimageCellConnectivity.FACES))
     config = SegmentationConfig(
-        cut_off_size=1, noise=1, connectivity=SkimageCellConnectivity.FACES
+        cut_off_size=1, min_size=1, connectivity=SkimageCellConnectivity.FACES
     )
     footprint = Rectangle2DFootprint(x=1, y=1)
     segments = segment_cell(cells, footprint, config)
@@ -75,7 +75,7 @@ def test_segment_cell_small_cell_not_split():
     img[1, 1, 1] = 1
     cells = LabeledCells(img, SkimageImgLabeling(SkimageCellConnectivity.FACES))
     config = SegmentationConfig(
-        cut_off_size=2, noise=1, connectivity=SkimageCellConnectivity.FACES
+        cut_off_size=2, min_size=1, connectivity=SkimageCellConnectivity.FACES
     )
     footprint = Rectangle2DFootprint(x=1, y=1)
     segments = segment_cell(cells, footprint, config)
@@ -95,7 +95,7 @@ def test_segment_single_cell_split():
     img[2, 2, 2] = 1
     img[1, 1, 1] = 1
     config = SegmentationConfig(
-        cut_off_size=1, noise=1, connectivity=SkimageCellConnectivity.FACES
+        cut_off_size=1, min_size=1, connectivity=SkimageCellConnectivity.FACES
     )
     # Use a minimal footprint to avoid eroding away the nuclei
     footprint = Rectangle3DFootprint(x=0, y=0, z=0)
