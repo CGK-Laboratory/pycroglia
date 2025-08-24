@@ -83,6 +83,7 @@ def segment_single_cell(
         cell_matrix (NDArray): 3D binary mask of a single cell.
         footprint (FootprintShape): Structuring element for erosion.
         config (SegmentationConfig): Configuration parameters for segmentation.
+        start_label (int, optional): Starting label index for relabeling. Defaults to 1.
 
     Returns:
         List[NDArray]: List of segmented cell masks as 3D arrays.

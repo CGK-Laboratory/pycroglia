@@ -182,6 +182,11 @@ class LabeledCells:
         return int(self._cell_sizes[index])
 
     def labels_to_2d(self) -> NDArray:
+        """Projects the labeled 3D array to 2D by taking the maximum label along the z-axis.
+
+        Returns:
+            NDArray: 2D array with the maximum label for each (y, x) position.
+        """
         return self.labels.max(axis=0)
 
     def cell_to_2d(self, index: int) -> NDArray:

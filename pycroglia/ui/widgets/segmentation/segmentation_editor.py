@@ -11,6 +11,12 @@ from pycroglia.ui.controllers.segmentation_state import SegmentationEditorState
 
 
 class SegmentationEditor(QtWidgets.QWidget):
+    """Widget for interactive cell segmentation editing.
+
+    Provides a UI for visualizing, segmenting, and rolling back cell segmentations.
+    Displays a list of cells, a multi-cell viewer, and a single cell viewer.
+    """
+
     # UI Text Constants
     HEADERS_TEXT = ["Cell number", "Cell size"]
     ROLLBACK_BUTTON_TEXT = "Roll back segmentation"
@@ -40,6 +46,15 @@ class SegmentationEditor(QtWidgets.QWidget):
         with_progress_bar: bool = False,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
+        """Initializes the SegmentationEditor widget.
+
+        Args:
+            img (NDArray): 3D binary image to segment.
+            labeling_strategy (LabelingStrategy): Strategy for labeling connected components.
+            min_size (int): Minimum size for objects to keep after noise removal.
+            with_progress_bar (bool, optional): Whether to show a progress bar during segmentation. Defaults to False.
+            parent (Optional[QtWidgets.QWidget], optional): Parent widget. Defaults to None.
+        """
         super().__init__(parent=parent)
 
         self.state = SegmentationEditorState(img, labeling_strategy, min_size)
@@ -89,6 +104,7 @@ class SegmentationEditor(QtWidgets.QWidget):
         self._load_data()
 
     def _load_data(self):
+        """Loads and displays the current segmentation state in the UI."""
         actual_state = self.state.get_state()
 
         self.list.clear_cells()
@@ -98,6 +114,7 @@ class SegmentationEditor(QtWidgets.QWidget):
         self.rollback_button.setEnabled(self.state.has_prev_state())
 
     def _on_cell_selection_changed(self):
+        """Handles cell selection changes in the list and updates the cell viewer."""
         selected_cell = self.list.get_selected_cell_id()
         self.segment_button.setEnabled(selected_cell is not None)
         if selected_cell is None:
@@ -107,15 +124,18 @@ class SegmentationEditor(QtWidgets.QWidget):
         self.cell_viewer.set_image(cell_2d)
 
     def _on_cell_segmentation_request(self):
+        """Handles the segmentation request for the selected cell, showing a progress bar if enabled."""
         selected_cell_info = self.list.get_selected_cell_info()
         if selected_cell_info is None:
             return
 
         progress_bar = None
         if self.with_progress_bar:
-            # TODO - Hardcoded values
             progress_bar = QtWidgets.QProgressDialog(
-                "Segmenting cell...", "Cancel", 0, 100, self
+                self.DEFAULT_PROGRESS_TITLE,
+                self.DEFAULT_PROGRESS_CANCEL_TEXT,
+                self.DEFAULT_PROGRESS_MIN,
+                self.DEFAULT_PROGRESS_MAX,
             )
             progress_bar.setModal(True)
             progress_bar.show()
@@ -129,6 +149,7 @@ class SegmentationEditor(QtWidgets.QWidget):
                 progress_bar.close()
 
     def _on_rollback_request(self):
+        """Handles the rollback request to restore the previous segmentation state."""
         self.state.rollback()
 
 
@@ -146,6 +167,7 @@ CHANNEL_OF_INTEREST = 2  # 1-based index
 
 
 def main():
+    """Standalone test entry point for the SegmentationEditor widget."""
     # Read TIFF file
     reader = TiffReader(TIFF_PATH)
     img = reader.read(CHANNELS, CHANNEL_OF_INTEREST)
@@ -165,4 +187,4 @@ def main():
     sys.exit(app.exec())
 
 
-main()
+#main()

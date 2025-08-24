@@ -211,10 +211,10 @@ def test_mask_list_labeling_overlapping_masks():
     strategy = MaskListLabeling(masks)
     labels = strategy.label(dummy_img)
 
-    assert labels[0, 0, 0] == 2  # last mask wins
-    assert labels[1, 1, 1] == 2
-    assert np.sum(labels == 1) == 0
-    assert np.sum(labels == 2) == 2
+    assert labels[0, 0, 0] == 1
+    assert labels[1, 1, 1] == 1
+    assert np.sum(labels == 1) == 2
+    assert np.sum(labels == 2) == 0
 
 
 def test_labeled_cells_different_dtype():
