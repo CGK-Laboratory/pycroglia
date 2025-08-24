@@ -1,7 +1,11 @@
 import numpy as np
 
 from numpy.typing import NDArray
-from pycroglia.core.segmentation import segment_cell, segment_single_cell, SegmentationConfig
+from pycroglia.core.segmentation import (
+    segment_cell,
+    segment_single_cell,
+    SegmentationConfig,
+)
 from pycroglia.core.erosion import Rectangle2DFootprint, Rectangle3DFootprint
 from pycroglia.core.labeled_cells import (
     LabeledCells,

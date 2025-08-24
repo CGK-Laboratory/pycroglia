@@ -3,58 +3,161 @@ import numpy as np
 
 from typing import Optional, Tuple
 from numpy.typing import NDArray
-from PyQt6 import QtWidgets, QtCore
+from PyQt6 import QtCore, QtWidgets
 
-from pycroglia.ui.widgets.two_column_list import TwoColumnList
-from pycroglia.ui.widgets.img_viewer import ImageViewer
+from pycroglia.core.enums import SkimageCellConnectivity
+from pycroglia.core.erosion import Octahedron3DFootprint
+from pycroglia.core.segmentation import segment_single_cell, SegmentationConfig
 from pycroglia.core.labeled_cells import (
     LabeledCells,
     LabelingStrategy,
     SkimageImgLabeling,
-    MaskListLabeling
+    MaskListLabeling,
 )
-from pycroglia.core.enums import SkimageCellConnectivity
-from pycroglia.core.erosion import Octahedron3DFootprint
+
+from pycroglia.ui.widgets.two_column_list import TwoColumnList
+from pycroglia.ui.widgets.img_viewer import ImageViewer
+
+# TODO - To delete, these are only for testing
 from pycroglia.core.files import TiffReader
 from pycroglia.core.filters import remove_small_objects, calculate_otsu_threshold
-from pycroglia.core.segmentation import segment_single_cell, SegmentationConfig
 
 
-class CellSegmentationList(QtWidgets.QWidget):
-    cellSelectionChanged = QtCore.pyqtSignal()
+class SegmentationEditorState(QtCore.QObject):
+    ARRAY_ELEMENTS_TYPE = np.uint8
 
-    def __init__(self,
-                 headers: list[str],
-                 parent: Optional[QtWidgets.QWidget] = None):
+    DEFAULT_EROSION_FOOTPRINT = Octahedron3DFootprint(r=1)
+    DEFAULT_SKIMAGE_CONNECTIVITY = SkimageCellConnectivity.CORNERS
+
+    DEFAULT_PROGRESS_BAR_TEXT = "Processing cells..."
+
+    @staticmethod
+    def DEFAULT_PROGRESS_BAR_TEXT_GENERATOR(cell, total):
+        return f"Processing cell {cell} of {total}"
+
+    stateChanged = QtCore.pyqtSignal()
+
+    def __init__(
+        self,
+        img: NDArray,
+        labeling_strategy: LabelingStrategy,
+        min_size: int,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
+        super().__init__(parent=parent)
+
+        self._shape = img.shape
+
+        self._actual_state = LabeledCells(img, labeling_strategy)
+        self._prev_state: Optional[LabeledCells] = None
+
+        self._min_size = min_size
+
+    def get_state(self) -> LabeledCells:
+        return self._actual_state
+
+    def has_prev_state(self) -> bool:
+        return self._prev_state is not None
+
+    def _update_state(self, new_state: LabeledCells):
+        self._prev_state = self._actual_state
+        self._actual_state = new_state
+
+    def segment_cell(
+        self,
+        cell_index: int,
+        cell_size: int,
+        progress_bar: Optional[QtWidgets.QProgressDialog] = None,
+    ):
+        list_of_cells: list[NDArray] = []
+        number_of_cells = self._actual_state.len()
+
+        # If progress bar was passed
+        if progress_bar:
+            progress_bar.setMaximum(number_of_cells)
+            progress_bar.setValue(0)
+            progress_bar.setLabelText(self.DEFAULT_PROGRESS_BAR_TEXT)
+            QtCore.QCoreApplication.processEvents()
+
+        for i in range(1, number_of_cells + 1):
+            if progress_bar:
+                progress_bar.setValue(i)
+                progress_bar.setLabelText(
+                    self.DEFAULT_PROGRESS_BAR_TEXT_GENERATOR(i, number_of_cells)
+                )
+                QtCore.QCoreApplication.processEvents()
+
+                if progress_bar.wasCanceled():
+                    return
+
+            if cell_index == i:
+                segmented_cell = segment_single_cell(
+                    cell_matrix=self._actual_state.get_cell(i),
+                    footprint=self.DEFAULT_EROSION_FOOTPRINT,
+                    config=SegmentationConfig(
+                        cut_off_size=cell_size,
+                        noise=self._min_size,
+                        connectivity=self.DEFAULT_SKIMAGE_CONNECTIVITY,
+                    ),
+                )
+                list_of_cells.extend(segmented_cell)
+            else:
+                list_of_cells.append(self._actual_state.get_cell(i))
+
+        if progress_bar:
+            progress_bar.setValue(number_of_cells)
+
+        new_state = LabeledCells(
+            np.zeros(self._shape, dtype=self.ARRAY_ELEMENTS_TYPE),
+            MaskListLabeling(list_of_cells),
+        )
+        self._update_state(new_state)
+        self.stateChanged.emit()
+
+    def rollback(self):
+        if self._prev_state is None:
+            return
+
+        self._actual_state = self._prev_state
+        self._prev_state = None
+        self.stateChanged.emit()
+
+
+class CellList(QtWidgets.QWidget):
+    def __init__(self, headers: list[str], parent: Optional[QtWidgets.QWidget] = None):
         super().__init__(parent=parent)
 
         # Widgets
         self.list = TwoColumnList(headers=headers, parent=self)
-
-        # Connections
-        self.list.selectionChanged.connect(self._on_selection_changed)
 
         # Layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.list)
 
         # Style
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         self.setLayout(layout)
+
+    @property
+    def selectionChanged(self) -> QtCore.pyqtSignal:
+        return self.list.selectionChanged
+
+    def add_cells(self, cells: LabeledCells):
+        list_of_cells = sorted(
+            [(i, cells.get_cell_size(i)) for i in range(1, cells.len() + 1)],
+            key=lambda x: x[1],
+            reverse=True,
+        )
+
+        for cell in list_of_cells:
+            self.list.add_item(str(cell[0]), str(cell[1]))
 
     def clear_cells(self):
         self.list.model.clear()
         self.list.model.setHorizontalHeaderLabels(self.list.headers)
         self.list.dataChanged.emit()
-
-    def _on_selection_changed(self):
-        self.cellSelectionChanged.emit()
-
-    @property
-    def selectionChanged(self) -> QtCore.pyqtSignal:
-        return self.list.selectionChanged
 
     def get_selected_cell_id(self) -> Optional[int]:
         selected = self.list.get_selected_item()
@@ -67,16 +170,6 @@ class CellSegmentationList(QtWidgets.QWidget):
         if selected:
             return int(selected[0]), int(selected[1])
         return None
-
-    def add_cells(self, cells: LabeledCells):
-        list_of_cells = sorted(
-            [(i, cells.get_cell_size(i)) for i in range(1, cells.len() + 1)],
-            key=lambda x: x[1],
-            reverse=True,
-        )
-
-        for cell in list_of_cells:
-            self.list.add_item(str(cell[0]), str(cell[1]))
 
 
 class MultiCellImageViewer(QtWidgets.QWidget):
@@ -117,42 +210,36 @@ class SegmentationEditor(QtWidgets.QWidget):
     ROLLBACK_BUTTON_TEXT = "Roll back segmentation"
     SEGMENTATION_BUTTON_TEXT = "Segment Cell"
 
-    SEGMENTATION_DEFAULT_FOOTPRINT = Octahedron3DFootprint(r=1)
-    SEGMENTATION_DEFAULT_CONNECTIVITY = SkimageCellConnectivity.CORNERS
-
     def __init__(
         self,
         img: NDArray,
         labeling_strategy: LabelingStrategy,
-        noise: int,
+        min_size: int,
+        with_progress_bar: bool = False,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         super().__init__(parent=parent)
 
-        self.labeled_cells = LabeledCells(img=img, labeling_strategy=labeling_strategy)
-        self.shape = (self.labeled_cells.z, self.labeled_cells.y, self.labeled_cells.x)
-        self.prev_state: Optional[LabeledCells] = None
-        self.noise = noise
+        self.state = SegmentationEditorState(img, labeling_strategy, min_size)
+        self.with_progress_bar = with_progress_bar
 
         # Widgets
-        self.list = CellSegmentationList(headers=self.HEADERS_TEXT, parent=self)
-        self.segment_button = QtWidgets.QPushButton(self.SEGMENTATION_BUTTON_TEXT, parent=self)
+        self.list = CellList(headers=self.HEADERS_TEXT, parent=self)
+
+        self.segment_button = QtWidgets.QPushButton(self.SEGMENTATION_BUTTON_TEXT)
         self.segment_button.setEnabled(False)
-        self.rollback_button = QtWidgets.QPushButton(self.ROLLBACK_BUTTON_TEXT, parent=self)
+
+        self.rollback_button = QtWidgets.QPushButton(self.ROLLBACK_BUTTON_TEXT)
         self.rollback_button.setEnabled(False)
 
         self.multi_cell_viewer = MultiCellImageViewer(parent=self)
         self.cell_viewer = ImageViewer(parent=self)
 
-        # Load data
-        self.list.add_cells(self.labeled_cells)
-        self.multi_cell_viewer.set_cells_img(self.labeled_cells)
-
         # Connections
-        self.list.selectionChanged.connect(self._on_cell_selected)
-        self.list.cellSelectionChanged.connect(self._on_selection_changed)
+        self.list.selectionChanged.connect(self._on_cell_selection_changed)
         self.segment_button.clicked.connect(self._on_cell_segmentation_request)
         self.rollback_button.clicked.connect(self._on_rollback_request)
+        self.state.stateChanged.connect(self._load_data)
 
         # Layout
         list_layout = QtWidgets.QVBoxLayout()
@@ -176,90 +263,51 @@ class SegmentationEditor(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
-    def _on_selection_changed(self):
-        has_selection = self.list.get_selected_cell_id() is not None
-        self.segment_button.setEnabled(has_selection)
+        # Loads data
+        self._load_data()
 
-    def _on_cell_selected(self):
+    def _load_data(self):
+        actual_state = self.state.get_state()
+
+        self.list.clear_cells()
+        self.list.add_cells(actual_state)
+        self.multi_cell_viewer.set_cells_img(actual_state)
+
+        self.rollback_button.setEnabled(self.state.has_prev_state())
+
+    def _on_cell_selection_changed(self):
         selected_cell = self.list.get_selected_cell_id()
-        if not selected_cell:
+        self.segment_button.setEnabled(selected_cell is not None)
+        if selected_cell is None:
             return
 
-        cell_2d = self.labeled_cells.cell_to_2d(selected_cell)
+        cell_2d = self.state.get_state().cell_to_2d(selected_cell)
         self.cell_viewer.set_image(cell_2d)
 
     def _on_cell_segmentation_request(self):
         selected_cell_info = self.list.get_selected_cell_info()
-        if not selected_cell_info:
-            return
-        cell_to_segment, cell_size = selected_cell_info
-
-        list_of_cells: list[NDArray] = []
-        number_of_cells = self.labeled_cells.len()
-
-        # Progress dialog popup
-        progress_dialog = QtWidgets.QProgressDialog(
-            "Segmenting cells...", "Cancel", 0, number_of_cells, self
-        )
-        progress_dialog.setWindowTitle("Segmentation Progress")
-        progress_dialog.setWindowModality(QtCore.Qt.WindowModality.ApplicationModal)
-        progress_dialog.setMinimumDuration(0)
-        progress_dialog.setValue(0)
-
-        cancelled = False
-
-        for i in range(1, number_of_cells + 1):
-            QtWidgets.QApplication.processEvents()
-            if progress_dialog.wasCanceled():
-                cancelled = True
-                break
-
-            if cell_to_segment == i:
-                segmented_cell = segment_single_cell(
-                    cell_matrix=self.labeled_cells.get_cell(i),
-                    footprint=self.SEGMENTATION_DEFAULT_FOOTPRINT,
-                    config=SegmentationConfig(
-                        cut_off_size=cell_size,
-                        noise=self.noise,
-                        connectivity=self.SEGMENTATION_DEFAULT_CONNECTIVITY
-                    )
-                )
-                list_of_cells.extend(segmented_cell)
-            else:
-                list_of_cells.append(self.labeled_cells.get_cell(i))
-
-            progress_dialog.setValue(i)
-
-        progress_dialog.close()
-
-        if cancelled:
+        if selected_cell_info is None:
             return
 
-        # Save prev state
-        # TODO - Could be abstracted
-        self.prev_state = self.labeled_cells
+        progress_bar = None
+        if self.with_progress_bar:
+            # TODO - Hardcoded values
+            progress_bar = QtWidgets.QProgressDialog(
+                "Segmenting cell...", "Cancel", 0, 100, self
+            )
+            progress_bar.setModal(True)
+            progress_bar.show()
 
-        # Creates new state
-        label_strategy = MaskListLabeling(list_of_cells)
-        # TODO - Hardcoded dtype
-        self.labeled_cells = LabeledCells(np.zeros(self.shape, dtype=np.uint8), label_strategy)
-        self.list.clear_cells()
-        self.list.add_cells(self.labeled_cells)
-        self.multi_cell_viewer.set_cells_img(self.labeled_cells)
-        self.rollback_button.setEnabled(True)
-        self.segment_button.setEnabled(False)
+        try:
+            self.state.segment_cell(
+                selected_cell_info[0], selected_cell_info[1], progress_bar
+            )
+        finally:
+            if progress_bar:
+                progress_bar.close()
 
     def _on_rollback_request(self):
-        if self.prev_state is None:
-            return
-
-        self.labeled_cells = self.prev_state
-        self.prev_state = None
-
-        self.list.clear_cells()
-        self.list.add_cells(self.labeled_cells)
-        self.multi_cell_viewer.set_cells_img(self.labeled_cells)
-
+        self.state.rollback()
 
 
 # --- Replace with your TIFF file path ---
@@ -283,7 +331,7 @@ def main():
 
     # Create the application and widget
     app = QtWidgets.QApplication(sys.argv)
-    editor = SegmentationEditor(img, labeling_strategy, noise)
+    editor = SegmentationEditor(img, labeling_strategy, noise, True)
     editor.show()
     sys.exit(app.exec())
 

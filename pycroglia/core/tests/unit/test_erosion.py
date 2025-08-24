@@ -9,7 +9,7 @@ from pycroglia.core.erosion import (
     Rectangle3DFootprint,
     Ball3DFootprint,
     Octahedron3DFootprint,
-    apply_binary_erosion
+    apply_binary_erosion,
 )
 
 

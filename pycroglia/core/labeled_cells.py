@@ -33,6 +33,7 @@ class LabelingStrategy(ABC):
         """
         pass
 
+
 # TODO - Add start_label value validation
 # TODO - Add specification of unique labels if used start_label
 class SkimageImgLabeling(LabelingStrategy):

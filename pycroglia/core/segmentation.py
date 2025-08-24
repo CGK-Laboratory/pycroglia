@@ -57,7 +57,9 @@ def segment_cell(
 
     for i in range(1, cells.len() + 1):
         if cells.get_cell_size(i) > config.cut_off_size:
-            segmentation_results = segment_single_cell(cells.get_cell(i), footprint, config)
+            segmentation_results = segment_single_cell(
+                cells.get_cell(i), footprint, config
+            )
             cells_array.append(*segmentation_results)
         else:
             cells_array.append(cells.get_cell(i))
@@ -69,7 +71,7 @@ def segment_single_cell(
     cell_matrix: NDArray,
     footprint: FootprintShape,
     config: SegmentationConfig,
-    start_label: int = 1
+    start_label: int = 1,
 ) -> List[NDArray]:
     """Segments a single cell mask using erosion, clustering, and noise removal.
 
@@ -99,7 +101,9 @@ def segment_single_cell(
 
     for cluster in clusters:
         cluster_filtered = remove_small_objects(cluster, config.noise)
-        labeled_cluster = LabeledCells(cluster_filtered, SkimageImgLabeling(config.connectivity, start_label))
+        labeled_cluster = LabeledCells(
+            cluster_filtered, SkimageImgLabeling(config.connectivity, start_label)
+        )
         for j in range(1, labeled_cluster.len() + 1):
             cells_array.append(labeled_cluster.get_cell(j))
 

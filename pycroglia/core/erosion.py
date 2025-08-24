@@ -78,6 +78,7 @@ class Disk2DFootprint(FootprintShape):
         """
         return morphology.disk(radius=self.r)
 
+
 class Octahedron3DFootprint(FootprintShape):
     """Octahedron-shaped structuring element in 3D."""
 
@@ -151,6 +152,7 @@ class Rectangle3DFootprint(FootprintShape):
             NDArray: 3D array of ones with shape (z*2+1, y*2+1, x*2+1).
         """
         return np.ones((self.z * 2 + 1, self.y * 2 + 1, self.x * 2 + 1), dtype=bool)
+
 
 def apply_binary_erosion(img: NDArray, footprint: FootprintShape) -> NDArray:
     """Applies binary erosion to an image using the given structuring element.
