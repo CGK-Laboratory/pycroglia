@@ -1,38 +1,103 @@
 import numpy as np
 
-from enum import Enum
+from abc import ABC, abstractmethod
+
+import skimage.segmentation
 from numpy.typing import NDArray
 from skimage import measure
 
+from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.errors.errors import PycrogliaException
 
 
-class CellConnectivity(Enum):
-    """Defines connectivity options for labeling connected cell components in 3D images.
+class LabelingStrategy(ABC):
+    """Abstract base class for labeling strategies.
+
+    Subclasses must implement the label method to generate labeled arrays from input images.
 
     Attributes:
-        FACES (int): 6-connectivity (voxels connected by faces).
-        EDGES (int): 18-connectivity (voxels connected by faces and edges).
-        CORNERS (int): 26-connectivity (voxels connected by faces, edges, and corners).
+        ARRAY_ELEMENTS_TYPE (type): Data type for output arrays.
     """
 
-    FACES = 1
-    EDGES = 2
-    CORNERS = 3
+    ARRAY_ELEMENTS_TYPE = np.uint8
+
+    @abstractmethod
+    def label(self, img: NDArray) -> NDArray:
+        """Labels the input image according to the strategy.
+
+        Args:
+            img (NDArray): Input image to label.
+
+        Returns:
+            NDArray: Labeled array.
+        """
+        pass
 
 
-def label_cells(img: NDArray, connectivity: CellConnectivity) -> NDArray:
-    """Assigns unique integer labels to each connected cell in a 3D binary image.
+# TODO - Add start_label value validation
+# TODO - Add specification of unique labels if used start_label
+class SkimageImgLabeling(LabelingStrategy):
+    """Labeling strategy using skimage.measure.label.
 
-    Args:
-        img (NDArray): 3D binary array where nonzero values represent cell candidates.
-        connectivity (CellConnectivity): Connectivity rule for defining cell neighborhoods.
-
-    Returns:
-        NDArray: 3D array with the same shape as `img`, where each connected cell has a unique integer label (0 is background).
+    Attributes:
+        connectivity (pycroglia.core.enums.SkimageCellConnectivity): Connectivity rule for labeling.
     """
-    labeled_cells = measure.label(img, connectivity=connectivity.value)
-    return labeled_cells
+
+    def __init__(self, connectivity: SkimageCellConnectivity, start_label: int = 1):
+        """Initializes SkimageImgLabeling with the given connectivity.
+
+        Args:
+            connectivity (SkimageCellConnectivity): Connectivity rule for labeling.
+        """
+        self.connectivity = connectivity
+        self.start_label = start_label
+
+    def label(self, img: NDArray) -> NDArray:
+        """Labels the input image using skimage.measure.label.
+
+        Args:
+            img (NDArray): Input image to label.
+
+        Returns:
+            NDArray: Labeled array.
+        """
+        labels = measure.label(img, connectivity=self.connectivity.value)
+
+        # Adjust labels to start from start_label
+        if self.start_label != 1:
+            mask = labels > 0
+            labels[mask] = labels[mask] + (self.start_label - 1)
+
+        return labels
+
+
+class MaskListLabeling(LabelingStrategy):
+    """Labeling strategy using a list of binary masks.
+
+    Each mask should have the same shape as the target image.
+    """
+
+    def __init__(self, masks: list[NDArray]):
+        """
+        Args:
+            masks (list[NDArray]): List of binary masks (same shape as the target image).
+        """
+        self.masks = masks
+
+    def label(self, img: NDArray) -> NDArray:
+        """
+        Args:
+            img (NDArray): Reference image to determine output shape.
+
+        Returns:
+            NDArray: Labeled array.
+        """
+        labels = np.zeros_like(img, dtype=self.ARRAY_ELEMENTS_TYPE)
+        for idx, mask in enumerate(self.masks, start=1):
+            labels[mask > 0] = idx
+
+        relabeled, _, _ = skimage.segmentation.relabel_sequential(labels)
+        return relabeled
 
 
 class LabeledCells:
@@ -45,22 +110,23 @@ class LabeledCells:
         z (int): Depth of the image.
         y (int): Height of the image.
         x (int): Width of the image.
-        connectivity (CellConnectivity): Connectivity used for labeling.
         labels (NDArray): Labeled 3D array.
     """
 
     ARRAY_ELEMENTS_TYPE = np.uint8
 
-    def __init__(self, img: NDArray, connectivity: CellConnectivity):
-        """Initializes LabeledCells with a 3D image and connectivity.
+    def __init__(self, img: NDArray, labeling_strategy: LabelingStrategy):
+        """Initializes LabeledCells with a 3D image and a labeling strategy.
 
         Args:
             img (NDArray): 3D binary image.
-            connectivity (CellConnectivity): Connectivity rule for labeling.
+            labeling_strategy (LabelingStrategy): Strategy for labeling connected components.
         """
         self.z, self.y, self.x = img.shape
-        self.connectivity = connectivity
-        self.labels = label_cells(img, connectivity)
+        self.labels = labeling_strategy.label(img)
+
+        self._cell_sizes = np.bincount(self.labels.ravel())
+        self._n_cells = len(self._cell_sizes) - 1
 
     def len(self) -> int:
         """Returns the number of labeled cells.
@@ -68,7 +134,7 @@ class LabeledCells:
         Returns:
             int: Number of labeled cells (excluding background).
         """
-        return self.labels.max()
+        return self._n_cells
 
     def _is_valid_index(self, index: int) -> bool:
         """Checks if the given index is a valid cell label.
@@ -113,7 +179,15 @@ class LabeledCells:
         if not self._is_valid_index(index):
             raise PycrogliaException(error_code=2000)
 
-        return np.sum(self.labels == index)
+        return int(self._cell_sizes[index])
+
+    def labels_to_2d(self) -> NDArray:
+        """Projects the labeled 3D array to 2D by taking the maximum label along the z-axis.
+
+        Returns:
+            NDArray: 2D array with the maximum label for each (y, x) position.
+        """
+        return self.labels.max(axis=0)
 
     def cell_to_2d(self, index: int) -> NDArray:
         """Projects a 3D cell to 2D by summing along the z-axis.
@@ -151,13 +225,3 @@ class LabeledCells:
             all_cells_matrix[i - 1, :, :] = cell_array
 
         return all_cells_matrix
-
-    def overlap_cells(self) -> NDArray:
-        """Computes the overlap image by summing all 2D projections of cells.
-
-        Returns:
-            NDArray: 2D array representing the overlap of all cells.
-        """
-        all_cells = self.all_cells_to_2d()
-        overlap_img = all_cells.sum(axis=0)
-        return overlap_img
