@@ -6,7 +6,11 @@ from numpy.typing import NDArray
 
 from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.erosion import Octahedron3DFootprint
-from pycroglia.core.labeled_cells import LabelingStrategy, LabeledCells, MaskListLabeling
+from pycroglia.core.labeled_cells import (
+    LabelingStrategy,
+    LabeledCells,
+    MaskListLabeling,
+)
 from pycroglia.core.segmentation import segment_single_cell, SegmentationConfig
 
 

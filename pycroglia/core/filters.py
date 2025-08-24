@@ -18,7 +18,7 @@ def calculate_otsu_threshold(img: NDArray, adjust: float) -> NDArray:
         NDArray: Boolean 3D array (same shape as input) representing the binary thresholded mask.
     """
     zs, height, width = img.shape
-    binary_stack = np.zeros((zs, height, width), dtype=bool)
+    binary_stack = np.zeros((zs, height, width), dtype=np.uint8)
 
     for i in range(zs):
         z_slice = img[i, :, :].astype(np.uint8)
