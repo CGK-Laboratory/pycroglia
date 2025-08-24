@@ -1,5 +1,3 @@
-import numpy as np
-
 from typing import Optional
 from numpy.typing import NDArray
 from PyQt6 import QtCore, QtWidgets
@@ -102,7 +100,7 @@ class MultiChImgEditorState(QtCore.QObject):
         Returns:
             NDArray: Middle slice of the image.
         """
-        return arr[:, :, arr.shape[2] // 2]
+        return arr[arr.shape[0] // 2, :, :]
 
     def apply_otsu_gray_filter(self, adjust_value: float) -> Optional[NDArray]:
         """Apply the Otsu threshold filter with adjustment.
@@ -119,7 +117,7 @@ class MultiChImgEditorState(QtCore.QObject):
                 return None
 
             masked_image = calculate_otsu_threshold(self._img, adjust_value)
-            self._gray_filtered_img = np.where(masked_image, self._img, 0)
+            self._gray_filtered_img = masked_image
 
             self.grayImageChanged.emit()
             return self._gray_filtered_img
@@ -141,7 +139,7 @@ class MultiChImgEditorState(QtCore.QObject):
                 return None
 
             masked_img = remove_small_objects(self._gray_filtered_img, threshold)
-            self._small_objects_img = np.where(masked_img, self._gray_filtered_img, 0)
+            self._small_objects_img = masked_img
 
             return self._small_objects_img
         finally:
