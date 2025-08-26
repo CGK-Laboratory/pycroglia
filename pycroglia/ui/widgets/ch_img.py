@@ -252,7 +252,7 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
     """
 
     FILTER_MIN_VALUE = 1
-    FILTER_MAX_VALUE = 1000
+    FILTER_MAX_VALUE = 5000
 
     def __init__(
         self, state: MultiChImgEditorState, parent: Optional[QtWidgets.QWidget] = None
