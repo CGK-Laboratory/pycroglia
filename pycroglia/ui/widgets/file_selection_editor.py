@@ -3,7 +3,7 @@ from typing import Optional, List
 from pathlib import Path
 
 from pycroglia.ui.widgets.file_selector import FileSelector
-from pycroglia.ui.widgets.two_column_list import TwoColumnList
+from pycroglia.ui.widgets.two_column_list import TwoColumnListWithDelete
 
 
 class FileSelectionEditor(QtWidgets.QWidget):
@@ -43,7 +43,7 @@ class FileSelectionEditor(QtWidgets.QWidget):
         super().__init__(parent)
 
         # Widgets
-        self.file_list = TwoColumnList(
+        self.file_list = TwoColumnListWithDelete(
             headers=headers, delete_button_text=delete_button_text, parent=self
         )
         self.file_selector = FileSelector(

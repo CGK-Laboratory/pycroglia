@@ -49,4 +49,4 @@ def read_hdf5_results(file: str, dataset: str = DEFAULT_DATASET_NAME) -> HDF5Tes
         x = img_data.attrs["X"][0]
         z = img_data.attrs["Z"][0]
 
-        return HDF5TestCase(img_data[:].transpose(2, 1, 0), x, y, z)
+        return HDF5TestCase(img_data[:], x, y, z)
