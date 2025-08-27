@@ -1,4 +1,4 @@
-from . import rk4, euler, simple, stepper
+from pycroglia.core.skeletonize.raytracing import rk4, euler, simple, stepper
 from enum import Enum
 from itertools import product
 import numpy as np

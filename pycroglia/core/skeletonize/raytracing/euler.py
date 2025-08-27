@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.ndimage import map_coordinates
-from .stepper import Stepper
+from pycroglia.core.skeletonize.raytracing.stepper import Stepper
 
 
 class Euler(Stepper):

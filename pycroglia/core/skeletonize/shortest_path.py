@@ -1,4 +1,4 @@
-from .raytracing import factory
+from pycroglia.core.skeletonize.raytracing import factory
 import numpy as np
 
 
