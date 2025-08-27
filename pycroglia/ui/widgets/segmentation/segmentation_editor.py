@@ -18,25 +18,19 @@ class SegmentationEditor(QtWidgets.QWidget):
     """
 
     # UI Text Constants
-    HEADERS_TEXT = ["Cell number", "Cell size"]
-    ROLLBACK_BUTTON_TEXT = "Roll back segmentation"
-    SEGMENTATION_BUTTON_TEXT = "Segment Cell"
+    DEFAULT_HEADERS_TEXT = ["Cell number", "Cell size"]
+    DEFAULT_ROLLBACK_BUTTON_TEXT = "Roll back segmentation"
+    DEFAULT_SEGMENTATION_BUTTON_TEXT = "Segment Cell"
+    DEFAULT_PROGRESS_TITLE = "Segmenting cell..."
+    DEFAULT_PROGRESS_CANCEL_TEXT = "Cancel"
 
     # Progress Dialog Constants
     DEFAULT_PROGRESS_MAX = 100
     DEFAULT_PROGRESS_MIN = 0
-    DEFAULT_PROGRESS_TITLE = "Segmenting cell..."
-    DEFAULT_PROGRESS_CANCEL_TEXT = "Cancel"
 
     # Layout Constants
     LIST_STRETCH_FACTOR = 1
     VIEWER_STRETCH_FACTOR = 2
-
-    # File Processing Constants (move from main)
-    DEFAULT_CHANNELS = 5
-    DEFAULT_CHANNEL_OF_INTEREST = 2
-    DEFAULT_NOISE_THRESHOLD = 100
-    DEFAULT_OTSU_FACTOR = 1.0
 
     def __init__(
         self,
@@ -44,6 +38,11 @@ class SegmentationEditor(QtWidgets.QWidget):
         labeling_strategy: LabelingStrategy,
         min_size: int,
         with_progress_bar: bool = False,
+        headers: Optional[list[str]] = None,
+        rollback_button_text: Optional[str] = None,
+        segmentation_button_text: Optional[str] = None,
+        progress_title: Optional[str] = None,
+        progress_cancel_text: Optional[str] = None,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initializes the SegmentationEditor widget.
@@ -52,21 +51,33 @@ class SegmentationEditor(QtWidgets.QWidget):
             img (NDArray): 3D binary image to segment.
             labeling_strategy (LabelingStrategy): Strategy for labeling connected components.
             min_size (int): Minimum size for objects to keep after noise removal.
-            with_progress_bar (bool, optional): Whether to show a progress bar during segmentation. Defaults to False.
-            parent (Optional[QtWidgets.QWidget], optional): Parent widget. Defaults to None.
+            with_progress_bar (bool, optional): Whether to show a progress bar during segmentation.
+            headers (Optional[list[str]], optional): Column headers for the cell list.
+            rollback_button_text (Optional[str], optional): Text for the rollback button.
+            segmentation_button_text (Optional[str], optional): Text for the segmentation button.
+            progress_title (Optional[str], optional): Title for the progress dialog.
+            progress_cancel_text (Optional[str], optional): Cancel button text for progress dialog.
+            parent (Optional[QtWidgets.QWidget], optional): Parent widget.
         """
         super().__init__(parent=parent)
+
+        # Configurable text properties
+        self.headers_text = headers or self.DEFAULT_HEADERS_TEXT
+        self.rollback_button_text = rollback_button_text or self.DEFAULT_ROLLBACK_BUTTON_TEXT
+        self.segmentation_button_text = segmentation_button_text or self.DEFAULT_SEGMENTATION_BUTTON_TEXT
+        self.progress_title = progress_title or self.DEFAULT_PROGRESS_TITLE
+        self.progress_cancel_text = progress_cancel_text or self.DEFAULT_PROGRESS_CANCEL_TEXT
 
         self.state = SegmentationEditorState(img, labeling_strategy, min_size)
         self.with_progress_bar = with_progress_bar
 
         # Widgets
-        self.list = CellList(headers=self.HEADERS_TEXT, parent=self)
+        self.list = CellList(headers=self.headers_text, parent=self)
 
-        self.segment_button = QtWidgets.QPushButton(self.SEGMENTATION_BUTTON_TEXT)
+        self.segment_button = QtWidgets.QPushButton(self.segmentation_button_text)
         self.segment_button.setEnabled(False)
 
-        self.rollback_button = QtWidgets.QPushButton(self.ROLLBACK_BUTTON_TEXT)
+        self.rollback_button = QtWidgets.QPushButton(self.rollback_button_text)
         self.rollback_button.setEnabled(False)
 
         self.multi_cell_viewer = MultiCellImageViewer(parent=self)
@@ -132,8 +143,8 @@ class SegmentationEditor(QtWidgets.QWidget):
         progress_bar = None
         if self.with_progress_bar:
             progress_bar = QtWidgets.QProgressDialog(
-                self.DEFAULT_PROGRESS_TITLE,
-                self.DEFAULT_PROGRESS_CANCEL_TEXT,
+                self.progress_title,
+                self.progress_cancel_text,
                 self.DEFAULT_PROGRESS_MIN,
                 self.DEFAULT_PROGRESS_MAX,
             )

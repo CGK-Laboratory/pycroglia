@@ -147,12 +147,14 @@ class LabeledFloatSlider(QtWidgets.QWidget):
         min_label (QtWidgets.QLabel): Label for minimum value.
         max_label (QtWidgets.QLabel): Label for maximum value.
         value_label (QtWidgets.QLabel): Label for current value.
+        label_text (str): Text for the main label.
         slider (QtWidgets.QSlider): Slider widget.
         _min (float): Minimum value.
         _max (float): Maximum value.
         _step (float): Step size.
         valueChanged (QtCore.pyqtSignal): Signal emitted when the value changes.
     """
+    DEFAULT_LABEL_TEXT = "Value"
 
     valueChanged = QtCore.pyqtSignal(float)
 
@@ -161,6 +163,7 @@ class LabeledFloatSlider(QtWidgets.QWidget):
         min_value: float,
         max_value: float,
         step_size: float,
+        label_text: Optional[str] = None,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the LabeledFloatSlider.
@@ -169,9 +172,12 @@ class LabeledFloatSlider(QtWidgets.QWidget):
             min_value (float): Minimum value.
             max_value (float): Maximum value.
             step_size (float): Step size.
+            label_text (Optional[str], optional): Text for the main label.
             parent (Optional[QtWidgets.QWidget]): Parent widget.
         """
         super().__init__(parent)
+
+        self.label_text = label_text or self.DEFAULT_LABEL_TEXT
 
         self._min = min_value
         self._max = max_value
@@ -183,7 +189,7 @@ class LabeledFloatSlider(QtWidgets.QWidget):
         # Widgets
         self.min_label = QtWidgets.QLabel(f"{self._min:.2f}")
         self.max_label = QtWidgets.QLabel(f"{self._max:.2f}")
-        self.value_label = QtWidgets.QLabel(f"Value: {self._min:.2f}")
+        self.value_label = QtWidgets.QLabel(f"{self.label_text}: {self._min:.2f}")
         self.value_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
@@ -211,7 +217,7 @@ class LabeledFloatSlider(QtWidgets.QWidget):
             value (int): Integer value from the slider.
         """
         float_value = self._min + value * self._step
-        self.value_label.setText(f"Value: {float_value:.2f}")
+        self.value_label.setText(f"{self.label_text}: {float_value:.2f}")
         self.valueChanged.emit(float_value)
 
     def get_value(self) -> float:
