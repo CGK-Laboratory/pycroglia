@@ -63,10 +63,16 @@ class SegmentationEditor(QtWidgets.QWidget):
 
         # Configurable text properties
         self.headers_text = headers or self.DEFAULT_HEADERS_TEXT
-        self.rollback_button_text = rollback_button_text or self.DEFAULT_ROLLBACK_BUTTON_TEXT
-        self.segmentation_button_text = segmentation_button_text or self.DEFAULT_SEGMENTATION_BUTTON_TEXT
+        self.rollback_button_text = (
+            rollback_button_text or self.DEFAULT_ROLLBACK_BUTTON_TEXT
+        )
+        self.segmentation_button_text = (
+            segmentation_button_text or self.DEFAULT_SEGMENTATION_BUTTON_TEXT
+        )
         self.progress_title = progress_title or self.DEFAULT_PROGRESS_TITLE
-        self.progress_cancel_text = progress_cancel_text or self.DEFAULT_PROGRESS_CANCEL_TEXT
+        self.progress_cancel_text = (
+            progress_cancel_text or self.DEFAULT_PROGRESS_CANCEL_TEXT
+        )
 
         self.state = SegmentationEditorState(img, labeling_strategy, min_size)
         self.with_progress_bar = with_progress_bar

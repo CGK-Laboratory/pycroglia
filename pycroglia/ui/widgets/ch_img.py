@@ -118,6 +118,7 @@ class MultiChannelImageViewer(QtWidgets.QWidget):
         editor (MultiChannelConfigurator): Channel configuration widget.
         read_button (QtWidgets.QPushButton): Button to trigger image reading.
     """
+
     DEFAULT_LABEL_TEXT = "Image Viewer"
     DEFAULT_READ_BUTTON_TEXT = "Read"
     DEFAULT_CHANNELS_LABEL = "Channels"
@@ -130,7 +131,7 @@ class MultiChannelImageViewer(QtWidgets.QWidget):
         read_button_text: Optional[str] = None,
         channels_label: Optional[str] = None,
         channel_of_interest_label: Optional[str] = None,
-        parent: Optional[QtWidgets.QWidget] = None
+        parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the multi-channel image viewer.
 
@@ -162,8 +163,9 @@ class MultiChannelImageViewer(QtWidgets.QWidget):
 
         self.editor = MultiChannelConfigurator(
             channels_label=channels_label or self.DEFAULT_CHANNELS_LABEL,
-            channel_of_interest_label=channel_of_interest_label or self.DEFAULT_CHANNEL_OF_INTEREST_LABEL,
-            parent=self
+            channel_of_interest_label=channel_of_interest_label
+            or self.DEFAULT_CHANNEL_OF_INTEREST_LABEL,
+            parent=self,
         )
 
         self.read_button = QtWidgets.QPushButton(parent=self)
@@ -209,6 +211,7 @@ class GrayFilterEditor(QtWidgets.QWidget):
         GRAY_FILTER_MIN (float): Minimum slider value.
         GRAY_FILTER_STEP (float): Step size for the slider.
     """
+
     DEFAULT_LABEL_TEXT = "Gray Filter Editor"
     DEFAULT_SLIDER_LABEL_TEXT = "Adjustment"
 
@@ -221,7 +224,7 @@ class GrayFilterEditor(QtWidgets.QWidget):
         state: MultiChImgEditorState,
         label_text: Optional[str] = None,
         slider_label_text: Optional[str] = None,
-        parent: Optional[QtWidgets.QWidget] = None
+        parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the gray filter editor.
 
@@ -292,6 +295,7 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
         FILTER_MIN_VALUE (int): Minimum value for the filter threshold.
         FILTER_MAX_VALUE (int): Maximum value for the filter threshold
     """
+
     DEFAULT_LABEL_TEXT = "Small objects Filter Editor"
     DEFAULT_THRESHOLD_LABEL_TEXT = "Threshold"
 
@@ -303,7 +307,7 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
         state: MultiChImgEditorState,
         label_text: Optional[str] = None,
         threshold_label_text: Optional[str] = None,
-        parent: Optional[QtWidgets.QWidget] = None
+        parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the small objects filter editor.
 
@@ -317,7 +321,9 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
 
         # Configurable text
         self.label_text = label_text or self.DEFAULT_LABEL_TEXT
-        self.threshold_label_text = threshold_label_text or self.DEFAULT_THRESHOLD_LABEL_TEXT
+        self.threshold_label_text = (
+            threshold_label_text or self.DEFAULT_THRESHOLD_LABEL_TEXT
+        )
 
         self.state = state
         self.tpool = QtCore.QThreadPool(self)

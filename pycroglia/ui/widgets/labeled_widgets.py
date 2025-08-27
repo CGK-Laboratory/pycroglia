@@ -154,6 +154,7 @@ class LabeledFloatSlider(QtWidgets.QWidget):
         _step (float): Step size.
         valueChanged (QtCore.pyqtSignal): Signal emitted when the value changes.
     """
+
     DEFAULT_LABEL_TEXT = "Value"
 
     valueChanged = QtCore.pyqtSignal(float)

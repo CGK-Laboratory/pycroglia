@@ -253,4 +253,3 @@ def test_multichannel_filter_editor_get_filter_results(qtbot, monkeypatch):
     assert result.gray_filter_value == 2.0
     assert result.min_size == 7
     assert np.array_equal(result.small_object_filtered_img, dummy_img)
-

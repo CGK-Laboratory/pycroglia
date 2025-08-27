@@ -21,10 +21,12 @@ class MultiChannelConfigurator(QtWidgets.QWidget):
     DEFAULT_MIN_CHANNELS = 1
     DEFAULT_MIN_CHANNEL_OF_INTEREST = 1
 
-    def __init__(self,
-                 channels_label: Optional[str] = None,
-                 channel_of_interest_label: Optional[str] = None,
-                 parent: Optional[QtWidgets.QWidget] = None):
+    def __init__(
+        self,
+        channels_label: Optional[str] = None,
+        channel_of_interest_label: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
         """Initialize the multi-channel configurator widget.
 
         Args:
@@ -36,14 +38,22 @@ class MultiChannelConfigurator(QtWidgets.QWidget):
 
         # Configurable text properties
         self.channels_label = channels_label or self.DEFAULT_CHANNELS_LABEL
-        self.channel_of_interest_label = channel_of_interest_label or self.DEFAULT_CHANNEL_OF_INTEREST_LABEL
+        self.channel_of_interest_label = (
+            channel_of_interest_label or self.DEFAULT_CHANNEL_OF_INTEREST_LABEL
+        )
 
         # Widgets
         self.ch_box = LabeledSpinBox(
-            label_text=self.channels_label, min_value=self.DEFAULT_MIN_CHANNELS, max_value=None, parent=self
+            label_text=self.channels_label,
+            min_value=self.DEFAULT_MIN_CHANNELS,
+            max_value=None,
+            parent=self,
         )
         self.chi_box = LabeledSpinBox(
-            label_text=self.channel_of_interest_label, min_value=self.DEFAULT_MIN_CHANNEL_OF_INTEREST, max_value=None, parent=self
+            label_text=self.channel_of_interest_label,
+            min_value=self.DEFAULT_MIN_CHANNEL_OF_INTEREST,
+            max_value=None,
+            parent=self,
         )
         self.ch_box.valueChanged.connect(self._update_chi_max_limit)
 
