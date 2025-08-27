@@ -193,3 +193,64 @@ def test_multichannel_filter_editor_init(qtbot, monkeypatch):
     assert isinstance(widget.img_viewer, QtWidgets.QWidget)
     assert isinstance(widget.gray_filter_editor, QtWidgets.QWidget)
     assert isinstance(widget.small_object_filter_editor, QtWidgets.QWidget)
+
+
+def test_filter_results_as_dict():
+    """Test that FilterResults.as_dict returns the correct dictionary."""
+    from pycroglia.ui.widgets.ch_img import FilterResults
+
+    dummy_img = np.ones((2, 2, 2), dtype=np.uint8)
+    fr = FilterResults(
+        file_path="file.tif",
+        gray_filter_value=1.5,
+        min_size=10,
+        small_object_filtered_img=dummy_img,
+    )
+    result = fr.as_dict()
+    assert result["file_path"] == "file.tif"
+    assert result["gray_filter_value"] == 1.5
+    assert result["min_size"] == 10
+    assert np.array_equal(result["small_object_filtered_img"], dummy_img)
+
+
+def test_multichannel_filter_editor_get_filter_results(qtbot, monkeypatch):
+    """Test that MultiChannelFilterEditor.get_filter_results returns a FilterResults object with correct values."""
+    dummy_img = np.ones((2, 2, 2), dtype=np.uint8)
+
+    class DummySlider:
+        def get_value(self):
+            return 2.0
+
+    class DummySpinBox:
+        def get_value(self):
+            return 7
+
+    class DummyGrayFilterEditor:
+        slider = DummySlider()
+
+    class DummySmallObjectFilterEditor:
+        spin_box = DummySpinBox()
+
+    class DummyEditorState:
+        imageChanged = MagicMock()
+        grayImageChanged = MagicMock()
+
+        def get_small_objects_img(self):
+            return dummy_img
+
+    monkeypatch.setattr(
+        "pycroglia.ui.widgets.ch_img.MultiChImgEditorState",
+        lambda file_path: DummyEditorState(),
+    )
+
+    widget = MultiChannelFilterEditor(file_path="dummy.tif")
+    widget.gray_filter_editor = DummyGrayFilterEditor()
+    widget.small_object_filter_editor = DummySmallObjectFilterEditor()
+    widget.editor_state = DummyEditorState()
+
+    result = widget.get_filter_results()
+    assert result.file_path == "dummy.tif"
+    assert result.gray_filter_value == 2.0
+    assert result.min_size == 7
+    assert np.array_equal(result.small_object_filtered_img, dummy_img)
+

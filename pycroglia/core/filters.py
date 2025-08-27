@@ -1,6 +1,10 @@
 import cv2
+import skimage
 import numpy as np
+
 from numpy.typing import NDArray
+
+from pycroglia.core.enums import SkimageCellConnectivity
 
 
 def calculate_otsu_threshold(img: NDArray, adjust: float) -> NDArray:
@@ -14,7 +18,7 @@ def calculate_otsu_threshold(img: NDArray, adjust: float) -> NDArray:
         NDArray: Boolean 3D array (same shape as input) representing the binary thresholded mask.
     """
     zs, height, width = img.shape
-    binary_stack = np.zeros((zs, height, width), dtype=bool)
+    binary_stack = np.zeros((zs, height, width), dtype=np.uint8)
 
     for i in range(zs):
         z_slice = img[i, :, :].astype(np.uint8)
@@ -32,33 +36,23 @@ def calculate_otsu_threshold(img: NDArray, adjust: float) -> NDArray:
 
 
 def remove_small_objects(
-    img: NDArray, min_size: int, connectivity: int = 8
+    img: NDArray,
+    min_size: int,
+    connectivity: SkimageCellConnectivity = SkimageCellConnectivity.EDGES,
 ) -> NDArray:
     """Removes connected components smaller than a given size from a 3D binary mask.
 
     Args:
         img (NDArray): 3D binary array (dtype=bool or uint8) with shape (zs, height, width).
         min_size (int): Minimum number of pixels required to keep a component.
-        connectivity (int, optional): Connectivity used by OpenCV (4 or 8). Defaults to 8.
+        connectivity (SkimageCellConnectivity): Connectivity used by skimage (4 or 8). Defaults to SkimageCellConnectivity.EDGES.
 
     Returns:
         NDArray: 3D binary array with small objects removed.
     """
-    zs, _, _ = img.shape
-    binary_stack = np.zeros_like(img)
-
-    for i in range(zs):
-        binary_img = img[i, :, :].astype(np.uint8)
-        filtered_img = np.zeros_like(binary_img)
-
-        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
-            binary_img, connectivity=connectivity
-        )
-        for label in range(1, num_labels):
-            area = stats[label, cv2.CC_STAT_AREA]
-            if area >= min_size:
-                filtered_img[labels == label] = 1
-
-        binary_stack[i, :, :] = filtered_img
-
-    return binary_stack
+    img_bool = img.astype(bool)
+    labeled_img = skimage.morphology.label(img_bool, connectivity=connectivity.value)
+    filtered = skimage.morphology.remove_small_objects(
+        labeled_img, min_size=min_size, connectivity=connectivity.value
+    )
+    return filtered.astype(img.dtype)

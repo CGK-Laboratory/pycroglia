@@ -1,4 +1,5 @@
 from typing import Optional
+from numpy.typing import NDArray
 
 from PyQt6 import QtWidgets, QtCore
 from pyqtgraph import ImageView
@@ -252,7 +253,7 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
     """
 
     FILTER_MIN_VALUE = 1
-    FILTER_MAX_VALUE = 1000
+    FILTER_MAX_VALUE = 5000
 
     def __init__(
         self, state: MultiChImgEditorState, parent: Optional[QtWidgets.QWidget] = None
@@ -309,6 +310,42 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
             self.viewer.setImage(self.state.get_midslice(img))
 
 
+class FilterResults:
+    """Encapsulates the results and parameters of the filter pipeline."""
+
+    def __init__(
+        self,
+        file_path: str,
+        gray_filter_value: float,
+        min_size: int,
+        small_object_filtered_img: NDArray,
+    ):
+        """
+        Args:
+            file_path (str): Path to the image file.
+            gray_filter_value (float): Value used for the gray filter.
+            min_size (int): Minimum size for small object removal.
+            small_object_filtered_img (np.ndarray): Image after small object removal.
+        """
+        self.file_path = file_path
+        self.gray_filter_value = gray_filter_value
+        self.min_size = min_size
+        self.small_object_filtered_img = small_object_filtered_img
+
+    def as_dict(self) -> dict:
+        """Returns the filter results as a dictionary.
+
+        Returns:
+            dict: Dictionary with filter values and resulting images.
+        """
+        return {
+            "file_path": self.file_path,
+            "gray_filter_value": self.gray_filter_value,
+            "min_size": self.min_size,
+            "small_object_filtered_img": self.small_object_filtered_img,
+        }
+
+
 class MultiChannelFilterEditor(QtWidgets.QWidget):
     """Main widget for multi-channel image editing and viewing.
 
@@ -345,3 +382,19 @@ class MultiChannelFilterEditor(QtWidgets.QWidget):
         layout.addWidget(self.gray_filter_editor, stretch=1)
         layout.addWidget(self.small_object_filter_editor, stretch=1)
         self.setLayout(layout)
+
+    def get_filter_results(self) -> FilterResults:
+        """Get the current values and images for each filter step.
+
+        Returns:
+            FilterResults: Object containing filter values and resulting images.
+        """
+        gray_value = self.gray_filter_editor.slider.get_value()
+        small_obj_value = self.small_object_filter_editor.spin_box.get_value()
+        small_obj_img = self.editor_state.get_small_objects_img()
+        return FilterResults(
+            file_path=self.file_path,
+            gray_filter_value=gray_value,
+            min_size=small_obj_value,
+            small_object_filtered_img=small_obj_img,
+        )
