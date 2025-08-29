@@ -111,39 +111,65 @@ class MultiChannelImageViewer(QtWidgets.QWidget):
 
     Attributes:
         state (MultiChImgEditorState): State object for image editing.
+        label_text (str): Text for the main label.
+        read_button_text (str): Text for the read button.
         label (QtWidgets.QLabel): Label for the viewer.
         viewer (ImageView): Image viewer widget.
         editor (MultiChannelConfigurator): Channel configuration widget.
         read_button (QtWidgets.QPushButton): Button to trigger image reading.
     """
 
+    DEFAULT_LABEL_TEXT = "Image Viewer"
+    DEFAULT_READ_BUTTON_TEXT = "Read"
+    DEFAULT_CHANNELS_LABEL = "Channels"
+    DEFAULT_CHANNEL_OF_INTEREST_LABEL = "Channel of interest"
+
     def __init__(
-        self, state: MultiChImgEditorState, parent: Optional[QtWidgets.QWidget] = None
+        self,
+        state: MultiChImgEditorState,
+        label_text: Optional[str] = None,
+        read_button_text: Optional[str] = None,
+        channels_label: Optional[str] = None,
+        channel_of_interest_label: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the multi-channel image viewer.
 
         Args:
             state (MultiChImgEditorState): Image editor state.
-            parent (Optional[QtWidgets.QWidget]): Parent widget.
+            label_text (Optional[str], optional): Text for the main label.
+            read_button_text (Optional[str], optional): Text for the read button.
+            channels_label (Optional[str], optional): Label for channels configurator.
+            channel_of_interest_label (Optional[str], optional): Label for channel of interest.
+            parent (Optional[QtWidgets.QWidget], optional): Parent widget.
         """
         super().__init__(parent=parent)
+
+        # Configurable text
+        self.label_text = label_text or self.DEFAULT_LABEL_TEXT
+        self.read_button_text = read_button_text or self.DEFAULT_READ_BUTTON_TEXT
 
         self.state = state
         self.tpool = QtCore.QThreadPool(self)
 
         # Widgets
         self.label = QtWidgets.QLabel(parent=self)
-        self.label.setText("Image Viewer")
+        self.label.setText(self.label_text)
 
         viewer = ImageView(parent=self)
         for component in (viewer.ui.histogram, viewer.ui.menuBtn, viewer.ui.roiBtn):
             component.hide()
         self.viewer = viewer
 
-        self.editor = MultiChannelConfigurator(parent=self)
+        self.editor = MultiChannelConfigurator(
+            channels_label=channels_label or self.DEFAULT_CHANNELS_LABEL,
+            channel_of_interest_label=channel_of_interest_label
+            or self.DEFAULT_CHANNEL_OF_INTEREST_LABEL,
+            parent=self,
+        )
 
         self.read_button = QtWidgets.QPushButton(parent=self)
-        self.read_button.setText("Read")
+        self.read_button.setText(self.read_button_text)
 
         # Connections
         self.read_button.clicked.connect(self._on_read_button_press)
@@ -176,6 +202,8 @@ class GrayFilterEditor(QtWidgets.QWidget):
 
     Attributes:
         state (MultiChImgEditorState): State object for image editing.
+        label_text (str): Text for the main label.
+        slider_label_text (str): Label for the adjustment slider.
         label (QtWidgets.QLabel): Label for the editor.
         viewer (ImageView): Image viewer widget.
         slider (LabeledFloatSlider): Slider for adjusting the gray filter.
@@ -184,27 +212,40 @@ class GrayFilterEditor(QtWidgets.QWidget):
         GRAY_FILTER_STEP (float): Step size for the slider.
     """
 
+    DEFAULT_LABEL_TEXT = "Gray Filter Editor"
+    DEFAULT_SLIDER_LABEL_TEXT = "Adjustment"
+
     GRAY_FILTER_MAX = 4.0
     GRAY_FILTER_MIN = 0.1
     GRAY_FILTER_STEP = 0.1
 
     def __init__(
-        self, state: MultiChImgEditorState, parent: Optional[QtWidgets.QWidget] = None
+        self,
+        state: MultiChImgEditorState,
+        label_text: Optional[str] = None,
+        slider_label_text: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the gray filter editor.
 
         Args:
             state (MultiChImgEditorState): Image editor state.
-            parent (Optional[QtWidgets.QWidget]): Parent widget.
+            label_text (Optional[str], optional): Text for the main label.
+            slider_label_text (Optional[str], optional): Label for the adjustment slider.
+            parent (Optional[QtWidgets.QWidget], optional): Parent widget.
         """
         super().__init__(parent=parent)
+
+        # Configurable text
+        self.label_text = label_text or self.DEFAULT_LABEL_TEXT
+        self.slider_label_text = slider_label_text or self.DEFAULT_SLIDER_LABEL_TEXT
 
         self.state = state
         self.tpool = QtCore.QThreadPool(self)
 
         # Widgets
         self.label = QtWidgets.QLabel(parent=self)
-        self.label.setText("Gray Filter Editor")
+        self.label.setText(self.label_text)
 
         viewer = ImageView(parent=self)
         for component in (viewer.ui.histogram, viewer.ui.menuBtn, viewer.ui.roiBtn):
@@ -212,6 +253,7 @@ class GrayFilterEditor(QtWidgets.QWidget):
         self.viewer = viewer
 
         self.slider = LabeledFloatSlider(
+            label_text=self.slider_label_text,
             min_value=self.GRAY_FILTER_MIN,
             max_value=self.GRAY_FILTER_MAX,
             step_size=self.GRAY_FILTER_STEP,
@@ -245,6 +287,8 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
 
     Attributes:
         state (MultiChImgEditorState): State object for image editing.
+        label_text (str): Text for the main label.
+        threshold_label_text (str): Label for the threshold spin box.
         label (QtWidgets.QLabel): Label for the editor.
         viewer (ImageView): Image viewer widget.
         spin_box (LabeledSpinBox): Spin box for threshold value.
@@ -252,26 +296,41 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
         FILTER_MAX_VALUE (int): Maximum value for the filter threshold
     """
 
+    DEFAULT_LABEL_TEXT = "Small objects Filter Editor"
+    DEFAULT_THRESHOLD_LABEL_TEXT = "Threshold"
+
     FILTER_MIN_VALUE = 1
     FILTER_MAX_VALUE = 5000
 
     def __init__(
-        self, state: MultiChImgEditorState, parent: Optional[QtWidgets.QWidget] = None
+        self,
+        state: MultiChImgEditorState,
+        label_text: Optional[str] = None,
+        threshold_label_text: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the small objects filter editor.
 
         Args:
             state (MultiChImgEditorState): Image editor state.
-            parent (Optional[QtWidgets.QWidget]): Parent widget.
+            label_text (Optional[str], optional): Text for the main label.
+            threshold_label_text (Optional[str], optional): Label for the threshold spin box.
+            parent (Optional[QtWidgets.QWidget], optional): Parent widget.
         """
         super().__init__(parent=parent)
+
+        # Configurable text
+        self.label_text = label_text or self.DEFAULT_LABEL_TEXT
+        self.threshold_label_text = (
+            threshold_label_text or self.DEFAULT_THRESHOLD_LABEL_TEXT
+        )
 
         self.state = state
         self.tpool = QtCore.QThreadPool(self)
 
         # Widgets
         self.label = QtWidgets.QLabel(parent=self)
-        self.label.setText("Small objects Filter Editor")
+        self.label.setText(self.label_text)
 
         viewer = ImageView(parent=self)
         for component in (viewer.ui.histogram, viewer.ui.menuBtn, viewer.ui.roiBtn):
@@ -279,7 +338,7 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
         self.viewer = viewer
 
         self.spin_box = LabeledSpinBox(
-            label_text="Threshold: ",
+            label_text=self.threshold_label_text,
             min_value=self.FILTER_MIN_VALUE,
             max_value=self.FILTER_MAX_VALUE,
             parent=self,
