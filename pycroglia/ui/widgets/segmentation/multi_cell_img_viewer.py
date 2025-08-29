@@ -4,7 +4,7 @@ import numpy as np
 from PyQt6 import QtWidgets
 
 from pycroglia.core.labeled_cells import LabeledCells
-from pycroglia.ui.widgets.img_viewer import CustomImageViewer
+from pycroglia.ui.widgets.common.img_viewer import CustomImageViewer
 
 
 class MultiCellImageViewer(QtWidgets.QWidget):

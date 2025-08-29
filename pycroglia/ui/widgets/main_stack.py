@@ -4,8 +4,9 @@ from PyQt6 import QtWidgets, QtCore
 
 from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.labeled_cells import SkimageImgLabeling
-from pycroglia.ui.widgets.file_selection_editor import FileSelectionEditor
-from pycroglia.ui.widgets.ch_img import MultiChannelFilterEditor, FilterResults
+from pycroglia.ui.widgets.io.file_selection_editor import FileSelectionEditor
+from pycroglia.ui.widgets.imagefilters.editors import MultiChannelFilterEditor
+from pycroglia.ui.widgets.imagefilters.results import FilterResults
 from pycroglia.ui.widgets.segmentation.segmentation_editor import SegmentationEditor
 
 

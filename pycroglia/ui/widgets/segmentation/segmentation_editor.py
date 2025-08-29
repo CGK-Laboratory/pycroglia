@@ -4,7 +4,7 @@ from PyQt6 import QtWidgets
 from numpy.typing import NDArray
 
 from pycroglia.core.labeled_cells import LabelingStrategy
-from pycroglia.ui.widgets.img_viewer import CustomImageViewer
+from pycroglia.ui.widgets.common.img_viewer import CustomImageViewer
 from pycroglia.ui.widgets.segmentation.cell_list import CellList
 from pycroglia.ui.widgets.segmentation.multi_cell_img_viewer import MultiCellImageViewer
 from pycroglia.ui.controllers.segmentation_state import SegmentationEditorState

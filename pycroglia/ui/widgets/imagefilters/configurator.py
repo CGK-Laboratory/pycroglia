@@ -1,7 +1,7 @@
 from PyQt6 import QtWidgets
 from typing import Optional
 
-from pycroglia.ui.widgets.labeled_widgets import LabeledSpinBox
+from pycroglia.ui.widgets.common.labeled_widgets import LabeledSpinBox
 
 
 class MultiChannelConfigurator(QtWidgets.QWidget):

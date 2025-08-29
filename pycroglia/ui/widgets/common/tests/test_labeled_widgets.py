@@ -1,6 +1,6 @@
 import pytest
 
-from pycroglia.ui.widgets.labeled_widgets import (
+from pycroglia.ui.widgets.common.labeled_widgets import (
     LabeledSpinBox,
     LabeledIntSlider,
     LabeledFloatSlider,

@@ -13,19 +13,20 @@ class StepperType(Enum):
     a distance map to extract skeleton paths.
 
     Attributes:
-        RK4 (int): 
+        RK4 (int):
             Runge-Kutta 4th-order integration method. Provides
             high accuracy in tracing smooth paths at the cost of
             higher computation.
-        Euler (int): 
+        Euler (int):
             First-order Euler integration method. Simpler and
             faster than RK4, but less accurate and more prone to
             drift in noisy data.
-        Simple (int): 
+        Simple (int):
             A heuristic stepping method that moves to the
             neighboring pixel/voxel with the lowest value.
             Useful as a baseline or when accuracy is less critical.
     """
+
     RK4 = 0
     Euler = 1
     Simple = 2

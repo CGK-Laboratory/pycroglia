@@ -2,8 +2,8 @@ from PyQt6 import QtCore, QtWidgets
 from typing import Optional, List
 from pathlib import Path
 
-from pycroglia.ui.widgets.file_selector import FileSelector
-from pycroglia.ui.widgets.two_column_list import TwoColumnListWithDelete
+from pycroglia.ui.widgets.io.file_selector import FileSelector
+from pycroglia.ui.widgets.common.two_column_list import TwoColumnListWithDelete
 
 
 class FileSelectionEditor(QtWidgets.QWidget):
@@ -63,7 +63,7 @@ class FileSelectionEditor(QtWidgets.QWidget):
         layout.addWidget(self.file_selector)
         self.setLayout(layout)
 
-    def get_files(self):
+    def get_files(self) -> list[str]:
         """Get the list of file paths.
 
         Returns:

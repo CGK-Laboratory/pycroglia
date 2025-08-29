@@ -1,5 +1,5 @@
 import pytest
-from pycroglia.ui.widgets.file_selection_editor import FileSelectionEditor
+from pycroglia.ui.widgets.io.file_selection_editor import FileSelectionEditor
 
 
 @pytest.fixture

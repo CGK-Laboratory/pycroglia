@@ -1,6 +1,6 @@
 import pytest
 
-from pycroglia.ui.widgets.two_column_list import (
+from pycroglia.ui.widgets.common.two_column_list import (
     TwoColumnListWithDelete,
     TwoColumnList,
 )

@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from pycroglia.ui.widgets.img_viewer import CustomImageViewer
+from pycroglia.ui.widgets.common.img_viewer import CustomImageViewer
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ from unittest.mock import patch
 from PyQt6 import QtCore
 from PyQt6.QtTest import QSignalSpy
 
-from pycroglia.ui.widgets.file_selector import FileSelector
+from pycroglia.ui.widgets.io.file_selector import FileSelector
 
 
 @pytest.fixture
