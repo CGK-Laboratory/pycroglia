@@ -1,5 +1,6 @@
 from numpy.typing import NDArray
 
+
 class FilterResults:
     """Encapsulates the results and parameters of the filter pipeline."""
 
