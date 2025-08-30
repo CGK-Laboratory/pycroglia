@@ -95,7 +95,7 @@ class FilterEditorStack(QtWidgets.QWidget):
 
         for i in range(self.tabs.count()):
             editor = self.tabs.widget(i)
-            if isinstance(editor, MultiChannelFilterEditor):
+            if hasattr(editor, 'get_filter_results'):
                 list_of_results.append(editor.get_filter_results())
 
         return list_of_results
