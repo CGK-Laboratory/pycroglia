@@ -5,6 +5,7 @@ from PyQt6 import QtWidgets
 from pycroglia.ui.widgets.imagefilters.stacks import FilterEditorStack
 from pycroglia.ui.widgets.imagefilters.results import FilterResults
 
+
 @pytest.fixture
 def filter_editor_stack():
     """Create a FilterEditorStack instance."""
@@ -16,7 +17,7 @@ def filter_editor_stack():
         gray_filter_label="Gray Filter",
         gray_filter_slider_label="Threshold:",
         small_objects_filter_label="Small Objects",
-        small_objects_threshold_label="Min Size:"
+        small_objects_threshold_label="Min Size:",
     )
 
 
@@ -55,8 +56,10 @@ def test_filter_editor_stack_default__init__():
     assert filter_stack.small_objects_threshold_label is None
 
 
-@patch('pycroglia.ui.widgets.imagefilters.stacks.MultiChannelFilterEditor')
-def test_filter_editor_stack_add_tabs_creates_editors(mock_editor_class, filter_editor_stack):
+@patch("pycroglia.ui.widgets.imagefilters.stacks.MultiChannelFilterEditor")
+def test_filter_editor_stack_add_tabs_creates_editors(
+    mock_editor_class, filter_editor_stack
+):
     """Test add_tabs creates MultiChannelFilterEditor for each file.
 
     Asserts:
@@ -83,7 +86,7 @@ def test_filter_editor_stack_add_tabs_creates_editors(mock_editor_class, filter_
         gray_filter_slider_label="Threshold:",
         small_objects_filter_label="Small Objects",
         small_objects_threshold_label="Min Size:",
-        parent=filter_editor_stack
+        parent=filter_editor_stack,
     )
 
 
@@ -96,7 +99,7 @@ def test_filter_editor_stack_add_tabs_clears_existing_tabs(filter_editor_stack):
     filter_editor_stack.tabs.clear = Mock()
     filter_editor_stack.tabs.addTab = Mock()
 
-    with patch('pycroglia.ui.widgets.imagefilters.stacks.MultiChannelFilterEditor'):
+    with patch("pycroglia.ui.widgets.imagefilters.stacks.MultiChannelFilterEditor"):
         filter_editor_stack.add_tabs(["/path/to/file.tif"])
 
     filter_editor_stack.tabs.clear.assert_called_once()
@@ -118,7 +121,7 @@ def test_filter_editor_stack_get_results_returns_filter_results(filter_editor_st
     filter_editor_stack.tabs.widget = Mock(side_effect=[mock_editor1, mock_editor2])
 
     # Mock hasattr to simulate MultiChannelFilterEditor detection
-    with patch('builtins.hasattr') as mock_hasattr:
+    with patch("builtins.hasattr") as mock_hasattr:
         mock_hasattr.return_value = True
 
         results = filter_editor_stack.get_results()
@@ -126,4 +129,3 @@ def test_filter_editor_stack_get_results_returns_filter_results(filter_editor_st
     assert len(results) == 2
     mock_editor1.get_filter_results.assert_called_once()
     mock_editor2.get_filter_results.assert_called_once()
-

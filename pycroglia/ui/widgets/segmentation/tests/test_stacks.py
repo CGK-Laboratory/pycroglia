@@ -5,6 +5,7 @@ from PyQt6 import QtWidgets
 from pycroglia.ui.widgets.segmentation.stacks import SegmentationEditorStack
 from pycroglia.ui.widgets.imagefilters.results import FilterResults
 
+
 @pytest.fixture
 def segmentation_editor_stack():
     """Create a SegmentationEditorStack instance."""
@@ -13,7 +14,7 @@ def segmentation_editor_stack():
         rollback_button_text="Rollback",
         segmentation_button_text="Segment",
         progress_title="Processing...",
-        progress_cancel_text="Cancel"
+        progress_cancel_text="Cancel",
     )
 
 
@@ -46,9 +47,11 @@ def test_segmentation_editor_stack_default__init__():
     assert segmentation_stack.progress_cancel_text is None
 
 
-@patch('pycroglia.ui.widgets.segmentation.stacks.SegmentationEditor')
-@patch('pycroglia.ui.widgets.segmentation.stacks.SkimageImgLabeling')
-def test_segmentation_editor_stack_add_tabs_creates_editors(mock_labeling_class, mock_editor_class, segmentation_editor_stack):
+@patch("pycroglia.ui.widgets.segmentation.stacks.SegmentationEditor")
+@patch("pycroglia.ui.widgets.segmentation.stacks.SkimageImgLabeling")
+def test_segmentation_editor_stack_add_tabs_creates_editors(
+    mock_labeling_class, mock_editor_class, segmentation_editor_stack
+):
     """Test add_tabs creates SegmentationEditor for each result.
 
     Asserts:
@@ -89,11 +92,13 @@ def test_segmentation_editor_stack_add_tabs_creates_editors(mock_labeling_class,
         segmentation_button_text="Segment",
         progress_title="Processing...",
         progress_cancel_text="Cancel",
-        parent=segmentation_editor_stack
+        parent=segmentation_editor_stack,
     )
 
 
-def test_segmentation_editor_stack_add_tabs_clears_existing_tabs(segmentation_editor_stack):
+def test_segmentation_editor_stack_add_tabs_clears_existing_tabs(
+    segmentation_editor_stack,
+):
     """Test add_tabs clears existing tabs before adding new ones.
 
     Asserts:
@@ -102,8 +107,10 @@ def test_segmentation_editor_stack_add_tabs_clears_existing_tabs(segmentation_ed
     segmentation_editor_stack.tabs.clear = Mock()
     segmentation_editor_stack.tabs.addTab = Mock()
 
-    with patch('pycroglia.ui.widgets.segmentation.stacks.SegmentationEditor'), \
-            patch('pycroglia.ui.widgets.segmentation.stacks.SkimageImgLabeling'):
+    with (
+        patch("pycroglia.ui.widgets.segmentation.stacks.SegmentationEditor"),
+        patch("pycroglia.ui.widgets.segmentation.stacks.SkimageImgLabeling"),
+    ):
         mock_result = Mock(spec=FilterResults)
         mock_result.small_object_filtered_img = Mock()
         mock_result.min_size = 100
@@ -114,8 +121,10 @@ def test_segmentation_editor_stack_add_tabs_clears_existing_tabs(segmentation_ed
     segmentation_editor_stack.tabs.clear.assert_called_once()
 
 
-@patch('pycroglia.ui.widgets.segmentation.stacks.Path')
-def test_segmentation_editor_stack_add_tabs_sets_correct_tab_names(mock_path_class, segmentation_editor_stack):
+@patch("pycroglia.ui.widgets.segmentation.stacks.Path")
+def test_segmentation_editor_stack_add_tabs_sets_correct_tab_names(
+    mock_path_class, segmentation_editor_stack
+):
     """Test add_tabs sets correct tab names from file paths.
 
     Asserts:
@@ -132,12 +141,18 @@ def test_segmentation_editor_stack_add_tabs_sets_correct_tab_names(mock_path_cla
 
     segmentation_editor_stack.tabs.addTab = Mock()
 
-    with patch('pycroglia.ui.widgets.segmentation.stacks.SegmentationEditor') as mock_editor_class, \
-            patch('pycroglia.ui.widgets.segmentation.stacks.SkimageImgLabeling'):
+    with (
+        patch(
+            "pycroglia.ui.widgets.segmentation.stacks.SegmentationEditor"
+        ) as mock_editor_class,
+        patch("pycroglia.ui.widgets.segmentation.stacks.SkimageImgLabeling"),
+    ):
         mock_editor = Mock()
         mock_editor_class.return_value = mock_editor
 
         segmentation_editor_stack.add_tabs([mock_result])
 
     mock_path_class.assert_called_with(mock_result.file_path)
-    segmentation_editor_stack.tabs.addTab.assert_called_with(mock_editor, "test_file.tif")
+    segmentation_editor_stack.tabs.addTab.assert_called_with(
+        mock_editor, "test_file.tif"
+    )

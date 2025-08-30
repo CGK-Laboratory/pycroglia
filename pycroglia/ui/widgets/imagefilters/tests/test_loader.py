@@ -1,8 +1,19 @@
 import pytest
+import numpy as np
+from numpy.typing import NDArray
 from unittest.mock import MagicMock, patch
-from pycroglia.ui.widgets.imagefilters.tests.utils import fake_image
 
 from pycroglia.ui.widgets.imagefilters.loader import MultiChannelImageLoader
+
+
+@pytest.fixture
+def fake_image() -> NDArray:
+    """Fixture for a fake 3D numpy image.
+
+    Returns:
+        NDArray: 3D array of ones.
+    """
+    return np.ones((5, 5, 5), dtype=np.uint8)
 
 
 @pytest.fixture
@@ -40,14 +51,13 @@ def multi_channel_image_viewer(qtbot, mock_editor_state):
 
 
 def test_image_viewer_reads_and_displays_image(
-    multi_channel_image_viewer, mock_editor_state, fake_image
+    multi_channel_image_viewer, mock_editor_state
 ):
     """Test that the image viewer reads and displays the image correctly.
 
     Args:
         multi_channel_image_viewer (MultiChannelImageLoader): The image viewer widget.
         mock_editor_state (MagicMock): Mocked editor state.
-        fake_image (NDArray): The fake image.
     """
     multi_channel_image_viewer.editor.get_channels = lambda: 1
     multi_channel_image_viewer.editor.get_channel_of_interest = lambda: 0
