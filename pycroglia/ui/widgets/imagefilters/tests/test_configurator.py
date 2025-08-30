@@ -1,5 +1,5 @@
 import pytest
-from pycroglia.ui.widgets.ch_config import MultiChannelConfigurator
+from pycroglia.ui.widgets.imagefilters.configurator import MultiChannelConfigurator
 
 
 @pytest.fixture

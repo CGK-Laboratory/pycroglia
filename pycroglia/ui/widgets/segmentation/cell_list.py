@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from PyQt6 import QtWidgets, QtCore
 
 from pycroglia.core.labeled_cells import LabeledCells
-from pycroglia.ui.widgets.two_column_list import TwoColumnList
+from pycroglia.ui.widgets.common.two_column_list import TwoColumnList
 
 
 class CellList(QtWidgets.QWidget):

@@ -5,105 +5,16 @@ from PyQt6 import QtWidgets, QtCore
 from pyqtgraph import ImageView
 
 from pycroglia.ui.controllers.ch_editor import MultiChImgEditorState
-from pycroglia.ui.widgets.labeled_widgets import LabeledSpinBox, LabeledFloatSlider
-from pycroglia.ui.widgets.ch_config import MultiChannelConfigurator
-
-
-class TaskSignals(QtCore.QObject):
-    """Signals for QRunnable tasks.
-
-    Attributes:
-        finished (QtCore.pyqtSignal): Signal emitted when the task is finished.
-    """
-
-    finished = QtCore.pyqtSignal()
-
-
-class ImageReaderTask(QtCore.QRunnable):
-    """QRunnable task for reading an image asynchronously.
-
-    Attributes:
-        state (MultiChImgEditorState): State object for image editing.
-        ch (int): Number of channels.
-        chi (int): Channel of interest.
-        signals (TaskSignals): Signals for task completion.
-    """
-
-    def __init__(self, state: MultiChImgEditorState, ch: int, chi: int):
-        """Initialize the image reader task.
-
-        Args:
-            state (MultiChImgEditorState): State object for image editing.
-            ch (int): Number of channels.
-            chi (int): Channel of interest.
-        """
-        super().__init__()
-
-        self.state = state
-        self.ch = ch
-        self.chi = chi
-        self.signals = TaskSignals()
-
-    def run(self):
-        """Run the image reading task and emit finished signal."""
-        self.state.read_img(self.ch, self.chi)
-        self.signals.finished.emit()
-
-
-class GrayFilterTask(QtCore.QRunnable):
-    """QRunnable task for applying the gray filter asynchronously.
-
-    Attributes:
-        state (MultiChImgEditorState): State object for image editing.
-        adjust_value (float): Adjustment value for the gray filter.
-        signals (TaskSignals): Signals for task completion.
-    """
-
-    def __init__(self, state: MultiChImgEditorState, adjust_value: float):
-        """Initialize the gray filter task.
-
-        Args:
-            state (MultiChImgEditorState): State object for image editing.
-            adjust_value (float): Adjustment value for the gray filter.
-        """
-        super().__init__()
-
-        self.state = state
-        self.adjust_value = adjust_value
-        self.signals = TaskSignals()
-
-    def run(self):
-        """Run the gray filter task and emit finished signal."""
-        self.state.apply_otsu_gray_filter(self.adjust_value)
-        self.signals.finished.emit()
-
-
-class SmallObjectFilterTask(QtCore.QRunnable):
-    """QRunnable task for applying the small objects filter asynchronously.
-
-    Attributes:
-        state (MultiChImgEditorState): State object for image editing.
-        threshold (int): Minimum object size threshold.
-        signals (TaskSignals): Signals for task completion.
-    """
-
-    def __init__(self, state: MultiChImgEditorState, threshold: int):
-        """Initialize the small objects filter task.
-
-        Args:
-            state (MultiChImgEditorState): State object for image editing.
-            threshold (int): Minimum object size threshold.
-        """
-        super().__init__()
-
-        self.state = state
-        self.threshold = threshold
-        self.signals = TaskSignals()
-
-    def run(self):
-        """Run the small objects filter task and emit finished signal."""
-        self.state.apply_small_object_filter(self.threshold)
-        self.signals.finished.emit()
+from pycroglia.ui.widgets.common.labeled_widgets import (
+    LabeledSpinBox,
+    LabeledFloatSlider,
+)
+from pycroglia.ui.widgets.imagefilters.configurator import MultiChannelConfigurator
+from pycroglia.ui.widgets.imagefilters.tasks import (
+    ImageReaderTask,
+    GrayFilterTask,
+    SmallObjectFilterTask,
+)
 
 
 class MultiChannelImageViewer(QtWidgets.QWidget):
@@ -416,11 +327,31 @@ class MultiChannelFilterEditor(QtWidgets.QWidget):
         small_object_filter_editor (SmallObjectsFilterEditor): Widget for small object filtering.
     """
 
-    def __init__(self, file_path: str, parent: Optional[QtWidgets.QWidget] = None):
+    def __init__(
+        self,
+        file_path: str,
+        img_viewer_label: Optional[str] = None,
+        read_button_text: Optional[str] = None,
+        channels_label: Optional[str] = None,
+        channel_of_interest_label: Optional[str] = None,
+        gray_filter_label: Optional[str] = None,
+        gray_filter_slider_label: Optional[str] = None,
+        small_objects_filter_label: Optional[str] = None,
+        small_objects_threshold_label: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
         """Initialize the multi-channel filter editor.
 
         Args:
             file_path (str): Path to the image file.
+            img_viewer_label (Optional[str]): Label text for image viewer.
+            read_button_text (Optional[str]): Text for read button.
+            channels_label (Optional[str]): Label for channels configurator.
+            channel_of_interest_label (Optional[str]): Label for channel of interest.
+            gray_filter_label (Optional[str]): Label text for gray filter editor.
+            gray_filter_slider_label (Optional[str]): Label for gray filter slider.
+            small_objects_filter_label (Optional[str]): Label text for small objects filter editor.
+            small_objects_threshold_label (Optional[str]): Label for threshold spin box.
             parent (Optional[QtWidgets.QWidget]): Parent widget.
         """
         super().__init__(parent=parent)
@@ -429,10 +360,25 @@ class MultiChannelFilterEditor(QtWidgets.QWidget):
         self.editor_state = MultiChImgEditorState(file_path=file_path)
 
         # Widgets
-        self.img_viewer = MultiChannelImageViewer(state=self.editor_state, parent=self)
-        self.gray_filter_editor = GrayFilterEditor(state=self.editor_state, parent=self)
+        self.img_viewer = MultiChannelImageViewer(
+            state=self.editor_state,
+            label_text=img_viewer_label,
+            read_button_text=read_button_text,
+            channels_label=channels_label,
+            channel_of_interest_label=channel_of_interest_label,
+            parent=self,
+        )
+        self.gray_filter_editor = GrayFilterEditor(
+            state=self.editor_state,
+            label_text=gray_filter_label,
+            slider_label_text=gray_filter_slider_label,
+            parent=self,
+        )
         self.small_object_filter_editor = SmallObjectsFilterEditor(
-            state=self.editor_state, parent=self
+            state=self.editor_state,
+            label_text=small_objects_filter_label,
+            threshold_label_text=small_objects_threshold_label,
+            parent=self,
         )
 
         # Layout
