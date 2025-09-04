@@ -103,7 +103,7 @@ def segment_single_cell(
     for cluster in clusters:
         cluster_filtered = remove_small_objects(cluster, config.min_size)
         labeled_cluster = LabeledCells(
-            cluster_filtered, SkimageImgLabeling(config.connectivity, start_label)
+            cluster_filtered, SkimageImgLabeling(config.connectivity)
         )
         for j in range(1, labeled_cluster.len() + 1):
             cells_array.append(labeled_cluster.get_cell(j))
