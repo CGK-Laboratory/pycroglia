@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from pycroglia.ui.widgets.segmentation.cell_list import CellList
+from pycroglia.ui.widgets.cells.cell_list import CellList
 from pycroglia.core.labeled_cells import LabeledCells, SkimageImgLabeling
 from pycroglia.core.enums import SkimageCellConnectivity
 

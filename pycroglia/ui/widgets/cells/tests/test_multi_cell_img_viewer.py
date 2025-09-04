@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from pycroglia.ui.widgets.segmentation.multi_cell_img_viewer import MultiCellImageViewer
+from pycroglia.ui.widgets.cells.multi_cell_img_viewer import MultiCellImageViewer
 from pycroglia.core.labeled_cells import LabeledCells, SkimageImgLabeling
 from pycroglia.core.enums import SkimageCellConnectivity
 

@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from pycroglia.ui.widgets.segmentation.segmentation_editor import SegmentationEditor
+from pycroglia.ui.widgets.segmentation.editor import SegmentationEditor
 from pycroglia.core.labeled_cells import LabeledCells, SkimageImgLabeling
 from pycroglia.core.enums import SkimageCellConnectivity
 

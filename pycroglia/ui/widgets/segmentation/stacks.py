@@ -6,7 +6,7 @@ from PyQt6 import QtWidgets
 from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.labeled_cells import SkimageImgLabeling
 from pycroglia.ui.widgets.imagefilters.results import FilterResults
-from pycroglia.ui.widgets.segmentation.segmentation_editor import SegmentationEditor
+from pycroglia.ui.widgets.segmentation.editor import SegmentationEditor
 
 
 class SegmentationEditorStack(QtWidgets.QWidget):
