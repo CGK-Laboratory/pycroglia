@@ -1,5 +1,8 @@
 from typing import Optional, Set, Dict
 
+import numpy as np
+from numpy.typing import NDArray
+
 from PyQt6 import QtWidgets, QtGui
 
 from pycroglia.core.labeled_cells import LabeledCells
@@ -8,12 +11,49 @@ from pycroglia.ui.widgets.cells.cell_list import CellList
 from pycroglia.ui.widgets.cells.multi_cell_img_viewer import MultiCellImageViewer
 from pycroglia.ui.widgets.common.labeled_widgets import LabeledSpinBox
 
+
+class PreviewDialog(QtWidgets.QDialog):
+    DEFAULT_WINDOW_TITLE = "Image preview"
+    DEFAULT_DIALOG_SIZE = (800, 600)
+
+    def __init__(
+        self,
+        img: NDArray,
+        title_txt: Optional[str] = None,
+        dialog_size: Optional[tuple[int, int]] = None,
+        parent: Optional[QtWidgets.QWidget] = None
+    ):
+        super().__init__(parent)
+
+        # Text configuration
+        # TODO - Change hardcoded values
+        self.window_title = title_txt or self.DEFAULT_WINDOW_TITLE
+        self.dialog_size = dialog_size or self.DEFAULT_DIALOG_SIZE
+
+        self.setWindowTitle(self.window_title)
+        self.setModal(True)
+
+        # Widgets
+        self.img_viewer = CustomImageViewer(parent=self)
+        self.img_viewer.set_image(img)
+
+        # Layout
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.img_viewer)
+        self.setLayout(layout)
+
+        self.resize(self.dialog_size[0], self.dialog_size[1])
+
+
+
+
 class CellSelector(QtWidgets.QWidget):
     # UI Text Constants
     DEFAULT_HEADERS_TEXT = ["Cell number", "Cell size"]
     DEFAULT_REMOVE_BUTTON_TEXT = "Remove Cell"
     DEFAULT_SIZE_LABEL_TEXT = "Cell Size"
     DEFAULT_SIZE_BUTTON_TEXT = "Remove smaller than"
+    DEFAULT_PREVIEW_BUTTON_TEXT = "Preview"
 
     # Layout Constants
     LIST_STRETCH_FACTOR = 1
@@ -30,6 +70,7 @@ class CellSelector(QtWidgets.QWidget):
         remove_button_text: Optional[str] = None,
         size_label_text: Optional[str] = None,
         size_button_text: Optional[str] = None,
+        preview_button_text: Optional[str] = None,
         parent: Optional[QtWidgets.QWidget] = None
     ):
         super().__init__(parent=parent)
@@ -43,6 +84,7 @@ class CellSelector(QtWidgets.QWidget):
         self.remove_button_text = remove_button_text or self.DEFAULT_REMOVE_BUTTON_TEXT
         self.size_label_text = size_label_text or self.DEFAULT_SIZE_LABEL_TEXT
         self.size_button_text = size_button_text or self.DEFAULT_SIZE_BUTTON_TEXT
+        self.preview_button_text = preview_button_text or self.DEFAULT_PREVIEW_BUTTON_TEXT
 
         # Widgets
         self.cell_list = CellList(headers=self.headers_text, parent=self)
@@ -56,6 +98,9 @@ class CellSelector(QtWidgets.QWidget):
         self.size_btn = QtWidgets.QPushButton(parent=self)
         self.size_btn.setText(self.size_button_text)
 
+        self.preview_btn = QtWidgets.QPushButton(parent=self)
+        self.preview_btn.setText(self.preview_button_text)
+
         self.multi_viewer = MultiCellImageViewer(parent=self)
         self.cell_viewer = CustomImageViewer(parent=self)
 
@@ -63,6 +108,7 @@ class CellSelector(QtWidgets.QWidget):
         self.cell_list.selectionChanged.connect(self._on_cell_selection_changed)
         self.remove_btn.clicked.connect(self._on_remove_button_clicked)
         self.size_btn.clicked.connect(self._on_size_button_clicked)
+        self.preview_btn.clicked.connect(self._on_preview_button_clicked)
 
         # Layout
         list_layout = QtWidgets.QVBoxLayout()
@@ -70,6 +116,7 @@ class CellSelector(QtWidgets.QWidget):
         list_layout.addWidget(self.remove_btn)
         list_layout.addWidget(self.size_input)
         list_layout.addWidget(self.size_btn)
+        list_layout.addWidget(self.preview_btn)
         list_layout_widget = QtWidgets.QWidget()
         list_layout_widget.setLayout(list_layout)
 
@@ -114,6 +161,22 @@ class CellSelector(QtWidgets.QWidget):
         """Update colors for multiple cells efficiently."""
         for cell_id in cell_ids:
             self._set_row_color(cell_id, is_unselected)
+
+    def _on_preview_button_clicked(self):
+        selected_cells = self.get_selected_cells()
+
+        if not selected_cells:
+            preview_2d = np.zeros((self.img.y, self.img.x), dtype=self.img.ARRAY_ELEMENTS_TYPE)
+        else:
+            preview_2d = np.zeros((self.img.y, self.img.x), dtype=self.img.ARRAY_ELEMENTS_TYPE)
+
+            # Iterate through selected cells and combine their 2D projections
+            for cell_id in selected_cells:
+                cell_2d = self.img.cell_to_2d(cell_id)
+                preview_2d += cell_2d
+
+        dialog = PreviewDialog(preview_2d, parent=self)
+        dialog.exec()
 
     def _on_cell_selection_changed(self):
         selected_cell = self.cell_list.get_selected_cell_id()
