@@ -111,29 +111,3 @@ def compute_metrics(
         empty_volume=empty_volume,
         covered_percentage=covered_percentage,
     )
-
-
-if __name__ == '__main__':
-    def indices_to_mask(cell_indices: np.ndarray, img_shape: tuple[int, int, int]) -> np.ndarray:
-      mask = np.zeros(img_shape, dtype=bool)
-      mask.ravel()[cell_indices] = True
-      return mask.astype(np.uint8)
-
-
-    from scipy.io import loadmat    
-    convex_hull = loadmat("convex.mat")["ConvexVol"]
-    img = loadmat("img.mat")["img"]
-    img_shape = img.shape
-    data = loadmat('microglia.mat')
-    microglia = data['Microglia'].ravel()
-    masks = []
-    for cell in microglia:
-        indices = cell.ravel().astype(int) - 1   # MATLAB 1-based → Python 0-based
-        mask = indices_to_mask(indices, (img_shape[2], img_shape[1], img_shape[0]))
-        masks.append(mask)
-    print(masks)
-    tv = TerritorialVolume(masks, 0.0100)
-    result = tv.compute()
-    assert len(convex_hull.flatten()) == len(result)
-    metrics = compute_metrics(result.flatten(), 0.0100, img.shape, 39)
-    print(metrics)
