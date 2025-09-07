@@ -4,10 +4,42 @@ from PyQt6 import QtWidgets
 from numpy.typing import NDArray
 
 from pycroglia.core.labeled_cells import LabelingStrategy
-from pycroglia.ui.widgets.common.img_viewer import CustomImageViewer
-from pycroglia.ui.widgets.cells.cell_list import CellList
-from pycroglia.ui.widgets.cells.multi_cell_img_viewer import MultiCellImageViewer
 from pycroglia.ui.controllers.segmentation_state import SegmentationEditorState
+from pycroglia.ui.widgets.cells.cells_panel import CellsPanel
+
+
+class SegmentationControlPanel(QtWidgets.QWidget):
+    DEFAULT_ROLLBACK_BUTTON_TEXT = "Roll back segmentation"
+    DEFAULT_SEGMENTATION_BUTTON_TEXT = "Segment Cell"
+
+    def __init__(
+        self,
+        rollback_button_text: Optional[str] = None,
+        segmentation_button_text: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
+        super().__init__(parent=parent)
+
+        # Store text parameters
+        self.rollback_button_text = (
+            rollback_button_text or self.DEFAULT_ROLLBACK_BUTTON_TEXT
+        )
+        self.segmentation_button_text = (
+            segmentation_button_text or self.DEFAULT_SEGMENTATION_BUTTON_TEXT
+        )
+
+        # Widgets
+        self.segment_button = QtWidgets.QPushButton(self.segmentation_button_text)
+        self.segment_button.setEnabled(False)
+
+        self.rollback_button = QtWidgets.QPushButton(self.rollback_button_text)
+        self.rollback_button.setEnabled(False)
+
+        # Layout
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.segment_button)
+        layout.addWidget(self.rollback_button)
+        self.setLayout(layout)
 
 
 class SegmentationEditor(QtWidgets.QWidget):
@@ -74,75 +106,52 @@ class SegmentationEditor(QtWidgets.QWidget):
             progress_cancel_text or self.DEFAULT_PROGRESS_CANCEL_TEXT
         )
 
+        # Properties
         self.state = SegmentationEditorState(img, labeling_strategy, min_size)
         self.with_progress_bar = with_progress_bar
 
         # Widgets
-        self.list = CellList(headers=self.headers_text, parent=self)
-
-        self.segment_button = QtWidgets.QPushButton(self.segmentation_button_text)
-        self.segment_button.setEnabled(False)
-
-        self.rollback_button = QtWidgets.QPushButton(self.rollback_button_text)
-        self.rollback_button.setEnabled(False)
-
-        self.multi_cell_viewer = MultiCellImageViewer(parent=self)
-        self.cell_viewer = CustomImageViewer(parent=self)
+        self.control_panel = SegmentationControlPanel(
+            rollback_button_text=self.rollback_button_text,
+            segmentation_button_text=self.segmentation_button_text,
+            parent=self,
+        )
+        self.viewer = CellsPanel(
+            self.state.get_state(),
+            headers=self.headers_text,
+            control_panel=self.control_panel,
+            parent=self,
+        )
 
         # Connections
-        self.list.selectionChanged.connect(self._on_cell_selection_changed)
-        self.segment_button.clicked.connect(self._on_cell_segmentation_request)
-        self.rollback_button.clicked.connect(self._on_rollback_request)
+        self.viewer.cell_list.selectionChanged.connect(self._on_cell_selection_change)
+        self.control_panel.segment_button.clicked.connect(self._on_cell_segmentation)
+        self.control_panel.rollback_button.clicked.connect(self._on_rollback_request)
         self.state.stateChanged.connect(self._load_data)
 
         # Layout
-        list_layout = QtWidgets.QVBoxLayout()
-        list_layout.addWidget(self.list, stretch=self.LIST_STRETCH_FACTOR)
-        list_layout.addWidget(self.segment_button)
-        list_layout.addWidget(self.rollback_button)
-        list_container = QtWidgets.QWidget()
-        list_container.setLayout(list_layout)
-
         layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(list_container, stretch=self.LIST_STRETCH_FACTOR)
-        layout.addWidget(self.multi_cell_viewer, stretch=self.VIEWER_STRETCH_FACTOR)
-
-        # For consistency
-        # TODO - Improve style
-        cell_viewer_layout = QtWidgets.QVBoxLayout()
-        cell_viewer_layout.addWidget(self.cell_viewer)
-        cell_viewer_container = QtWidgets.QWidget()
-        cell_viewer_container.setLayout(cell_viewer_layout)
-        layout.addWidget(cell_viewer_container, stretch=self.VIEWER_STRETCH_FACTOR)
-
+        layout.addWidget(self.viewer)
         self.setLayout(layout)
 
-        # Loads data
+        # Load data
         self._load_data()
 
     def _load_data(self):
         """Loads and displays the current segmentation state in the UI."""
         actual_state = self.state.get_state()
 
-        self.list.clear_cells()
-        self.list.add_cells(actual_state)
-        self.multi_cell_viewer.set_cells_img(actual_state)
+        self.viewer.load_data(actual_state)
+        self.control_panel.rollback_button.setEnabled(self.state.has_prev_state())
 
-        self.rollback_button.setEnabled(self.state.has_prev_state())
+    def _on_cell_selection_change(self):
+        self.control_panel.segment_button.setEnabled(
+            self.viewer.cell_list.get_selected_cell_id() is not None
+        )
 
-    def _on_cell_selection_changed(self):
-        """Handles cell selection changes in the list and updates the cell viewer."""
-        selected_cell = self.list.get_selected_cell_id()
-        self.segment_button.setEnabled(selected_cell is not None)
-        if selected_cell is None:
-            return
-
-        cell_2d = self.state.get_state().cell_to_2d(selected_cell)
-        self.cell_viewer.set_image(cell_2d)
-
-    def _on_cell_segmentation_request(self):
+    def _on_cell_segmentation(self):
         """Handles the segmentation request for the selected cell, showing a progress bar if enabled."""
-        selected_cell_info = self.list.get_selected_cell_info()
+        selected_cell_info = self.viewer.cell_list.get_selected_cell_info()
         if selected_cell_info is None:
             return
 
@@ -164,7 +173,9 @@ class SegmentationEditor(QtWidgets.QWidget):
         finally:
             if progress_bar:
                 progress_bar.close()
+            self.viewer.load_data(self.state.get_state())
 
     def _on_rollback_request(self):
         """Handles the rollback request to restore the previous segmentation state."""
         self.state.rollback()
+        self.viewer.load_data(self.state.get_state())

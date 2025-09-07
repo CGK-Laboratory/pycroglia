@@ -1,50 +1,59 @@
-from typing import Optional, Set, Dict
-
 import numpy as np
-from numpy.typing import NDArray
+from typing import Optional, Set, Dict
 
 from PyQt6 import QtWidgets, QtGui
 
 from pycroglia.core.labeled_cells import LabeledCells
-from pycroglia.ui.widgets.common.img_viewer import CustomImageViewer
-from pycroglia.ui.widgets.cells.cell_list import CellList
-from pycroglia.ui.widgets.cells.multi_cell_img_viewer import MultiCellImageViewer
+from pycroglia.ui.widgets.cells.cells_panel import CellsPanel
 from pycroglia.ui.widgets.common.labeled_widgets import LabeledSpinBox
+from pycroglia.ui.widgets.analysis.dialog import PreviewDialog
 
 
-class PreviewDialog(QtWidgets.QDialog):
-    DEFAULT_WINDOW_TITLE = "Image preview"
-    DEFAULT_DIALOG_SIZE = (800, 600)
+class CellSelectorControlPanel(QtWidgets.QWidget):
+    DEFAULT_REMOVE_BUTTON_TEXT = "Remove Cell"
+    DEFAULT_SIZE_LABEL_TEXT = "Cell Size"
+    DEFAULT_SIZE_BUTTON_TEXT = "Remove smaller than"
+    DEFAULT_PREVIEW_BUTTON_TEXT = "Preview"
 
     def __init__(
         self,
-        img: NDArray,
-        title_txt: Optional[str] = None,
-        dialog_size: Optional[tuple[int, int]] = None,
-        parent: Optional[QtWidgets.QWidget] = None
+        max_cell_size: int,
+        remove_button_text: Optional[str] = None,
+        size_label_text: Optional[str] = None,
+        size_button_text: Optional[str] = None,
+        preview_button_text: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
     ):
-        super().__init__(parent)
+        super().__init__(parent=parent)
 
-        # Text configuration
-        # TODO - Change hardcoded values
-        self.window_title = title_txt or self.DEFAULT_WINDOW_TITLE
-        self.dialog_size = dialog_size or self.DEFAULT_DIALOG_SIZE
-
-        self.setWindowTitle(self.window_title)
-        self.setModal(True)
+        # Text properties
+        self.remove_button_text = remove_button_text or self.DEFAULT_REMOVE_BUTTON_TEXT
+        self.size_label_text = size_label_text or self.DEFAULT_SIZE_LABEL_TEXT
+        self.size_button_text = size_button_text or self.DEFAULT_SIZE_BUTTON_TEXT
+        self.preview_button_text = (
+            preview_button_text or self.DEFAULT_PREVIEW_BUTTON_TEXT
+        )
 
         # Widgets
-        self.img_viewer = CustomImageViewer(parent=self)
-        self.img_viewer.set_image(img)
+        self.remove_btn = QtWidgets.QPushButton(parent=self)
+        self.remove_btn.setText(self.remove_button_text)
+        self.remove_btn.setEnabled(False)
 
-        # Layout
+        self.size_input = LabeledSpinBox(
+            label_text=self.size_label_text, min_value=0, max_value=max_cell_size
+        )
+        self.size_btn = QtWidgets.QPushButton(parent=self)
+        self.size_btn.setText(self.size_button_text)
+
+        self.preview_btn = QtWidgets.QPushButton(parent=self)
+        self.preview_btn.setText(self.preview_button_text)
+
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.img_viewer)
+        layout.addWidget(self.remove_btn)
+        layout.addWidget(self.size_input)
+        layout.addWidget(self.size_btn)
+        layout.addWidget(self.preview_btn)
         self.setLayout(layout)
-
-        self.resize(self.dialog_size[0], self.dialog_size[1])
-
-
 
 
 class CellSelector(QtWidgets.QWidget):
@@ -54,10 +63,6 @@ class CellSelector(QtWidgets.QWidget):
     DEFAULT_SIZE_LABEL_TEXT = "Cell Size"
     DEFAULT_SIZE_BUTTON_TEXT = "Remove smaller than"
     DEFAULT_PREVIEW_BUTTON_TEXT = "Preview"
-
-    # Layout Constants
-    LIST_STRETCH_FACTOR = 1
-    VIEWER_STRETCH_FACTOR = 2
 
     # Color Constants
     UNSELECTED_COLOR = QtGui.QColor(255, 200, 200)
@@ -71,74 +76,66 @@ class CellSelector(QtWidgets.QWidget):
         size_label_text: Optional[str] = None,
         size_button_text: Optional[str] = None,
         preview_button_text: Optional[str] = None,
-        parent: Optional[QtWidgets.QWidget] = None
+        parent: Optional[QtWidgets.QWidget] = None,
     ):
         super().__init__(parent=parent)
+
+        # Text properties
+        self.headers_text = headers or self.DEFAULT_HEADERS_TEXT
+        self.remove_button_text = remove_button_text or self.DEFAULT_REMOVE_BUTTON_TEXT
+        self.size_label_text = size_label_text or self.DEFAULT_SIZE_LABEL_TEXT
+        self.size_button_text = size_button_text or self.DEFAULT_SIZE_BUTTON_TEXT
+        self.preview_button_text = (
+            preview_button_text or self.DEFAULT_PREVIEW_BUTTON_TEXT
+        )
 
         # State
         self.img = img
         self.unselected_cells = set()
         self._cell_to_row_cache: Dict[int, int] = {}
 
-        self.headers_text = headers or self.DEFAULT_HEADERS_TEXT
-        self.remove_button_text = remove_button_text or self.DEFAULT_REMOVE_BUTTON_TEXT
-        self.size_label_text = size_label_text or self.DEFAULT_SIZE_LABEL_TEXT
-        self.size_button_text = size_button_text or self.DEFAULT_SIZE_BUTTON_TEXT
-        self.preview_button_text = preview_button_text or self.DEFAULT_PREVIEW_BUTTON_TEXT
-
         # Widgets
-        self.cell_list = CellList(headers=self.headers_text, parent=self)
-
-        self.remove_btn = QtWidgets.QPushButton(parent=self)
-        self.remove_btn.setText(self.remove_button_text)
-        self.remove_btn.setEnabled(False)
-
-        max_cell_size = max(img.get_cell_size(i) for i in range(1, img.len() + 1))
-        self.size_input = LabeledSpinBox(label_text=self.size_label_text, min_value=0, max_value=max_cell_size, parent=self)
-        self.size_btn = QtWidgets.QPushButton(parent=self)
-        self.size_btn.setText(self.size_button_text)
-
-        self.preview_btn = QtWidgets.QPushButton(parent=self)
-        self.preview_btn.setText(self.preview_button_text)
-
-        self.multi_viewer = MultiCellImageViewer(parent=self)
-        self.cell_viewer = CustomImageViewer(parent=self)
+        self.control_panel = CellSelectorControlPanel(
+            max_cell_size=max(img.get_cell_size(i) for i in range(1, img.len() + 1)),
+            remove_button_text=self.remove_button_text,
+            size_label_text=self.size_label_text,
+            size_button_text=self.size_button_text,
+            preview_button_text=self.preview_button_text,
+            parent=self,
+        )
+        self.viewer = CellsPanel(
+            img=self.img,
+            headers=self.headers_text,
+            control_panel=self.control_panel,
+            parent=self,
+        )
 
         # Connections
-        self.cell_list.selectionChanged.connect(self._on_cell_selection_changed)
-        self.remove_btn.clicked.connect(self._on_remove_button_clicked)
-        self.size_btn.clicked.connect(self._on_size_button_clicked)
-        self.preview_btn.clicked.connect(self._on_preview_button_clicked)
+        self.viewer.cell_list.selectionChanged.connect(self._on_cell_selection_changed)
+        self.control_panel.remove_btn.clicked.connect(self._on_remove_button_clicked)
+        self.control_panel.size_btn.clicked.connect(self._on_size_button_clicked)
+        self.control_panel.preview_btn.clicked.connect(self._on_preview_button_clicked)
 
         # Layout
-        list_layout = QtWidgets.QVBoxLayout()
-        list_layout.addWidget(self.cell_list)
-        list_layout.addWidget(self.remove_btn)
-        list_layout.addWidget(self.size_input)
-        list_layout.addWidget(self.size_btn)
-        list_layout.addWidget(self.preview_btn)
-        list_layout_widget = QtWidgets.QWidget()
-        list_layout_widget.setLayout(list_layout)
-
-        layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(list_layout_widget, stretch=self.LIST_STRETCH_FACTOR)
-        layout.addWidget(self.multi_viewer, stretch=self.VIEWER_STRETCH_FACTOR)
-        layout.addWidget(self.cell_viewer, stretch=self.VIEWER_STRETCH_FACTOR)
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.viewer)
         self.setLayout(layout)
 
-        # Load data
         self._load_data(self.img)
 
     def _load_data(self, img: LabeledCells):
-        self.cell_list.clear_cells()
-        self.cell_list.add_cells(img)
-        self.multi_viewer.set_cells_img(img)
+        self.viewer.load_data(img)
         self._build_cell_to_row_cache()
+
+    def _on_cell_selection_changed(self):
+        self.control_panel.remove_btn.setEnabled(
+            self.viewer.cell_list.get_selected_cell_id() is not None
+        )
 
     def _build_cell_to_row_cache(self):
         """Build a cache mapping cell_id to row index for efficient lookups."""
         self._cell_to_row_cache.clear()
-        model = self.cell_list.list.model
+        model = self.viewer.cell_list.list.model
 
         for row in range(model.rowCount()):
             cell_id = int(model.item(row, 0).text())
@@ -150,7 +147,7 @@ class CellSelector(QtWidgets.QWidget):
             return
 
         row = self._cell_to_row_cache[cell_id]
-        model = self.cell_list.list.model
+        model = self.viewer.cell_list.list.model
         color = self.UNSELECTED_COLOR if is_unselected else self.SELECTED_COLOR
 
         for col in range(model.columnCount()):
@@ -162,34 +159,8 @@ class CellSelector(QtWidgets.QWidget):
         for cell_id in cell_ids:
             self._set_row_color(cell_id, is_unselected)
 
-    def _on_preview_button_clicked(self):
-        selected_cells = self.get_selected_cells()
-
-        if not selected_cells:
-            preview_2d = np.zeros((self.img.y, self.img.x), dtype=self.img.ARRAY_ELEMENTS_TYPE)
-        else:
-            preview_2d = np.zeros((self.img.y, self.img.x), dtype=self.img.ARRAY_ELEMENTS_TYPE)
-
-            # Iterate through selected cells and combine their 2D projections
-            for cell_id in selected_cells:
-                cell_2d = self.img.cell_to_2d(cell_id)
-                preview_2d += cell_2d
-
-        dialog = PreviewDialog(preview_2d, parent=self)
-        dialog.exec()
-
-    def _on_cell_selection_changed(self):
-        selected_cell = self.cell_list.get_selected_cell_id()
-        self.remove_btn.setEnabled(selected_cell is not None)
-
-        if selected_cell is None:
-            return
-
-        cell_2d = self.img.cell_to_2d(selected_cell)
-        self.cell_viewer.set_image(cell_2d)
-
     def _on_remove_button_clicked(self):
-        selected_cell = self.cell_list.get_selected_cell_id()
+        selected_cell = self.viewer.cell_list.get_selected_cell_id()
         if selected_cell is None:
             return
 
@@ -201,7 +172,7 @@ class CellSelector(QtWidgets.QWidget):
             self._set_row_color(selected_cell, True)
 
     def _on_size_button_clicked(self):
-        threshold = self.size_input.get_value()
+        threshold = self.control_panel.size_input.get_value()
 
         cells_to_unselect = set()
         for cell_id in range(1, self.img.len() + 1):
@@ -211,6 +182,25 @@ class CellSelector(QtWidgets.QWidget):
 
         self.unselected_cells.update(cells_to_unselect)
         self._update_colors_batch(cells_to_unselect, True)
+
+    def _on_preview_button_clicked(self):
+        selected_cells = self.get_selected_cells()
+
+        if not selected_cells:
+            preview_2d = np.zeros(
+                (self.img.y, self.img.x), dtype=self.img.ARRAY_ELEMENTS_TYPE
+            )
+        else:
+            preview_2d = np.zeros(
+                (self.img.y, self.img.x), dtype=self.img.ARRAY_ELEMENTS_TYPE
+            )
+            # Iterate through selected cells and combine their 2D projections
+            for cell_id in selected_cells:
+                cell_2d = self.img.cell_to_2d(cell_id)
+                preview_2d += cell_2d
+
+        dialog = PreviewDialog(preview_2d, parent=self)
+        dialog.exec()
 
     def get_selected_cells(self) -> Set[int]:
         all_cells = set(range(1, self.img.len() + 1))
@@ -226,6 +216,7 @@ from pycroglia.core.labeled_cells import SkimageImgLabeling
 from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.files import TiffReader
 from pycroglia.core.filters import remove_small_objects, calculate_otsu_threshold
+
 TIFF_PATH = "/Users/framos/Desktop/TrialControlZip.tif"
 CHANNELS = 5  # Set according to your file
 CHANNEL_OF_INTEREST = 2  # 1-based index
