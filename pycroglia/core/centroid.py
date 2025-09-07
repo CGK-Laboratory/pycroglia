@@ -1,7 +1,6 @@
-from dataclasses import dataclass
 import numpy as np
 from  numpy.typing  import NDArray
-from scipy.spatial.distance import pdist, squareform
+from scipy.spatial.distance import pdist
 
 
 class Centroids:
