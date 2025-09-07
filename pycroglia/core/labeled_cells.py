@@ -219,6 +219,15 @@ class LabeledCells:
         return all_cells_matrix
 
     def get_border_cells(self) -> Set[int]:
+        """Detects cells that touch the image borders in any Z slice.
+
+        Identifies cells whose labels appear on any edge of the 3D image volume.
+        A cell is considered a border cell if any of its voxels touch the top, bottom,
+        left, or right edges of any Z slice.
+
+        Returns:
+            Set[int]: Set of cell IDs that touch the image borders.
+        """
         border_cells = set()
         border_labels = set()
         z, y, x = self.labels.shape

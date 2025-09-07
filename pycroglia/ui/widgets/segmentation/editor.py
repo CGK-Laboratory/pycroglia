@@ -9,6 +9,15 @@ from pycroglia.ui.widgets.cells.cells_panel import CellsPanel
 
 
 class SegmentationControlPanel(QtWidgets.QWidget):
+    """Control panel widget for segmentation operations.
+
+    Provides buttons for cell segmentation and rollback operations.
+
+    Attributes:
+        DEFAULT_ROLLBACK_BUTTON_TEXT (str): Default text for the rollback button.
+        DEFAULT_SEGMENTATION_BUTTON_TEXT (str): Default text for the segmentation button.
+    """
+
     DEFAULT_ROLLBACK_BUTTON_TEXT = "Roll back segmentation"
     DEFAULT_SEGMENTATION_BUTTON_TEXT = "Segment Cell"
 
@@ -18,6 +27,13 @@ class SegmentationControlPanel(QtWidgets.QWidget):
         segmentation_button_text: Optional[str] = None,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
+        """Initializes the SegmentationControlPanel widget.
+
+        Args:
+            rollback_button_text (Optional[str], optional): Custom text for rollback button.
+            segmentation_button_text (Optional[str], optional): Custom text for segmentation button.
+            parent (Optional[QtWidgets.QWidget], optional): Parent widget.
+        """
         super().__init__(parent=parent)
 
         # Store text parameters
@@ -45,8 +61,20 @@ class SegmentationControlPanel(QtWidgets.QWidget):
 class SegmentationEditor(QtWidgets.QWidget):
     """Widget for interactive cell segmentation editing.
 
-    Provides a UI for visualizing, segmenting, and rolling back cell segmentations.
-    Displays a list of cells, a multi-cell viewer, and a single cell viewer.
+    Provides a comprehensive UI for visualizing, segmenting, and rolling back cell
+    segmentations. Displays a list of cells, a multi-cell viewer, and a single cell viewer
+    with integrated segmentation controls.
+
+    Attributes:
+        DEFAULT_HEADERS_TEXT (list[str]): Default column headers for the cell list.
+        DEFAULT_ROLLBACK_BUTTON_TEXT (str): Default text for the rollback button.
+        DEFAULT_SEGMENTATION_BUTTON_TEXT (str): Default text for the segmentation button.
+        DEFAULT_PROGRESS_TITLE (str): Default title for the progress dialog.
+        DEFAULT_PROGRESS_CANCEL_TEXT (str): Default cancel button text for progress dialog.
+        DEFAULT_PROGRESS_MAX (int): Maximum value for the progress bar.
+        DEFAULT_PROGRESS_MIN (int): Minimum value for the progress bar.
+        LIST_STRETCH_FACTOR (int): Stretch factor for list widget in layout.
+        VIEWER_STRETCH_FACTOR (int): Stretch factor for viewer widgets in layout.
     """
 
     # UI Text Constants
@@ -138,19 +166,31 @@ class SegmentationEditor(QtWidgets.QWidget):
         self._load_data()
 
     def _load_data(self):
-        """Loads and displays the current segmentation state in the UI."""
+        """Loads and displays the current segmentation state in the UI.
+
+        Updates the viewer with the current state and enables/disables the rollback
+        button based on state history availability.
+        """
         actual_state = self.state.get_state()
 
         self.viewer.load_data(actual_state)
         self.control_panel.rollback_button.setEnabled(self.state.has_prev_state())
 
     def _on_cell_selection_change(self):
+        """Handles cell selection changes from the cell list.
+
+        Enables or disables the segment button based on whether a cell is selected.
+        """
         self.control_panel.segment_button.setEnabled(
             self.viewer.cell_list.get_selected_cell_id() is not None
         )
 
     def _on_cell_segmentation(self):
-        """Handles the segmentation request for the selected cell, showing a progress bar if enabled."""
+        """Handles the segmentation request for the selected cell.
+
+        Shows a progress bar if enabled and performs segmentation of the currently
+        selected cell. Updates the UI after completion.
+        """
         selected_cell_info = self.viewer.cell_list.get_selected_cell_info()
         if selected_cell_info is None:
             return
@@ -176,6 +216,9 @@ class SegmentationEditor(QtWidgets.QWidget):
             self.viewer.load_data(self.state.get_state())
 
     def _on_rollback_request(self):
-        """Handles the rollback request to restore the previous segmentation state."""
+        """Handles the rollback request to restore the previous segmentation state.
+
+        Reverts to the previous segmentation state and updates the UI display.
+        """
         self.state.rollback()
         self.viewer.load_data(self.state.get_state())

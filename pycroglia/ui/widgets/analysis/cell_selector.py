@@ -11,11 +11,31 @@ from pycroglia.ui.widgets.analysis.dialog import PreviewDialog
 
 
 class ColorType(Enum):
+    """Enumeration for cell row color types in the cell selector.
+
+    Attributes:
+        SELECTED: Color type for selected (normal) cells.
+        UNSELECTED: Color type for unselected cells that will be filtered out.
+    """
+
     SELECTED = "selected"
     UNSELECTED = "unselected"
 
 
 class CellSelectorControlPanel(QtWidgets.QWidget):
+    """Control panel widget for cell selection operations.
+
+    Provides buttons and controls for removing cells, filtering by size,
+    handling border cells, and previewing results.
+
+    Attributes:
+        DEFAULT_REMOVE_BUTTON_TEXT (str): Default text for the remove button.
+        DEFAULT_SIZE_LABEL_TEXT (str): Default text for the size input label.
+        DEFAULT_SIZE_BUTTON_TEXT (str): Default text for the size filter button.
+        DEFAULT_PREVIEW_BUTTON_TEXT (str): Default text for the preview button.
+        DEFAULT_BORDER_CHECKBOX_TEXT (str): Default text for the border checkbox.
+    """
+
     DEFAULT_REMOVE_BUTTON_TEXT = "Remove Cell"
     DEFAULT_SIZE_LABEL_TEXT = "Cell Size"
     DEFAULT_SIZE_BUTTON_TEXT = "Remove smaller than"
@@ -32,6 +52,17 @@ class CellSelectorControlPanel(QtWidgets.QWidget):
         border_checkbox_text: Optional[str] = None,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
+        """Initializes the CellSelectorControlPanel widget.
+
+        Args:
+            max_cell_size (int): Maximum cell size for the size input spinbox.
+            remove_button_text (Optional[str], optional): Custom text for remove button.
+            size_label_text (Optional[str], optional): Custom text for size label.
+            size_button_text (Optional[str], optional): Custom text for size filter button.
+            preview_button_text (Optional[str], optional): Custom text for preview button.
+            border_checkbox_text (Optional[str], optional): Custom text for border checkbox.
+            parent (Optional[QtWidgets.QWidget], optional): Parent widget.
+        """
         super().__init__(parent=parent)
 
         # Text properties
@@ -72,6 +103,23 @@ class CellSelectorControlPanel(QtWidgets.QWidget):
 
 
 class CellSelector(QtWidgets.QWidget):
+    """Widget for interactive cell selection and filtering.
+
+    Provides a comprehensive interface for selecting, filtering, and previewing cells
+    from a labeled cell image. Users can remove individual cells, filter by size,
+    exclude border cells, and preview the results.
+
+    Attributes:
+        DEFAULT_HEADERS_TEXT (list[str]): Default column headers for the cell list.
+        DEFAULT_REMOVE_BUTTON_TEXT (str): Default text for the remove button.
+        DEFAULT_SIZE_LABEL_TEXT (str): Default text for the size input label.
+        DEFAULT_SIZE_BUTTON_TEXT (str): Default text for the size filter button.
+        DEFAULT_PREVIEW_BUTTON_TEXT (str): Default text for the preview button.
+        DEFAULT_BORDER_CHECKBOX_TEXT (str): Default text for the border checkbox.
+        UNSELECTED_COLOR (QtGui.QColor): Color for unselected cell rows.
+        SELECTED_COLOR (QtGui.QBrush): Color for selected cell rows.
+    """
+
     # UI Text Constants
     DEFAULT_HEADERS_TEXT = ["Cell number", "Cell size"]
     DEFAULT_REMOVE_BUTTON_TEXT = "Remove Cell"
@@ -95,6 +143,18 @@ class CellSelector(QtWidgets.QWidget):
         border_checkbox_text: Optional[str] = None,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
+        """Initializes the CellSelector widget.
+
+        Args:
+            img (LabeledCells): Labeled cells object containing the cell data.
+            headers (Optional[list[str]], optional): Custom column headers for cell list.
+            remove_button_text (Optional[str], optional): Custom text for remove button.
+            size_label_text (Optional[str], optional): Custom text for size label.
+            size_button_text (Optional[str], optional): Custom text for size filter button.
+            preview_button_text (Optional[str], optional): Custom text for preview button.
+            border_checkbox_text (Optional[str], optional): Custom text for border checkbox.
+            parent (Optional[QtWidgets.QWidget], optional): Parent widget.
+        """
         super().__init__(parent=parent)
 
         # Text properties
@@ -149,16 +209,29 @@ class CellSelector(QtWidgets.QWidget):
         self._load_data(self.img)
 
     def _load_data(self, img: LabeledCells):
+        """Loads cell data into the viewer and builds the cell-to-row cache.
+
+        Args:
+            img (LabeledCells): Labeled cells object to load.
+        """
         self.viewer.load_data(img)
         self._build_cell_to_row_cache()
 
     def _on_cell_selection_changed(self):
+        """Handles cell selection changes in the cell list.
+
+        Enables or disables the remove button based on whether a cell is selected.
+        """
         self.control_panel.remove_btn.setEnabled(
             self.viewer.cell_list.get_selected_cell_id() is not None
         )
 
     def _build_cell_to_row_cache(self):
-        """Build a cache mapping cell_id to row index for efficient lookups."""
+        """Builds a cache mapping cell_id to row index for efficient color updates.
+
+        This cache improves performance when updating row colors by avoiding
+        the need to search through all rows for each cell.
+        """
         self._cell_to_row_cache.clear()
         model = self.viewer.cell_list.list.model
 
@@ -167,7 +240,12 @@ class CellSelector(QtWidgets.QWidget):
             self._cell_to_row_cache[cell_id] = row
 
     def _set_row_color(self, cell_id: int, color_type: ColorType):
-        """Set the color of a specific row based on color type."""
+        """Sets the background color of a specific cell row.
+
+        Args:
+            cell_id (int): ID of the cell whose row color to change.
+            color_type (ColorType): Type of color to apply (selected or unselected).
+        """
         if cell_id not in self._cell_to_row_cache:
             return
 
@@ -184,11 +262,21 @@ class CellSelector(QtWidgets.QWidget):
             item.setBackground(color)
 
     def _update_colors_batch(self, cell_ids: Set[int], color_type: ColorType):
-        """Update colors for multiple cells efficiently."""
+        """Updates colors for multiple cells efficiently in batch.
+
+        Args:
+            cell_ids (Set[int]): Set of cell IDs to update.
+            color_type (ColorType): Color type to apply to all specified cells.
+        """
         for cell_id in cell_ids:
             self._set_row_color(cell_id, color_type)
 
     def _on_remove_button_clicked(self):
+        """Handles the remove button click event.
+
+        Toggles the selection state of the currently selected cell and updates
+        its visual appearance accordingly.
+        """
         selected_cell = self.viewer.cell_list.get_selected_cell_id()
         if selected_cell is None:
             return
@@ -201,6 +289,11 @@ class CellSelector(QtWidgets.QWidget):
             self._set_row_color(selected_cell, ColorType.UNSELECTED)
 
     def _on_size_button_clicked(self):
+        """Handles the size filter button click event.
+
+        Marks all cells smaller than the specified threshold as unselected
+        and updates their visual appearance.
+        """
         threshold = self.control_panel.size_input.get_value()
 
         cells_to_unselect = set()
@@ -213,7 +306,14 @@ class CellSelector(QtWidgets.QWidget):
         self._update_colors_batch(cells_to_unselect, ColorType.UNSELECTED)
 
     def _on_border_checkbox_toggled(self, checked: bool):
-        """Handle border checkbox toggle."""
+        """Handles the border cells checkbox toggle event.
+
+        When checked, marks all border cells as unselected. When unchecked,
+        removes border cells from the unselected set and restores their normal color.
+
+        Args:
+            checked (bool): Whether the checkbox is checked.
+        """
         if checked:
             # Add border cells to unselected and mark as unselected color
             self.unselected_cells.update(self.border_cells)
@@ -224,6 +324,11 @@ class CellSelector(QtWidgets.QWidget):
             self._update_colors_batch(self.border_cells, ColorType.SELECTED)
 
     def _on_preview_button_clicked(self):
+        """Handles the preview button click event.
+
+        Creates a 2D preview of the selected cells by combining their projections
+        and displays it in a preview dialog.
+        """
         selected_cells = self.get_selected_cells()
 
         if not selected_cells:
@@ -243,13 +348,28 @@ class CellSelector(QtWidgets.QWidget):
         dialog.exec()
 
     def get_selected_cells(self) -> Set[int]:
+        """Returns the set of currently selected (not unselected) cells.
+
+        Returns:
+            Set[int]: Set of cell IDs that are currently selected.
+        """
         all_cells = set(range(1, self.img.len() + 1))
         return all_cells - self.unselected_cells
 
     def get_unselected_cells(self) -> Set[int]:
+        """Returns a copy of the set of unselected cells.
+
+        Returns:
+            Set[int]: Copy of the set of cell IDs that are unselected.
+        """
         return self.unselected_cells.copy()
 
     def get_border_cells(self) -> Set[int]:
+        """Returns a copy of the set of border cells.
+
+        Returns:
+            Set[int]: Copy of the set of cell IDs that touch the image borders.
+        """
         return self.border_cells.copy()
 
 
