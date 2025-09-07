@@ -152,7 +152,7 @@ class SegmentationEditor(QtWidgets.QWidget):
         )
 
         # Connections
-        self.viewer.cell_list.selectionChanged.connect(self._on_cell_selection_change)
+        self.viewer.cell_list.selectionChanged.connect(self._on_cell_selection_changed)
         self.control_panel.segment_button.clicked.connect(self._on_cell_segmentation)
         self.control_panel.rollback_button.clicked.connect(self._on_rollback_request)
         self.state.stateChanged.connect(self._load_data)
@@ -176,7 +176,7 @@ class SegmentationEditor(QtWidgets.QWidget):
         self.viewer.load_data(actual_state)
         self.control_panel.rollback_button.setEnabled(self.state.has_prev_state())
 
-    def _on_cell_selection_change(self):
+    def _on_cell_selection_changed(self):
         """Handles cell selection changes from the cell list.
 
         Enables or disables the segment button based on whether a cell is selected.

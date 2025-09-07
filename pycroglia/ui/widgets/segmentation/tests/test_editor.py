@@ -31,29 +31,29 @@ def segmentation_editor(qtbot, labeled_cells_simple):
 def test_load_data_populates_list(segmentation_editor):
     """Test that _load_data populates the cell list."""
     segmentation_editor._load_data()
-    assert segmentation_editor.list.list.model.rowCount() > 0
+    assert segmentation_editor.viewer.cell_list.list.model.rowCount() > 0
 
 
 def test_on_cell_selection_enables_segment_button(segmentation_editor, qtbot):
     """Test that selecting a cell enables the segment button."""
     segmentation_editor._load_data()
 
-    index = segmentation_editor.list.list.model.index(0, 0)
-    segmentation_editor.list.list.table_view.selectRow(index.row())
+    index = segmentation_editor.viewer.cell_list.list.model.index(0, 0)
+    segmentation_editor.viewer.cell_list.list.table_view.selectRow(index.row())
     segmentation_editor._on_cell_selection_changed()
 
-    assert segmentation_editor.segment_button.isEnabled()
+    assert segmentation_editor.control_panel.segment_button.isEnabled()
 
 
 def test_on_cell_selection_updates_cell_viewer(segmentation_editor, qtbot):
     """Test that selecting a cell updates the cell viewer image."""
     segmentation_editor._load_data()
 
-    index = segmentation_editor.list.list.model.index(0, 0)
-    segmentation_editor.list.list.table_view.selectRow(index.row())
+    index = segmentation_editor.viewer.cell_list.list.model.index(0, 0)
+    segmentation_editor.viewer.cell_list.list.table_view.selectRow(index.row())
     segmentation_editor._on_cell_selection_changed()
 
-    assert segmentation_editor.cell_viewer.img_viewer.image is not None
+    assert segmentation_editor.viewer.cell_viewer.img_viewer.image is not None
 
 
 def test_on_rollback_request_restores_state(segmentation_editor):

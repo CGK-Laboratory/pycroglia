@@ -371,39 +371,3 @@ class CellSelector(QtWidgets.QWidget):
             Set[int]: Copy of the set of cell IDs that touch the image borders.
         """
         return self.border_cells.copy()
-
-
-# --- Replace with your TIFF file path ---
-import sys
-from pycroglia.core.labeled_cells import SkimageImgLabeling
-from pycroglia.core.enums import SkimageCellConnectivity
-from pycroglia.core.files import TiffReader
-from pycroglia.core.filters import remove_small_objects, calculate_otsu_threshold
-
-TIFF_PATH = "/Users/framos/Desktop/TrialControlZip.tif"
-CHANNELS = 5  # Set according to your file
-CHANNEL_OF_INTEREST = 2  # 1-based index
-
-
-def main():
-    # Read TIFF file
-    reader = TiffReader(TIFF_PATH)
-    img = reader.read(CHANNELS, CHANNEL_OF_INTEREST)
-
-    # Filters
-    noise = 100
-    img = calculate_otsu_threshold(img, 1.0)
-    img = remove_small_objects(img, noise, connectivity=SkimageCellConnectivity.CORNERS)
-
-    # Create a dummy labeling strategy (replace with your actual strategy)
-    labeling_strategy = SkimageImgLabeling(SkimageCellConnectivity.CORNERS)
-    labeled_cell = LabeledCells(img, labeling_strategy)
-
-    # Create the application and widget
-    app = QtWidgets.QApplication(sys.argv)
-    editor = CellSelector(labeled_cell)
-    editor.show()
-    sys.exit(app.exec())
-
-
-main()
