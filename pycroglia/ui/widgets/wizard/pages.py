@@ -6,7 +6,9 @@ from PyQt6 import QtCore, QtWidgets
 from pycroglia.ui.widgets.imagefilters.results import FilterResults
 from pycroglia.ui.widgets.imagefilters.stacks import FilterEditorStack
 from pycroglia.ui.widgets.io.file_selection_editor import FileSelectionEditor
+from pycroglia.ui.widgets.segmentation.results import SegmentationResults
 from pycroglia.ui.widgets.segmentation.stacks import SegmentationEditorStack
+from pycroglia.ui.widgets.analysis.stacks import CellSelectorStack
 
 
 class BasePage(ABC):
@@ -164,7 +166,9 @@ class SegmentationEditorPage(BasePage):
         Returns:
             Optional[dict[str, Any]]: None, as no further processing is expected.
         """
-        pass
+        list_of_results = self.main_widget.get_results()
+        list_of_dicts = [result.as_dict() for result in list_of_results]
+        return {"results": list_of_dicts}
 
     def set_data(self, data: Optional[dict[str, list[FilterResults]]]):
         """Set filter results data to initialize segmentation editors.
@@ -174,6 +178,49 @@ class SegmentationEditorPage(BasePage):
                 'results' key with list of FilterResults dictionaries.
         """
         list_of_results = [FilterResults(**elem) for elem in data["results"]]
+        self.main_widget.add_tabs(list_of_results)
+
+
+class CellSelectionPage(BasePage):
+    """Page for cell selection and analysis functionality.
+
+    Handles cell selection, filtering, and analysis using segmentation results
+    from the previous page. Provides tools for removing unwanted cells, filtering
+    by size, and excluding border cells.
+
+    Attributes:
+        main_widget (CellSelectorStack): The cell selector stack widget.
+    """
+
+    def __init__(self, main_widget: CellSelectorStack):
+        """Initialize the cell selection page.
+
+        Args:
+            main_widget (CellSelectorStack): The cell selector stack widget.
+        """
+        super().__init__(main_widget)
+        self.main_widget = main_widget
+
+    def get_state(self) -> Optional[dict[str, Any]]:
+        """Get the current state of cell selection results.
+
+        Note:
+            Currently returns None as this is typically the final analysis page.
+
+        Returns:
+            Optional[dict[str, Any]]: None, as no further processing is expected
+                after cell selection.
+        """
+        pass
+
+    def set_data(self, data: Optional[dict[str, list[SegmentationResults]]]):
+        """Set segmentation results data to initialize cell selectors.
+
+        Args:
+            data (Optional[dict[str, list[SegmentationResults]]]): Dictionary containing
+                'results' key with list of SegmentationResults dictionaries.
+        """
+        list_of_results = [SegmentationResults(**elem) for elem in data["results"]]
         self.main_widget.add_tabs(list_of_results)
 
 

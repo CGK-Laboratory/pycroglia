@@ -80,7 +80,6 @@ def test_cells_panel_cell_selection_handler(cells_panel, qtbot):
     assert cells_panel.cell_viewer.img_viewer.image is not None
 
 
-
 def test_control_panel_integration(qtbot, labeled_cells_simple):
     """Test integration with control panel."""
     control_panel = QtWidgets.QPushButton("Test Button")
@@ -94,4 +93,3 @@ def test_control_panel_integration(qtbot, labeled_cells_simple):
     left_widget = panel.layout().itemAt(0).widget()
     left_layout = left_widget.layout()
     assert left_layout.itemAt(1).widget() == control_panel
-

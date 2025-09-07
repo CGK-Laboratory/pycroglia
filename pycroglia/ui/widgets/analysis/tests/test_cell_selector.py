@@ -6,7 +6,7 @@ from PyQt6 import QtCore
 from pycroglia.ui.widgets.analysis.cell_selector import (
     CellSelector,
     CellSelectorControlPanel,
-    ColorType
+    ColorType,
 )
 from pycroglia.core.labeled_cells import LabeledCells, SkimageImgLabeling
 from pycroglia.core.enums import SkimageCellConnectivity
@@ -48,28 +48,40 @@ def control_panel(qtbot):
 # CellSelectorControlPanel tests
 def test_cell_selector_control_panel_initialization_default_texts(control_panel):
     """Test control panel initialization with default texts."""
-    assert control_panel.remove_btn.text() == CellSelectorControlPanel.DEFAULT_REMOVE_BUTTON_TEXT
-    assert control_panel.size_btn.text() == CellSelectorControlPanel.DEFAULT_SIZE_BUTTON_TEXT
-    assert control_panel.preview_btn.text() == CellSelectorControlPanel.DEFAULT_PREVIEW_BUTTON_TEXT
-    assert control_panel.border_checkbox.text() == CellSelectorControlPanel.DEFAULT_BORDER_CHECKBOX_TEXT
+    assert (
+        control_panel.remove_btn.text()
+        == CellSelectorControlPanel.DEFAULT_REMOVE_BUTTON_TEXT
+    )
+    assert (
+        control_panel.size_btn.text()
+        == CellSelectorControlPanel.DEFAULT_SIZE_BUTTON_TEXT
+    )
+    assert (
+        control_panel.preview_btn.text()
+        == CellSelectorControlPanel.DEFAULT_PREVIEW_BUTTON_TEXT
+    )
+    assert (
+        control_panel.border_checkbox.text()
+        == CellSelectorControlPanel.DEFAULT_BORDER_CHECKBOX_TEXT
+    )
 
 
 def test_cell_selector_control_panel_initialization_custom_texts(qtbot):
     """Test control panel initialization with custom texts."""
     custom_texts = {
-        'remove_button_text': 'Delete Cell',
-        'size_button_text': 'Filter Small',
-        'preview_button_text': 'Show Preview',
-        'border_checkbox_text': 'Exclude Border'
+        "remove_button_text": "Delete Cell",
+        "size_button_text": "Filter Small",
+        "preview_button_text": "Show Preview",
+        "border_checkbox_text": "Exclude Border",
     }
 
     panel = CellSelectorControlPanel(max_cell_size=50, **custom_texts)
     qtbot.addWidget(panel)
 
-    assert panel.remove_btn.text() == custom_texts['remove_button_text']
-    assert panel.size_btn.text() == custom_texts['size_button_text']
-    assert panel.preview_btn.text() == custom_texts['preview_button_text']
-    assert panel.border_checkbox.text() == custom_texts['border_checkbox_text']
+    assert panel.remove_btn.text() == custom_texts["remove_button_text"]
+    assert panel.size_btn.text() == custom_texts["size_button_text"]
+    assert panel.preview_btn.text() == custom_texts["preview_button_text"]
+    assert panel.border_checkbox.text() == custom_texts["border_checkbox_text"]
 
 
 def test_cell_selector_control_panel_remove_button_initially_disabled(control_panel):
@@ -128,7 +140,9 @@ def test_cell_selector_on_remove_button_clicked_unselect(cell_selector, qtbot):
     selected_cell = cell_selector.viewer.cell_list.get_selected_cell_id()
 
     # Click remove button
-    qtbot.mouseClick(cell_selector.control_panel.remove_btn, QtCore.Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(
+        cell_selector.control_panel.remove_btn, QtCore.Qt.MouseButton.LeftButton
+    )
 
     assert selected_cell in cell_selector.unselected_cells
 
@@ -141,19 +155,27 @@ def test_cell_selector_on_remove_button_clicked_reselect(cell_selector, qtbot):
     selected_cell = cell_selector.viewer.cell_list.get_selected_cell_id()
 
     # First click - unselect
-    qtbot.mouseClick(cell_selector.control_panel.remove_btn, QtCore.Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(
+        cell_selector.control_panel.remove_btn, QtCore.Qt.MouseButton.LeftButton
+    )
     assert selected_cell in cell_selector.unselected_cells
 
     # Second click - reselect
-    qtbot.mouseClick(cell_selector.control_panel.remove_btn, QtCore.Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(
+        cell_selector.control_panel.remove_btn, QtCore.Qt.MouseButton.LeftButton
+    )
     assert selected_cell not in cell_selector.unselected_cells
 
 
 def test_cell_selector_on_size_button_clicked_filtering(cell_selector, qtbot):
     """Test size-based filtering."""
     threshold = 2
-    with patch.object(cell_selector.control_panel.size_input, 'get_value', return_value=threshold):
-        qtbot.mouseClick(cell_selector.control_panel.size_btn, QtCore.Qt.MouseButton.LeftButton)
+    with patch.object(
+        cell_selector.control_panel.size_input, "get_value", return_value=threshold
+    ):
+        qtbot.mouseClick(
+            cell_selector.control_panel.size_btn, QtCore.Qt.MouseButton.LeftButton
+        )
 
         # Check that cells smaller than threshold are unselected
         for cell_id in range(1, cell_selector.img.len() + 1):
@@ -171,20 +193,28 @@ def test_cell_selector_on_border_checkbox_toggled_check(cell_selector, qtbot):
         assert border_cell in cell_selector.unselected_cells
 
 
-@patch('pycroglia.ui.widgets.analysis.dialog.PreviewDialog.exec')
-def test_cell_selector_on_preview_button_clicked_with_selected_cells(mock_exec, cell_selector, qtbot):
+@patch("pycroglia.ui.widgets.analysis.dialog.PreviewDialog.exec")
+def test_cell_selector_on_preview_button_clicked_with_selected_cells(
+    mock_exec, cell_selector, qtbot
+):
     """Test preview button with selected cells."""
-    qtbot.mouseClick(cell_selector.control_panel.preview_btn, QtCore.Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(
+        cell_selector.control_panel.preview_btn, QtCore.Qt.MouseButton.LeftButton
+    )
     mock_exec.assert_called_once()
 
 
-@patch('pycroglia.ui.widgets.analysis.dialog.PreviewDialog.exec')
-def test_cell_selector_on_preview_button_clicked_no_selected_cells(mock_exec, cell_selector, qtbot):
+@patch("pycroglia.ui.widgets.analysis.dialog.PreviewDialog.exec")
+def test_cell_selector_on_preview_button_clicked_no_selected_cells(
+    mock_exec, cell_selector, qtbot
+):
     """Test preview button when no cells are selected."""
     # Unselect all cells
     cell_selector.unselected_cells = set(range(1, cell_selector.img.len() + 1))
 
-    qtbot.mouseClick(cell_selector.control_panel.preview_btn, QtCore.Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(
+        cell_selector.control_panel.preview_btn, QtCore.Qt.MouseButton.LeftButton
+    )
     mock_exec.assert_called_once()
 
 
@@ -254,7 +284,9 @@ def test_cell_selector_update_colors_batch_multiple_cells(cell_selector):
             assert item.background().color() == CellSelector.UNSELECTED_COLOR
 
 
-def test_cell_selector_on_cell_selection_changed_enables_remove_button(cell_selector, qtbot):
+def test_cell_selector_on_cell_selection_changed_enables_remove_button(
+    cell_selector, qtbot
+):
     """Test that selecting a cell enables the remove button."""
     # Initially remove button should be disabled
     assert not cell_selector.control_panel.remove_btn.isEnabled()

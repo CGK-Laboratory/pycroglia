@@ -3,7 +3,7 @@ from typing import Optional
 from PyQt6 import QtWidgets
 from numpy.typing import NDArray
 
-from pycroglia.core.labeled_cells import LabelingStrategy
+from pycroglia.core.labeled_cells import LabelingStrategy, LabeledCells
 from pycroglia.ui.controllers.segmentation_state import SegmentationEditorState
 from pycroglia.ui.widgets.cells.cells_panel import CellsPanel
 
@@ -222,3 +222,15 @@ class SegmentationEditor(QtWidgets.QWidget):
         """
         self.state.rollback()
         self.viewer.load_data(self.state.get_state())
+
+    def get_results(self) -> LabeledCells:
+        """Get the current segmentation results.
+
+        Returns the current state of the labeled cells after all segmentation
+        operations have been performed.
+
+        Returns:
+            LabeledCells: The current labeled cells object containing all
+                segmentation results.
+        """
+        return self.state.get_state()
