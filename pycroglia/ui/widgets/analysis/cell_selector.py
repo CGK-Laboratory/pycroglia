@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Optional, Set, Dict
+from enum import Enum
 
 from PyQt6 import QtWidgets, QtGui
 
@@ -9,11 +10,17 @@ from pycroglia.ui.widgets.common.labeled_widgets import LabeledSpinBox
 from pycroglia.ui.widgets.analysis.dialog import PreviewDialog
 
 
+class ColorType(Enum):
+    SELECTED = "selected"
+    UNSELECTED = "unselected"
+
+
 class CellSelectorControlPanel(QtWidgets.QWidget):
     DEFAULT_REMOVE_BUTTON_TEXT = "Remove Cell"
     DEFAULT_SIZE_LABEL_TEXT = "Cell Size"
     DEFAULT_SIZE_BUTTON_TEXT = "Remove smaller than"
     DEFAULT_PREVIEW_BUTTON_TEXT = "Preview"
+    DEFAULT_BORDER_CHECKBOX_TEXT = "Remove border cells"
 
     def __init__(
         self,
@@ -22,6 +29,7 @@ class CellSelectorControlPanel(QtWidgets.QWidget):
         size_label_text: Optional[str] = None,
         size_button_text: Optional[str] = None,
         preview_button_text: Optional[str] = None,
+        border_checkbox_text: Optional[str] = None,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         super().__init__(parent=parent)
@@ -32,6 +40,9 @@ class CellSelectorControlPanel(QtWidgets.QWidget):
         self.size_button_text = size_button_text or self.DEFAULT_SIZE_BUTTON_TEXT
         self.preview_button_text = (
             preview_button_text or self.DEFAULT_PREVIEW_BUTTON_TEXT
+        )
+        self.border_checkbox_text = (
+            border_checkbox_text or self.DEFAULT_BORDER_CHECKBOX_TEXT
         )
 
         # Widgets
@@ -45,6 +56,9 @@ class CellSelectorControlPanel(QtWidgets.QWidget):
         self.size_btn = QtWidgets.QPushButton(parent=self)
         self.size_btn.setText(self.size_button_text)
 
+        self.border_checkbox = QtWidgets.QCheckBox(parent=self)
+        self.border_checkbox.setText(self.border_checkbox_text)
+
         self.preview_btn = QtWidgets.QPushButton(parent=self)
         self.preview_btn.setText(self.preview_button_text)
 
@@ -52,6 +66,7 @@ class CellSelectorControlPanel(QtWidgets.QWidget):
         layout.addWidget(self.remove_btn)
         layout.addWidget(self.size_input)
         layout.addWidget(self.size_btn)
+        layout.addWidget(self.border_checkbox)
         layout.addWidget(self.preview_btn)
         self.setLayout(layout)
 
@@ -63,6 +78,7 @@ class CellSelector(QtWidgets.QWidget):
     DEFAULT_SIZE_LABEL_TEXT = "Cell Size"
     DEFAULT_SIZE_BUTTON_TEXT = "Remove smaller than"
     DEFAULT_PREVIEW_BUTTON_TEXT = "Preview"
+    DEFAULT_BORDER_CHECKBOX_TEXT = "Remove border cells"
 
     # Color Constants
     UNSELECTED_COLOR = QtGui.QColor(255, 200, 200)
@@ -76,6 +92,7 @@ class CellSelector(QtWidgets.QWidget):
         size_label_text: Optional[str] = None,
         size_button_text: Optional[str] = None,
         preview_button_text: Optional[str] = None,
+        border_checkbox_text: Optional[str] = None,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         super().__init__(parent=parent)
@@ -88,10 +105,14 @@ class CellSelector(QtWidgets.QWidget):
         self.preview_button_text = (
             preview_button_text or self.DEFAULT_PREVIEW_BUTTON_TEXT
         )
+        self.border_checkbox_text = (
+            border_checkbox_text or self.DEFAULT_BORDER_CHECKBOX_TEXT
+        )
 
         # State
         self.img = img
         self.unselected_cells = set()
+        self.border_cells = self.img.get_border_cells()
         self._cell_to_row_cache: Dict[int, int] = {}
 
         # Widgets
@@ -101,6 +122,7 @@ class CellSelector(QtWidgets.QWidget):
             size_label_text=self.size_label_text,
             size_button_text=self.size_button_text,
             preview_button_text=self.preview_button_text,
+            border_checkbox_text=self.border_checkbox_text,
             parent=self,
         )
         self.viewer = CellsPanel(
@@ -114,6 +136,9 @@ class CellSelector(QtWidgets.QWidget):
         self.viewer.cell_list.selectionChanged.connect(self._on_cell_selection_changed)
         self.control_panel.remove_btn.clicked.connect(self._on_remove_button_clicked)
         self.control_panel.size_btn.clicked.connect(self._on_size_button_clicked)
+        self.control_panel.border_checkbox.toggled.connect(
+            self._on_border_checkbox_toggled
+        )
         self.control_panel.preview_btn.clicked.connect(self._on_preview_button_clicked)
 
         # Layout
@@ -141,23 +166,27 @@ class CellSelector(QtWidgets.QWidget):
             cell_id = int(model.item(row, 0).text())
             self._cell_to_row_cache[cell_id] = row
 
-    def _set_row_color(self, cell_id: int, is_unselected: bool):
-        """Set the color of a specific row based on selection state."""
+    def _set_row_color(self, cell_id: int, color_type: ColorType):
+        """Set the color of a specific row based on color type."""
         if cell_id not in self._cell_to_row_cache:
             return
 
         row = self._cell_to_row_cache[cell_id]
         model = self.viewer.cell_list.list.model
-        color = self.UNSELECTED_COLOR if is_unselected else self.SELECTED_COLOR
+
+        if color_type == ColorType.UNSELECTED:
+            color = self.UNSELECTED_COLOR
+        else:  # ColorType.SELECTED
+            color = self.SELECTED_COLOR
 
         for col in range(model.columnCount()):
             item = model.item(row, col)
             item.setBackground(color)
 
-    def _update_colors_batch(self, cell_ids: Set[int], is_unselected: bool):
+    def _update_colors_batch(self, cell_ids: Set[int], color_type: ColorType):
         """Update colors for multiple cells efficiently."""
         for cell_id in cell_ids:
-            self._set_row_color(cell_id, is_unselected)
+            self._set_row_color(cell_id, color_type)
 
     def _on_remove_button_clicked(self):
         selected_cell = self.viewer.cell_list.get_selected_cell_id()
@@ -166,10 +195,10 @@ class CellSelector(QtWidgets.QWidget):
 
         if selected_cell in self.unselected_cells:
             self.unselected_cells.remove(selected_cell)
-            self._set_row_color(selected_cell, False)
+            self._set_row_color(selected_cell, ColorType.SELECTED)
         else:
             self.unselected_cells.add(selected_cell)
-            self._set_row_color(selected_cell, True)
+            self._set_row_color(selected_cell, ColorType.UNSELECTED)
 
     def _on_size_button_clicked(self):
         threshold = self.control_panel.size_input.get_value()
@@ -181,7 +210,18 @@ class CellSelector(QtWidgets.QWidget):
                 cells_to_unselect.add(cell_id)
 
         self.unselected_cells.update(cells_to_unselect)
-        self._update_colors_batch(cells_to_unselect, True)
+        self._update_colors_batch(cells_to_unselect, ColorType.UNSELECTED)
+
+    def _on_border_checkbox_toggled(self, checked: bool):
+        """Handle border checkbox toggle."""
+        if checked:
+            # Add border cells to unselected and mark as unselected color
+            self.unselected_cells.update(self.border_cells)
+            self._update_colors_batch(self.border_cells, ColorType.UNSELECTED)
+        else:
+            # Remove border cells from unselected and restore normal color
+            self.unselected_cells.difference_update(self.border_cells)
+            self._update_colors_batch(self.border_cells, ColorType.SELECTED)
 
     def _on_preview_button_clicked(self):
         selected_cells = self.get_selected_cells()
@@ -208,6 +248,9 @@ class CellSelector(QtWidgets.QWidget):
 
     def get_unselected_cells(self) -> Set[int]:
         return self.unselected_cells.copy()
+
+    def get_border_cells(self) -> Set[int]:
+        return self.border_cells.copy()
 
 
 # --- Replace with your TIFF file path ---

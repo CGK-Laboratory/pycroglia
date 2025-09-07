@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Set
 
 from abc import ABC, abstractmethod
 
@@ -216,3 +217,27 @@ class LabeledCells:
             all_cells_matrix[i - 1, :, :] = cell_array
 
         return all_cells_matrix
+
+    def get_border_cells(self) -> Set[int]:
+        border_cells = set()
+        border_labels = set()
+        z, y, x = self.labels.shape
+
+        for z_slice in range(z):
+            # Top and bottom borders for this Z slice
+            border_labels.update(np.unique(self.labels[z_slice, 0, :]))
+            border_labels.update(np.unique(self.labels[z_slice, y - 1, :]))
+
+            # Left and right borders for this Z slice
+            border_labels.update(np.unique(self.labels[z_slice, :, 0]))
+            border_labels.update(np.unique(self.labels[z_slice, :, x - 1]))
+
+        # Remove background (label 0)
+        border_labels.discard(0)
+
+        # Filter to only include valid cell IDs
+        for label in border_labels:
+            if 1 <= label <= self.len():
+                border_cells.add(label)
+
+        return border_cells
