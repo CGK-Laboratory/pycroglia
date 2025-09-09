@@ -6,11 +6,16 @@ from PyQt6 import QtWidgets
 from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.labeled_cells import SkimageImgLabeling
 from pycroglia.ui.widgets.imagefilters.results import FilterResults
-from pycroglia.ui.widgets.segmentation.segmentation_editor import SegmentationEditor
+from pycroglia.ui.widgets.segmentation.editor import SegmentationEditor
+from pycroglia.ui.widgets.segmentation.results import SegmentationResults
 
 
 class SegmentationEditorStack(QtWidgets.QWidget):
     """Widget that manages a tabbed interface for segmentation editors.
+
+    Creates and manages multiple SegmentationEditor widgets in a tabbed interface,
+    allowing users to perform cell segmentation on multiple filtered images
+    simultaneously. Each tab corresponds to one filtered image result.
 
     Attributes:
         tabs (QtWidgets.QTabWidget): Tab widget containing segmentation editors.
@@ -33,11 +38,11 @@ class SegmentationEditorStack(QtWidgets.QWidget):
         """Initialize the SegmentationEditorStack widget.
 
         Args:
-            headers_text (Optional[list[str]]): Text for cell list headers.
-            rollback_button_text (Optional[str]): Text for rollback button.
-            segmentation_button_text (Optional[str]): Text for segmentation button.
-            progress_title (Optional[str]): Title for progress dialog.
-            progress_cancel_text (Optional[str]): Text for progress cancel button.
+            headers_text (Optional[list[str]]): Custom text for cell list headers.
+            rollback_button_text (Optional[str]): Custom text for rollback button.
+            segmentation_button_text (Optional[str]): Custom text for segmentation button.
+            progress_title (Optional[str]): Custom title for progress dialog.
+            progress_cancel_text (Optional[str]): Custom text for progress cancel button.
             parent (Optional[QtWidgets.QWidget]): Parent widget.
         """
         super().__init__(parent=parent)
@@ -58,10 +63,14 @@ class SegmentationEditorStack(QtWidgets.QWidget):
         self.setLayout(layout)
 
     def add_tabs(self, results: list[FilterResults]):
-        """Clear and add a tab for each result, each with a SegmentationEditor.
+        """Clear existing tabs and add a new tab for each filter result.
+
+        Creates a SegmentationEditor for each FilterResults object and adds it
+        as a tab. The tab title is derived from the file path.
 
         Args:
-            results (list[FilterResults]): List of filter results to add as tabs.
+            results (list[FilterResults]): List of filter results to create tabs for.
+                Each result will get its own segmentation editor tab.
         """
         self.tabs.clear()
 
@@ -79,3 +88,25 @@ class SegmentationEditorStack(QtWidgets.QWidget):
                 parent=self,
             )
             self.tabs.addTab(editor, f"{Path(elem.file_path).name}")
+
+    def get_results(self) -> list[SegmentationResults]:
+        """Collect segmentation results from all editor tabs.
+
+        Iterates through all tabs and collects the segmentation results from
+        each SegmentationEditor widget.
+
+        Returns:
+            list[SegmentationResults]: List containing segmentation results from
+                all editor tabs. Each result includes the file path and labeled cells.
+        """
+        list_of_results = []
+
+        for i in range(self.tabs.count()):
+            editor = self.tabs.widget(i)
+            file_path = self.tabs.tabText(i)
+            if hasattr(editor, "get_results"):
+                list_of_results.append(
+                    SegmentationResults(file_path, editor.get_results())
+                )
+
+        return list_of_results

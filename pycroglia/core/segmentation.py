@@ -71,7 +71,6 @@ def segment_single_cell(
     cell_matrix: NDArray,
     footprint: FootprintShape,
     config: SegmentationConfig,
-    start_label: int = 1,
 ) -> List[NDArray]:
     """Segments a single cell mask using erosion, clustering, and noise removal.
 
@@ -83,7 +82,6 @@ def segment_single_cell(
         cell_matrix (NDArray): 3D binary mask of a single cell.
         footprint (FootprintShape): Structuring element for erosion.
         config (SegmentationConfig): Configuration parameters for segmentation.
-        start_label (int, optional): Starting label index for relabeling. Defaults to 1.
 
     Returns:
         List[NDArray]: List of segmented cell masks as 3D arrays.
@@ -103,7 +101,7 @@ def segment_single_cell(
     for cluster in clusters:
         cluster_filtered = remove_small_objects(cluster, config.min_size)
         labeled_cluster = LabeledCells(
-            cluster_filtered, SkimageImgLabeling(config.connectivity, start_label)
+            cluster_filtered, SkimageImgLabeling(config.connectivity)
         )
         for j in range(1, labeled_cluster.len() + 1):
             cells_array.append(labeled_cluster.get_cell(j))

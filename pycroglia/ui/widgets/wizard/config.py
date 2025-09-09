@@ -4,10 +4,12 @@ from PyQt6 import QtCore
 from pycroglia.ui.widgets.imagefilters.stacks import FilterEditorStack
 from pycroglia.ui.widgets.io.file_selection_editor import FileSelectionEditor
 from pycroglia.ui.widgets.segmentation.stacks import SegmentationEditorStack
+from pycroglia.ui.widgets.analysis.stacks import CellSelectorStack
 from pycroglia.ui.widgets.wizard.pages import (
     FileSelectionPage,
     FilterEditorPage,
     SegmentationEditorPage,
+    CellSelectionPage,
 )
 
 DEFAULT_CONFIG = {
@@ -38,6 +40,15 @@ DEFAULT_CONFIG = {
         "segmentation_button_text": "Segment Cell",
         "progress_title": "Segmenting cell...",
         "progress_cancel_text": "Cancel",
+    },
+    # Cell Selector
+    "cell_selector": {
+        "headers": ["Cell Number", "Cell Size"],
+        "remove_button_text": "Remove Cell",
+        "size_label_text": "Cell Size",
+        "size_button_text": "Remove smaller than",
+        "preview_button_text": "Preview",
+        "border_checkbox_text": "Remove border cells",
     },
     # Navigation buttons
     "navigation": {
@@ -132,6 +143,25 @@ def create_wizard_pages(config: dict[str, Any]) -> List[dict[str, Any]]:
                 ],
             },
             "page_class": SegmentationEditorPage,
+            "navigation": {
+                "show_back_btn": True,
+                "show_next_btn": True,
+                "back_btn_txt": config["navigation"]["back_button_text"],
+                "next_btn_txt": config["navigation"]["next_button_text"],
+            },
+        },
+        {
+            "type": "segmentation_editor",
+            "widget_class": CellSelectorStack,
+            "widget_args": {
+                "headers": config["cell_selector"]["headers"],
+                "remove_button_text": config["cell_selector"]["remove_button_text"],
+                "size_label_text": config["cell_selector"]["size_label_text"],
+                "size_button_text": config["cell_selector"]["size_button_text"],
+                "preview_button_text": config["cell_selector"]["preview_button_text"],
+                "border_checkbox_text": config["cell_selector"]["border_checkbox_text"],
+            },
+            "page_class": CellSelectionPage,
             "navigation": {
                 "show_back_btn": True,
                 "show_next_btn": False,
