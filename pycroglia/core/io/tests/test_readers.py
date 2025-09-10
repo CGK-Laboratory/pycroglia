@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 from pycroglia.core.errors.errors import PycrogliaException
-from pycroglia.core.files import TiffReader, LsmReader, create_channeled_reader
+from pycroglia.core.io.readers import TiffReader, LsmReader, create_channeled_reader
 
 
 @pytest.mark.parametrize(

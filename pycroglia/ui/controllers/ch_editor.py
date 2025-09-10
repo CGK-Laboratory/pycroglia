@@ -2,7 +2,7 @@ from typing import Optional
 from numpy.typing import NDArray
 from PyQt6 import QtCore, QtWidgets
 
-from pycroglia.core.files import create_channeled_reader, MultiChReader
+from pycroglia.core.io.readers import create_channeled_reader, MultiChReader
 from pycroglia.core.filters import calculate_otsu_threshold, remove_small_objects
 
 
