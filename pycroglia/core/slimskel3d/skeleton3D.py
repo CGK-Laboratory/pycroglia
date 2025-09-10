@@ -2,7 +2,31 @@ from numpy.typing import NDArray
 import numpy as np
 
 def _border_candidates(skel: NDArray, current_border: int) -> NDArray:
-    """Compute border-deletion candidates for one of the 6 sweep directions."""
+    """Compute border-deletion candidates for one sweep direction.
+
+    A voxel is considered a candidate if it lies on the "border"
+    between foreground and background when sweeping along one of
+    the six Cartesian directions (+/-x, +/-y, +/-z). This matches
+    the conditions in the Lee–Kashyap–Chu thinning algorithm.
+
+    Args:
+        skel (NDArray):
+            3D binary skeleton volume of shape ``(z, y, x)``.
+        current_border (int):
+            Index of the current border direction:
+            - 1: +y (south)
+            - 2: -y (north)
+            - 3: -x (west)
+            - 4: +x (east)
+            - 5: -z (bottom)
+            - 6: +z (top)
+
+    Returns:
+        NDArray:
+            Boolean mask of the same shape as `skel`, with True
+            at voxels that are candidates for deletion in this
+            sweep direction.
+    """
     c = np.zeros_like(skel, dtype=bool)
     
     if current_border == 4:
@@ -22,6 +46,29 @@ def _border_candidates(skel: NDArray, current_border: int) -> NDArray:
     return c & skel
     
 def _fill_euler_lut() -> NDArray:
+    """Construct the Euler characteristic look-up table (LUT).
+
+    This LUT encodes the Euler characteristic contributions of all
+    possible 2×2×2 binary voxel configurations (indexed as an 8-bit
+    integer from 0 to 255). It is used during skeletonization to
+    ensure voxel deletions preserve topology.
+
+    The table was originally derived from the MATLAB function
+    ``FillEulerLUT`` (Kollmannsberger, 2013) and implements the
+    same assignment rules. Only specific entries are non-zero,
+    corresponding to configurations that affect the Euler number.
+
+    Returns:
+        NDArray:
+            A 1D array of shape (256,) with dtype ``int8``.
+            Index ``lut[k]`` contains the Euler contribution
+            for configuration ``k``.
+
+    Notes:
+        - Index 0 (all voxels empty) is unused and remains 0.
+        - Negative values indicate topology-breaking configurations.
+        - This LUT is referenced inside ``_compute_euler_invariant_mask``.
+    """    
     lut = np.zeros(256, dtype=np.int8)  # index 0 unused (kept 0)
     assignments = {
         1: 1,   3: -1,  5: -1,  7: 1,
@@ -64,22 +111,56 @@ def _fill_euler_lut() -> NDArray:
 EULER_LUT: NDArray = _fill_euler_lut()
 
 def skeleton3D(volume: NDArray) -> NDArray:
-    """3D skeletonization (Lee–Kashyap–Chu medial axis thinning) for binary volumes.
+    """3D skeletonization of a binary volume using the
+    Lee–Kashyap–Chu medial axis thinning algorithm.
+
+    This implementation follows the algorithm from:
+
+        Lee, T.C., Kashyap, R.L., & Chu, C.N. (1994).
+        "Building skeleton models via 3-D medial surface/axis
+        thinning algorithms." Computer Vision, Graphics, and
+        Image Processing, 56(6): 462–478.
+
+    The algorithm iteratively deletes border voxels from the
+    foreground volume, ensuring that deletions do not alter
+    the topology of the object. Candidate voxels are removed
+    only if they satisfy three conditions:
+
+    1. **Not endpoints**: The voxel has more than one neighbor.
+    2. **Euler invariant**: Removal preserves the Euler characteristic,
+       verified with a precomputed look-up table (LUT).
+    3. **Simple point**: Removal does not break connectivity, verified
+       using recursive octant labeling.
+
+    The thinning continues until no voxels can be removed from
+    any of the six sweep directions.
 
     Args:
         volume (NDArray):
-            Input binary volume as a boolean/0-1 array with shape (z, y, x).
+            Input 3D binary volume of shape ``(z, y, x)``.
+            Must be boolean or convertible to boolean.
 
     Returns:
         NDArray:
-            Skeletonized binary volume (same shape and dtype as input), (z, y, x).
+            Skeletonized 3D binary volume with the same shape
+            and dtype as the input.
 
     Notes:
-        - Uses 1-voxel zero padding around the volume to avoid edge effects,
-          like the MATLAB implementation.
-        - Neighborhoods are flattened in (z, y, x) order.
-        - The algorithm iterates over 6 border directions until no changes occur
-          in all 6 directions.
+        - A 1-voxel border of zeros is temporarily padded around
+          the input to avoid edge effects; this is removed before
+          returning the result.
+        - Neighborhoods are evaluated in 3×3×3 cubes flattened
+          in (z, y, x) order.
+        - The Euler LUT is precomputed once via :func:`_fill_euler_lut`.
+        - Simple point detection is performed with
+          :func:`_is_simple_point`, which recursively labels
+          connected components of the neighborhood.
+
+    References:
+        - Lee, T.C., Kashyap, R.L., & Chu, C.N. (1994).
+          *Building skeleton models via 3-D medial surface/axis
+          thinning algorithms*. CVGIP: Image Understanding,
+          56(6): 462–478.
     """
     orig_dtype = volume.dtype
     skel = np.pad(volume.astype(bool, copy=False), 1, mode="constant")
@@ -88,7 +169,6 @@ def skeleton3D(volume: NDArray) -> NDArray:
     zdim, ydim, xdim = skel.shape
 
     unchanged_borders = 0
-    print("here 1")
     while unchanged_borders < 6:
         unchanged_borders = 0
 
@@ -190,7 +270,6 @@ def _get_neighbourhood(img: NDArray, indices: NDArray) -> NDArray:
             A boolean array of shape ``(len(indices), 27)``, where each row
             corresponds to the 27-neighborhood of a voxel in row-major order.
     """
-    print("here get_nh")
     shape = img.shape  # (z, y, x)
     z, y, x = np.unravel_index(indices, shape)
 
@@ -215,60 +294,47 @@ def _get_neighbourhood(img: NDArray, indices: NDArray) -> NDArray:
     return neighbourhood
 
 
+def _compute_euler_invariant_mask(img: NDArray, lut: NDArray) -> NDArray:
+    """Check Euler characteristic preservation for voxel neighborhoods.
 
-def _get_neighbourhood_indices(img: NDArray, indices: NDArray) -> NDArray:
-    """Return linear indices of the 3x3x3 neighborhood around given voxels.
-
-    This is the Python equivalent of the MATLAB function `pk_get_nh_idx`.
+    This function evaluates whether candidate voxels can be removed
+    without altering the Euler characteristic of the 3D object. It does
+    so by computing the Euler contribution of each voxel’s 3×3×3
+    neighborhood across all 8 octants, and summing these contributions
+    using the precomputed Euler look-up table (LUT).
 
     Args:
         img (NDArray):
-            Input 3D image, shape (z, y, x).
-        indices (NDArray):
-            1D array of linear indices (0-based) of voxels in `img`.
+            Boolean array of shape (N, 27). Each row encodes the 3×3×3
+            neighborhood of a voxel, flattened in (z, y, x) order, where
+            column 13 is the center voxel.
+        lut (NDArray):
+            Precomputed Euler LUT of shape (256,) with dtype ``int8``.
+            The LUT maps a 7-bit configuration index (0–255) to its
+            Euler characteristic contribution. Must have length 256.
 
     Returns:
         NDArray:
-            Array of shape (len(indices), 27) with the linear indices of each
-            voxel’s 3x3x3 neighborhood, in row-major order.
+            Boolean mask of shape (N,). ``True`` if the voxel’s deletion
+            preserves the Euler characteristic (i.e., total contribution
+            equals 0), ``False`` otherwise.
+
+    Notes:
+        - Each octant corresponds to a 2×2×2 sub-cube around the voxel.
+        - Only 7 neighbors of the sub-cube are considered per octant,
+          yielding a 7-bit configuration index.
+        - These 7 bits are combined into an index via bitwise OR
+          (weights: [128, 64, 32, 16, 8, 4, 2]).
+        - The LUT provides the Euler contribution for each configuration.
+        - If the sum of contributions from all 8 octants is 0, the voxel
+          is Euler invariant.
+
+    References:
+        - P. Kollmannsberger, *Skeleton3D* (MATLAB implementation).
+        - Lee, Kashyap, and Chu (1994): "Building skeleton models via
+          3-D medial surface/axis thinning algorithms."
     """
-    print("here get_nh_indices")
-    shape = img.shape  # (z, y, x)
-    z, y, x = np.unravel_index(indices, shape)
 
-    neighbourhood = np.zeros((len(indices), 27), dtype=int)
-
-    w = 0
-    for dz in range(3):
-        for dy in range(3):
-            for dx in range(3):
-                zn = z + dz - 1
-                yn = y + dy - 1
-                xn = x + dx - 1
-                # convert (zn,yn,xn) → linear index
-                neighbourhood[:, w] = np.ravel_multi_index(
-                    (zn, yn, xn), shape, mode="clip"
-                )
-                w += 1
-
-    return neighbourhood    
-
-def _compute_euler_invariant_mask(img: NDArray, lut: NDArray) -> NDArray:
-    """Calculate Euler invariant mask for a 3D skeleton neighborhood table.
-
-    Args:
-        img (NDArray): 
-            Neighborhood table of shape (N, 27). Each row contains the values
-            of the 3x3x3 neighborhood around a voxel (flattened in row-major order).
-        lut (NDArray): 
-            Euler look-up table of length 255 (dtype int8). Indexing is 0-based.
-
-    Returns:
-        NDArray: 
-            Boolean mask of shape (N,), True if the Euler characteristic is preserved.
-    """
-#    assert lut.size == 255, "LUT with 255 elements expected"
-    print("here compute_euler")
     assert lut.size == 256
     N = img.shape[0]
     euler_char = np.zeros(N, dtype=np.int32)
@@ -399,8 +465,39 @@ OCTANT_RULES: dict[int, list[tuple[int, list[int]]]] = {
 }
 
 def _label_octant(octant: int, label: int, cube: NDArray) -> NDArray:
-    """Recursive octant labeling for a single voxel row (26-neighbor system)."""
-    # cube is shape (26,)
+    """Recursively propagate labels across a voxel’s octant neighborhood.
+
+    This function operates on the 26-neighbor configuration of a voxel’s
+    3×3×3 neighborhood (excluding the center). The neighborhood is
+    represented as a 1D array ``cube`` of length 26, where each entry
+    corresponds to a neighbor voxel state (1 = foreground, 0 = background,
+    >1 = already labeled).
+
+    The function starts at the given ``octant`` (1..8), identifies which
+    neighbors belong to that octant, and assigns them the current ``label``.
+    If a neighbor is relabeled, recursive calls are made into the next
+    connected octants specified by ``OCTANT_RULES``.
+
+    Args:
+        octant (int):
+            Octant ID (1–8). Defines which subset of neighbors to process.
+        label (int):
+            Label value to assign to the connected voxels in this octant.
+        cube (NDArray):
+            1D array of length 26 (uint8). The neighborhood configuration
+            of one voxel, excluding the center voxel.
+
+    Returns:
+        NDArray:
+            Updated ``cube`` with connected voxels labeled.
+
+    Notes:
+        - Uses the global constant ``OCTANT_RULES`` to determine which
+          neighbor indices belong to each octant, and which other octants
+          should be visited recursively.
+        - The recursion stops once all connected voxels in the octant are
+          relabeled or when no new voxels remain.
+     """
     for col, next_octants in OCTANT_RULES[octant]:
         if cube[col] == 1:
             cube[col] = label
@@ -409,14 +506,28 @@ def _label_octant(octant: int, label: int, cube: NDArray) -> NDArray:
     return cube
 
 def _is_simple_point(N: NDArray) -> NDArray:
-    """Check whether voxels are 'simple points' (can be deleted without changing topology).
+    """Check whether voxels are 'simple points' (can be safely removed).
+
+    A voxel is considered *simple* if removing it does not alter the
+    topological structure of the object. This check is used in thinning /
+    skeletonization algorithms to preserve connectivity.
+
+    Each voxel's 26-neighborhood (3×3×3 minus the center) is analyzed.
+    The neighborhood is partitioned into octants, and connected components
+    are recursively labeled using :func:`_label_octant`. If labeling
+    requires more than 3 distinct labels, the voxel is **not simple**.
 
     Args:
-        N (NDArray): Neighborhood table of shape (n_points, 27).
-                     Each row is a 3x3x3 neighborhood (flattened, center at col=13).
+        N (NDArray):
+            Neighborhood table of shape ``(n_points, 27)``. Each row is the
+            flattened 3×3×3 neighborhood (row-major, z–y–x order), with the
+            center voxel at index 13.
 
     Returns:
-        NDArray: Boolean mask of shape (n_points,), True if voxel is simple.
+        NDArray:
+            Boolean mask of shape ``(n_points,)`` where ``True`` means the
+            voxel is simple (removable) and ``False`` means the voxel must
+            be preserved.
     """
     n_points = N.shape[0]
     is_simple = np.ones(n_points, dtype=bool)
