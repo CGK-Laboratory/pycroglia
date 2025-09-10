@@ -1,7 +1,9 @@
+import json
+
 from abc import ABC
 from dataclasses import dataclass
-from typing import Optional, List
 from openpyxl import Workbook
+from typing import Optional, List
 
 
 @dataclass
@@ -15,6 +17,7 @@ class AnalysisSummary:
         total_unoccupied_volume: Volume not occupied by any cell territory.
         percent_occupied_volume: Percentage of total volume that is occupied.
     """
+
     file: str
     avg_centroid_distance: float
     total_territorial_volume: float
@@ -33,6 +36,7 @@ class AnalysisSummaryConfig:
         total_unoccupied_volume_txt: Header text for total unoccupied volume.
         percent_occupied_volume_txt: Header text for percent occupied volume.
     """
+
     file_txt: str
     avg_centroid_distance_txt: str
     total_territorial_volume_txt: str
@@ -69,6 +73,7 @@ class CellAnalysis:
         max_branch_length: Length of the longest branch.
         min_branch_length: Length of the shortest branch.
     """
+
     cell_territory_volume: float
     cell_volume: float
     ramification_index: float
@@ -93,6 +98,7 @@ class CellAnalysisConfig:
         max_branch_length_txt: Header text for maximum branch length.
         min_branch_length_txt: Header text for minimum branch length.
     """
+
     cell_territory_volume_txt: str
     cell_volume_txt: str
     ramification_index_txt: str
@@ -129,6 +135,7 @@ class FullAnalysis:
         summary: Overall analysis summary statistics.
         cells: List of individual cell analysis results.
     """
+
     summary: AnalysisSummary
     cells: List[CellAnalysis]
 
@@ -143,7 +150,7 @@ class OutputWriter(ABC):
             file_path: Path where the output file should be saved.
             data: Complete analysis results to write.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class ExcelOutput(OutputWriter):
@@ -276,3 +283,108 @@ class ExcelOutput(OutputWriter):
                     float(cell.min_branch_length),
                 ]
             )
+
+
+class JsonOutput(OutputWriter):
+    """JSON output writer for microglia analysis results.
+
+    Serializes analysis data to JSON format using configured field names
+    for consistency with other output formats.
+    """
+
+    DEFAULT_FILE_EXTENSION = ".json"
+
+    def __init__(
+        self,
+        summary_config: Optional[AnalysisSummaryConfig] = None,
+        per_cell_config: Optional[CellAnalysisConfig] = None,
+        indent: Optional[int] = 4,
+    ):
+        """Initialize JSON output writer with custom configurations.
+
+        Args:
+            summary_config: Configuration for summary field names.
+            per_cell_config: Configuration for per-cell field names.
+            indent: Number of spaces for JSON indentation. None for compact output.
+        """
+        super().__init__()
+        self.summary_config = summary_config or AnalysisSummaryConfig.default()
+        self.per_cell_config = per_cell_config or CellAnalysisConfig.default()
+        self.indent = indent
+
+    def write(self, file_path: str, data: FullAnalysis):
+        """Write analysis data to a JSON file.
+
+        Args:
+            file_path: Path where the JSON file should be saved.
+            data: Complete analysis results to write.
+        """
+        complete_path = self._create_path(file_path)
+        json_data = self._convert_to_dict(data)
+
+        with open(complete_path, "w") as f:
+            json.dump(json_data, f, indent=self.indent)
+
+    def _create_path(self, path: str) -> str:
+        """Ensure the file path has the correct JSON extension.
+
+        Args:
+            path: Original file path.
+
+        Returns:
+            str: File path with .json extension if not already present.
+        """
+        if not path.lower().endswith(".json"):
+            path += self.DEFAULT_FILE_EXTENSION
+        return path
+
+    def _convert_to_dict(self, data: FullAnalysis) -> dict:
+        """Convert FullAnalysis to dictionary using configured field names.
+
+        Args:
+            data: Complete analysis results to convert.
+
+        Returns:
+            dict: Dictionary representation with configured field names.
+        """
+        return {
+            "summary": self._convert_summary_to_dict(data.summary),
+            "cells": [self._convert_cell_to_dict(cell) for cell in data.cells],
+        }
+
+    def _convert_summary_to_dict(self, summary: AnalysisSummary) -> dict:
+        """Convert summary using configuration field names.
+
+        Args:
+            summary: Summary statistics to convert.
+
+        Returns:
+            dict: Summary with configured field names.
+        """
+        return {
+            self.summary_config.file_txt: summary.file,
+            self.summary_config.avg_centroid_distance_txt: summary.avg_centroid_distance,
+            self.summary_config.total_territorial_volume_txt: summary.total_territorial_volume,
+            self.summary_config.total_unoccupied_volume_txt: summary.total_unoccupied_volume,
+            self.summary_config.percent_occupied_volume_txt: summary.percent_occupied_volume,
+        }
+
+    def _convert_cell_to_dict(self, cell: CellAnalysis) -> dict:
+        """Convert cell analysis using configuration field names.
+
+        Args:
+            cell: Individual cell analysis to convert.
+
+        Returns:
+            dict: Cell analysis with configured field names.
+        """
+        return {
+            self.per_cell_config.cell_territory_volume_txt: cell.cell_territory_volume,
+            self.per_cell_config.cell_volume_txt: cell.cell_volume,
+            self.per_cell_config.ramification_index_txt: cell.ramification_index,
+            self.per_cell_config.number_of_endpoints_txt: cell.number_of_endpoints,
+            self.per_cell_config.number_of_branches_txt: cell.number_of_branches,
+            self.per_cell_config.avg_branch_length_txt: cell.avg_branch_length,
+            self.per_cell_config.max_branch_length_txt: cell.max_branch_length,
+            self.per_cell_config.min_branch_length_txt: cell.min_branch_length,
+        }
