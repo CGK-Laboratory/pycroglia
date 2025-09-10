@@ -1,4 +1,6 @@
 import json
+import re
+import unicodedata
 
 from abc import ABC
 from dataclasses import dataclass
@@ -285,7 +287,7 @@ class ExcelOutput(OutputWriter):
             )
 
 
-class JsonOutput(OutputWriter):
+class JSONOutput(OutputWriter):
     """JSON output writer for microglia analysis results.
 
     Serializes analysis data to JSON format using configured field names
@@ -352,6 +354,26 @@ class JsonOutput(OutputWriter):
             "cells": [self._convert_cell_to_dict(cell) for cell in data.cells],
         }
 
+    def _to_snake_case(self, text: str) -> str:
+        """Convert text to lowercase snake_case format.
+
+        Args:
+            text: Text to convert.
+
+        Returns:
+            str: Text converted to lowercase snake_case.
+        """
+        # Normalize unicode characters to remove accents
+        text = unicodedata.normalize('NFD', text)
+        text = ''.join(c for c in text if unicodedata.category(c) != 'Mn')
+
+        text = re.sub(r"[^\w\s]", "", text)
+        text = re.sub(r"\s+", "_", text)
+        text = text.lower()
+        text = re.sub(r"_+", "_", text)
+        text = text.strip("_")
+        return text
+
     def _convert_summary_to_dict(self, summary: AnalysisSummary) -> dict:
         """Convert summary using configuration field names.
 
@@ -359,14 +381,14 @@ class JsonOutput(OutputWriter):
             summary: Summary statistics to convert.
 
         Returns:
-            dict: Summary with configured field names.
+            dict: Summary with configured field names in snake_case.
         """
         return {
-            self.summary_config.file_txt: summary.file,
-            self.summary_config.avg_centroid_distance_txt: summary.avg_centroid_distance,
-            self.summary_config.total_territorial_volume_txt: summary.total_territorial_volume,
-            self.summary_config.total_unoccupied_volume_txt: summary.total_unoccupied_volume,
-            self.summary_config.percent_occupied_volume_txt: summary.percent_occupied_volume,
+            self._to_snake_case(self.summary_config.file_txt): summary.file,
+            self._to_snake_case(self.summary_config.avg_centroid_distance_txt): summary.avg_centroid_distance,
+            self._to_snake_case(self.summary_config.total_territorial_volume_txt): summary.total_territorial_volume,
+            self._to_snake_case(self.summary_config.total_unoccupied_volume_txt): summary.total_unoccupied_volume,
+            self._to_snake_case(self.summary_config.percent_occupied_volume_txt): summary.percent_occupied_volume,
         }
 
     def _convert_cell_to_dict(self, cell: CellAnalysis) -> dict:
@@ -376,15 +398,15 @@ class JsonOutput(OutputWriter):
             cell: Individual cell analysis to convert.
 
         Returns:
-            dict: Cell analysis with configured field names.
+            dict: Cell analysis with configured field names in snake_case.
         """
         return {
-            self.per_cell_config.cell_territory_volume_txt: cell.cell_territory_volume,
-            self.per_cell_config.cell_volume_txt: cell.cell_volume,
-            self.per_cell_config.ramification_index_txt: cell.ramification_index,
-            self.per_cell_config.number_of_endpoints_txt: cell.number_of_endpoints,
-            self.per_cell_config.number_of_branches_txt: cell.number_of_branches,
-            self.per_cell_config.avg_branch_length_txt: cell.avg_branch_length,
-            self.per_cell_config.max_branch_length_txt: cell.max_branch_length,
-            self.per_cell_config.min_branch_length_txt: cell.min_branch_length,
+            self._to_snake_case(self.per_cell_config.cell_territory_volume_txt): cell.cell_territory_volume,
+            self._to_snake_case(self.per_cell_config.cell_volume_txt): cell.cell_volume,
+            self._to_snake_case(self.per_cell_config.ramification_index_txt): cell.ramification_index,
+            self._to_snake_case(self.per_cell_config.number_of_endpoints_txt): cell.number_of_endpoints,
+            self._to_snake_case(self.per_cell_config.number_of_branches_txt): cell.number_of_branches,
+            self._to_snake_case(self.per_cell_config.avg_branch_length_txt): cell.avg_branch_length,
+            self._to_snake_case(self.per_cell_config.max_branch_length_txt): cell.max_branch_length,
+            self._to_snake_case(self.per_cell_config.min_branch_length_txt): cell.min_branch_length,
         }
