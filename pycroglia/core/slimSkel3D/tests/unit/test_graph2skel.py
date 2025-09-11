@@ -1,7 +1,10 @@
 import numpy as np
+from pathlib import Path
 from pycroglia.core.slimSkel3D import graph2skel
 from pycroglia.core.slimSkel3D.skel2graph import skel2graph
 
+TEST_DIR = Path(__file__).parent  # folder where this test lives
+FILES_DIR = TEST_DIR / "files"    # adjust if files/ is elsewhere
 
 def test_graph2skel():
     """Test Graph2Skel3D correctly reconstructs skeleton from graph.
@@ -13,7 +16,7 @@ def test_graph2skel():
         - The number of mismatches is exactly 9.
         - The mismatched voxel coordinates match the expected set.
     """    
-    with np.load("./files/skel_test.npz") as data:
+    with np.load(FILES_DIR / "skel_test.npz") as data:
         expected = data["arr_0"].astype(np.uint8)
 
     _, nodes, links = skel2graph(expected, threshold=0)
