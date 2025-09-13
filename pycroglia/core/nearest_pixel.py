@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Coordinates:
+    """Container for 3D voxel coordinates."""    
     x: int
     y: int
     z: int
