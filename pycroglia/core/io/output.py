@@ -364,8 +364,8 @@ class JSONOutput(OutputWriter):
             str: Text converted to lowercase snake_case.
         """
         # Normalize unicode characters to remove accents
-        text = unicodedata.normalize('NFD', text)
-        text = ''.join(c for c in text if unicodedata.category(c) != 'Mn')
+        text = unicodedata.normalize("NFD", text)
+        text = "".join(c for c in text if unicodedata.category(c) != "Mn")
 
         text = re.sub(r"[^\w\s]", "", text)
         text = re.sub(r"\s+", "_", text)
@@ -385,10 +385,18 @@ class JSONOutput(OutputWriter):
         """
         return {
             self._to_snake_case(self.summary_config.file_txt): summary.file,
-            self._to_snake_case(self.summary_config.avg_centroid_distance_txt): summary.avg_centroid_distance,
-            self._to_snake_case(self.summary_config.total_territorial_volume_txt): summary.total_territorial_volume,
-            self._to_snake_case(self.summary_config.total_unoccupied_volume_txt): summary.total_unoccupied_volume,
-            self._to_snake_case(self.summary_config.percent_occupied_volume_txt): summary.percent_occupied_volume,
+            self._to_snake_case(
+                self.summary_config.avg_centroid_distance_txt
+            ): summary.avg_centroid_distance,
+            self._to_snake_case(
+                self.summary_config.total_territorial_volume_txt
+            ): summary.total_territorial_volume,
+            self._to_snake_case(
+                self.summary_config.total_unoccupied_volume_txt
+            ): summary.total_unoccupied_volume,
+            self._to_snake_case(
+                self.summary_config.percent_occupied_volume_txt
+            ): summary.percent_occupied_volume,
         }
 
     def _convert_cell_to_dict(self, cell: CellAnalysis) -> dict:
@@ -401,12 +409,26 @@ class JSONOutput(OutputWriter):
             dict: Cell analysis with configured field names in snake_case.
         """
         return {
-            self._to_snake_case(self.per_cell_config.cell_territory_volume_txt): cell.cell_territory_volume,
+            self._to_snake_case(
+                self.per_cell_config.cell_territory_volume_txt
+            ): cell.cell_territory_volume,
             self._to_snake_case(self.per_cell_config.cell_volume_txt): cell.cell_volume,
-            self._to_snake_case(self.per_cell_config.ramification_index_txt): cell.ramification_index,
-            self._to_snake_case(self.per_cell_config.number_of_endpoints_txt): cell.number_of_endpoints,
-            self._to_snake_case(self.per_cell_config.number_of_branches_txt): cell.number_of_branches,
-            self._to_snake_case(self.per_cell_config.avg_branch_length_txt): cell.avg_branch_length,
-            self._to_snake_case(self.per_cell_config.max_branch_length_txt): cell.max_branch_length,
-            self._to_snake_case(self.per_cell_config.min_branch_length_txt): cell.min_branch_length,
+            self._to_snake_case(
+                self.per_cell_config.ramification_index_txt
+            ): cell.ramification_index,
+            self._to_snake_case(
+                self.per_cell_config.number_of_endpoints_txt
+            ): cell.number_of_endpoints,
+            self._to_snake_case(
+                self.per_cell_config.number_of_branches_txt
+            ): cell.number_of_branches,
+            self._to_snake_case(
+                self.per_cell_config.avg_branch_length_txt
+            ): cell.avg_branch_length,
+            self._to_snake_case(
+                self.per_cell_config.max_branch_length_txt
+            ): cell.max_branch_length,
+            self._to_snake_case(
+                self.per_cell_config.min_branch_length_txt
+            ): cell.min_branch_length,
         }
