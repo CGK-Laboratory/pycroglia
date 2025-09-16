@@ -14,6 +14,7 @@ class SegmentationResults:
         file_path (str): Path to the original image file that was segmented.
         img (LabeledCells): The labeled cells object containing segmentation results.
     """
+
     file_path: str
     img: LabeledCells
 

@@ -3,19 +3,25 @@ from numpy.typing import NDArray
 from collections import deque
 import numpy as np
 
+
 @dataclass
 class Point:
     """A 3D voxel coordinate in (x, y, z)."""
+
     x: int
     y: int
     z: int
 
-# 26-neighbourhood offsets (all possible moves except staying in place)    
-NEIGHBOURS = [(dz,dy,dx) 
-                 for dz in (-1,0,1)
-                 for dy in (-1,0,1)
-                 for dx in (-1,0,1)
-                 if not (dz==dy==dx==0)]
+
+# 26-neighbourhood offsets (all possible moves except staying in place)
+NEIGHBOURS = [
+    (dz, dy, dx)
+    for dz in (-1, 0, 1)
+    for dy in (-1, 0, 1)
+    for dx in (-1, 0, 1)
+    if not (dz == dy == dx == 0)
+]
+
 
 def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray:
     """
@@ -42,7 +48,7 @@ def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray
         - The coordinate system is **0-based, z-y-x order** (NumPy convention).
     """
     assert img.ndim == 3, "the image should be 3D"
-    
+
     shape = img.shape
     visited = np.zeros(shape, dtype=bool)
     prev = {}
@@ -71,7 +77,7 @@ def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray
                 visited[zn, yn, xn] = True
                 prev[(zn, yn, xn)] = (z, y, x)
                 q.append((zn, yn, xn))
-            
+
     if not found:
         return np.array([])
 

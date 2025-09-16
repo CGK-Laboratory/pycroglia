@@ -7,7 +7,7 @@ def test_bounding_box_of_cell():
     Test Bounding Box computation on a simple 3D volume.
 
     Scenario:
-        A single foreground voxel is placed at (z=2, y=3, x=4) in a 
+        A single foreground voxel is placed at (z=2, y=3, x=4) in a
         (5,6,7) volume. The bounding box should tightly crop in z and y,
         while keeping the full x dimension.
 
