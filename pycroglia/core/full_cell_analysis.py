@@ -18,6 +18,7 @@ class AnalysisResult:
         max_cell_volume (np.float64): Maximum cell volume among all cells, in physical units.
     """
 
+    convex_simplices: list[NDArray]
     convex_vertices: list[NDArray]
     convex_volumes: NDArray
     cell_complexities: NDArray
@@ -72,17 +73,20 @@ class FullCellAnalysis:
 
         convex_volumes = np.zeros(len(self.masks), dtype=np.float64)
         convex_vertices = []
+        convex_simplices = []
         for i, mask in enumerate(self.masks):
             coords = np.argwhere(mask)  # (z, y, x)
             hull = ConvexHull(coords.astype(np.float64))
             convex_volumes[i] = hull.volume * self.voxscale
             convex_vertices.append(hull.vertices)
+            convex_simplices.append(hull.simplices)
 
         complexities = np.zeros_like(cell_volumes, dtype=np.float64)
         valid = cell_volumes > 0
         complexities[valid] = convex_volumes[valid] / cell_volumes[valid]
 
         return AnalysisResult(
+            convex_simplices=convex_simplices,
             convex_vertices=convex_vertices,
             convex_volumes=convex_volumes,
             max_cell_volume=max_cell_volume,
