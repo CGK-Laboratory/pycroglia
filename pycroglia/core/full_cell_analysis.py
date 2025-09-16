@@ -6,16 +6,22 @@ from scipy.spatial import ConvexHull
 
 @dataclass
 class AnalysisResult:
-    """Holds results of full cell analysis including convex hulls and derived metrics.
+    """Results of full cell analysis including convex hulls and derived metrics.
 
     Attributes:
-        convex_vertices (list[np.ndarray]): List of arrays containing indices of
-            convex hull vertices for each cell. Each array corresponds to one cell.
-        convex_volumes (np.ndarray): Array of convex hull volumes for each cell
-            in physical units (scaled by `voxscale`).
-        cell_complexities (np.ndarray): Array of complexity measures for each cell,
-            defined as `convex_volume / cell_volume`.
-        max_cell_volume (np.float64): Maximum cell volume among all cells, in physical units.
+        convex_simplices (list[NDArray]): 
+            List of arrays of simplices (faces) for each convex hull, 
+            useful for 3D visualization or mesh reconstruction.
+        convex_vertices (list[NDArray]): 
+            List of arrays containing vertex indices of convex hulls. 
+            Each entry corresponds to one cell.
+        convex_volumes (NDArray): 
+            Array of convex hull volumes for each cell, scaled by ``voxscale``.
+        cell_complexities (NDArray): 
+            Array of complexity values for each cell, computed as 
+            ``convex_volume / cell_volume``.
+        max_cell_volume (np.float64): 
+            Maximum voxel-based cell volume across all cells (scaled).
     """
 
     convex_simplices: list[NDArray]
@@ -26,19 +32,23 @@ class AnalysisResult:
 
 
 class FullCellAnalysis:
-    """Compute full cell volumes, convex hulls, and complexity metrics.
+    """Compute convex hulls, volumes, and complexity metrics for segmented cells.
 
-    This class takes a list of 3D binary masks representing segmented cells
-    and calculates for each cell:
-        1. The raw voxel-based volume scaled to physical units.
-        2. The convex hull volume using `scipy.spatial.ConvexHull`.
-        3. The complexity of the cell defined as `convex_volume / cell_volume`.
-        4. Maximum cell volume across all cells.
-        5. The indices of convex hull vertices for further visualization or analysis.
+    Given a list of 3D binary masks (segmented cells), this class computes:
+
+        1. Raw voxel-based cell volume (scaled to physical units by ``voxscale``).
+        2. Convex hull of voxel coordinates and its volume.
+        3. Cell complexity: ratio of convex hull volume to cell volume.
+        4. Maximum cell volume across all masks.
+        5. Convex hull vertices and simplices for visualization.
 
     Attributes:
-        masks (list[np.ndarray]): List of 3D binary masks for each segmented cell.
-        voxscale (float): Scaling factor to convert voxel counts/volume into physical units (e.g., µm³ per voxel).
+        masks (list[np.ndarray]): 
+            List of 3D binary arrays where ``True`` or ``1`` indicates 
+            cell voxels.
+        voxscale (float): 
+            Scaling factor to convert voxel counts/volumes into 
+            physical units (e.g., µm³ per voxel).
     """
 
     def __init__(self, masks: list[np.ndarray], voxscale: float) -> None:
@@ -51,21 +61,18 @@ class FullCellAnalysis:
         self.voxscale = voxscale
 
     def compute(self) -> AnalysisResult:
-        """Compute convex hulls, cell volumes, complexities, and maximum cell volume.
+        """Perform convex hull and complexity analysis for all cells.
 
-        For each cell mask:
-            1. Count the number of voxels and scale by `voxscale` to get `cell_volume`.
-            2. Compute the convex hull of voxel coordinates.
-            3. Compute convex hull volume scaled by `voxscale`.
-            4. Store convex hull vertex indices for visualization.
-            5. Calculate cell complexity as `convex_volume / cell_volume`.
+        For each cell:
+            - Counts voxels and converts to volume using ``voxscale``.
+            - Builds a convex hull from voxel coordinates.
+            - Computes convex hull volume and stores vertices/simplices.
+            - Computes complexity as ``convex_volume / cell_volume``.
 
         Returns:
-            AnalysisResult: Dataclass containing:
-                - convex_vertices: vertex indices for each cell's convex hull
-                - convex_volumes: array of convex hull volumes
-                - max_cell_volume: maximum voxel volume among all cells
-                - cell_complexities: array of complexity values
+            AnalysisResult: 
+                Dataclass containing convex hulls, volumes, complexities, 
+                and maximum cell volume.
         """
         voxel_counts = np.array([mask.sum() for mask in self.masks])
         cell_volumes = voxel_counts * self.voxscale

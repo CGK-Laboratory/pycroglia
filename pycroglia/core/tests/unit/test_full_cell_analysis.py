@@ -6,17 +6,21 @@ from pycroglia.core.full_cell_analysis import FullCellAnalysis, AnalysisResult
 def test_full_cell_analysis():
     """Test FullCellAnalysis computes convex volumes and complexities.
 
-    This test uses two simple 3x3x3 masks with four voxels each to verify that:
-        - The convex hull vertices are correctly identified.
-        - The convex hull volumes are computed in physical units using voxscale.
-        - Cell complexities (convex volume / cell volume) are correctly calculated.
-        - Maximum cell volume is correctly determined from the voxel counts.
+    This test builds two synthetic 3×3×3 masks, each containing four voxels
+    arranged in an L-shape. These small shapes have simple convex hulls, making
+    it straightforward to verify correctness of the analysis.
+
+    Verifications performed:
+        - Convex hull simplices and vertex indices are consistent with the voxel geometry.
+        - Convex hull volumes are computed in physical units by scaling with `voxscale`.
+        - Cell complexities are correctly calculated as `convex_volume / cell_volume`.
+        - The maximum cell volume is determined correctly from voxel counts.
 
     Asserts:
-        - Convex hull vertices match expected indices for each cell.
-        - Convex hull volumes match expected floating-point values.
-        - Cell complexities match expected floating-point values.
-        - Maximum cell volume matches expected value.
+        - `convex_vertices` match the expected vertex indices for each mask.
+        - `convex_volumes` match expected floating-point values.
+        - `cell_complexities` match expected floating-point values.
+        - `max_cell_volume` matches the expected maximum cell volume.
     """
     mask1 = np.zeros((3, 3, 3), dtype=np.uint8)
     mask1[0, 0, 0] = 1
@@ -36,15 +40,9 @@ def test_full_cell_analysis():
     fca = FullCellAnalysis(masks, voxscale)
     result = fca.compute()
     expected = AnalysisResult(
-        convex_simplices = [
-            np.array([[2, 3, 0],
-                      [1, 3, 0],
-                      [1, 2, 0],
-                      [1, 2, 3]], dtype=np.int32),
-            np.array([[2, 1, 0],
-                      [3, 1, 0],
-                      [3, 2, 0],
-                      [3, 2, 1]], dtype=np.int32)
+        convex_simplices=[
+            np.array([[2, 3, 0], [1, 3, 0], [1, 2, 0], [1, 2, 3]], dtype=np.int32),
+            np.array([[2, 1, 0], [3, 1, 0], [3, 2, 0], [3, 2, 1]], dtype=np.int32),
         ],
         convex_vertices=[
             np.array([0, 1, 2, 3], dtype=np.int32),
@@ -55,6 +53,6 @@ def test_full_cell_analysis():
         max_cell_volume=np.float64(0.4),
     )
     np.testing.assert_allclose(result.convex_vertices, expected.convex_vertices)
-    assert np.allclose(result.convex_volumes, expected.convex_volumes)    
+    assert np.allclose(result.convex_volumes, expected.convex_volumes)
     np.testing.assert_allclose(result.cell_complexities, expected.cell_complexities)
     assert np.isclose(expected.max_cell_volume, result.max_cell_volume)
