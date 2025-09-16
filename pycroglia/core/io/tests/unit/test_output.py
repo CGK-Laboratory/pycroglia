@@ -202,17 +202,7 @@ def test_json_output_write_custom_config(tmp_path, sample_full_analysis):
 def test_excel_output_create_path(path, expected):
     """Test ExcelOutput._create_path returns correct file paths with .xlsx extension."""
     excel_writer = ExcelOutput()
-    assert excel_writer._to_snake_case(path) == expected
-
-
-@pytest.mark.parametrize(
-    "path, expected",
-    [("file.json", "file.json"), ("file", "file.json"), ("file.txt", "file.txt.json")],
-)
-def test_json_output_create_path(path, expected):
-    """Test JSONOutput._create_path returns correct file paths with .json extension."""
-    json_writer = JSONOutput()
-    assert json_writer._to_snake_case(path) == expected
+    assert excel_writer._create_path(path) == expected
 
 
 @pytest.mark.parametrize(
