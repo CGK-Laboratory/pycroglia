@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
-from pycroglia.core.slimSkel3D import graph2skel
-from pycroglia.core.slimSkel3D.skel2graph import skel2graph
+from pycroglia.core.slimskel3d import graph2skel
+from pycroglia.core.slimskel3d.skel2graph import skel2graph
 
 TEST_DIR = Path(__file__).parent  # folder where this test lives
 FILES_DIR = TEST_DIR / "files"    # adjust if files/ is elsewhere
