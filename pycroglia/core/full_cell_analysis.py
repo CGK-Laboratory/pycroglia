@@ -9,18 +9,18 @@ class AnalysisResult:
     """Results of full cell analysis including convex hulls and derived metrics.
 
     Attributes:
-        convex_simplices (list[NDArray]): 
-            List of arrays of simplices (faces) for each convex hull, 
+        convex_simplices (list[NDArray]):
+            List of arrays of simplices (faces) for each convex hull,
             useful for 3D visualization or mesh reconstruction.
-        convex_vertices (list[NDArray]): 
-            List of arrays containing vertex indices of convex hulls. 
+        convex_vertices (list[NDArray]):
+            List of arrays containing vertex indices of convex hulls.
             Each entry corresponds to one cell.
-        convex_volumes (NDArray): 
+        convex_volumes (NDArray):
             Array of convex hull volumes for each cell, scaled by ``voxscale``.
-        cell_complexities (NDArray): 
-            Array of complexity values for each cell, computed as 
+        cell_complexities (NDArray):
+            Array of complexity values for each cell, computed as
             ``convex_volume / cell_volume``.
-        max_cell_volume (np.float64): 
+        max_cell_volume (np.float64):
             Maximum voxel-based cell volume across all cells (scaled).
     """
 
@@ -43,11 +43,11 @@ class FullCellAnalysis:
         5. Convex hull vertices and simplices for visualization.
 
     Attributes:
-        masks (list[np.ndarray]): 
-            List of 3D binary arrays where ``True`` or ``1`` indicates 
+        masks (list[np.ndarray]):
+            List of 3D binary arrays where ``True`` or ``1`` indicates
             cell voxels.
-        voxscale (float): 
-            Scaling factor to convert voxel counts/volumes into 
+        voxscale (float):
+            Scaling factor to convert voxel counts/volumes into
             physical units (e.g., µm³ per voxel).
     """
 
@@ -70,8 +70,8 @@ class FullCellAnalysis:
             - Computes complexity as ``convex_volume / cell_volume``.
 
         Returns:
-            AnalysisResult: 
-                Dataclass containing convex hulls, volumes, complexities, 
+            AnalysisResult:
+                Dataclass containing convex hulls, volumes, complexities,
                 and maximum cell volume.
         """
         voxel_counts = np.array([mask.sum() for mask in self.masks])
