@@ -1,5 +1,5 @@
 import numpy as np
-from  numpy.typing  import NDArray
+from numpy.typing import NDArray
 from scipy.spatial.distance import pdist
 
 
@@ -14,6 +14,7 @@ class Centroids:
         centroids (NDArray[np.float64]): Array of centroids with shape (N, 3),
             where each row is (z, y, x) in voxel coordinates.
     """
+
     def __init__(self, masks: list[NDArray]) -> None:
         """Initializes the Centroids object from binary masks.
 
@@ -23,7 +24,7 @@ class Centroids:
         """
         centroids = []
         for mask in masks:
-            coords = np.argwhere(mask) # voxel coords as (z,y,x)
+            coords = np.argwhere(mask)  # voxel coords as (z,y,x)
             if coords.size == 0:
                 continue
             centroid = coords.mean(axis=0)
@@ -40,8 +41,8 @@ class Centroids:
         Returns:
             float: The average Euclidean distance between centroids in microns.
         """
-        self.centroids[:, 1] *= scale   # y
-        self.centroids[:, 2] *= scale   # x
+        self.centroids[:, 1] *= scale  # y
+        self.centroids[:, 2] *= scale  # x
         self.centroids[:, 0] *= zscale  # z
 
         dists = pdist(self.centroids)

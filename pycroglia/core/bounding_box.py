@@ -15,9 +15,9 @@ class ComputeResult:
 def compute(input_img: NDArray) -> ComputeResult:
     """Compute the tight bounding box of a 3D binary image along the Z and Y axes.
 
-    The function finds the minimum and maximum foreground voxel indices 
-    (value == 1 / True) along the Z (rows) and Y (columns) dimensions, 
-    crops the input volume accordingly, and keeps the full X (slices) range.  
+    The function finds the minimum and maximum foreground voxel indices
+    (value == 1 / True) along the Z (rows) and Y (columns) dimensions,
+    crops the input volume accordingly, and keeps the full X (slices) range.
 
     Args:
         input_img (NDArray):
@@ -26,7 +26,7 @@ def compute(input_img: NDArray) -> ComputeResult:
     Returns:
         ComputeResult:
             A dataclass with the following fields:
-            - bounded_img (NDArray): Cropped sub-volume 
+            - bounded_img (NDArray): Cropped sub-volume
               [left:right+1, bottom:top+1, :].
             - right (int): Max Z index (0-based).
             - left (int): Min Z index (0-based).

@@ -4,7 +4,8 @@ from pathlib import Path
 from pycroglia.core.slimskel3d.skel2graph import skel2graph
 
 TEST_DIR = Path(__file__).parent  # folder where this test lives
-FILES_DIR = TEST_DIR / "files"    # adjust if files/ is elsewhere
+FILES_DIR = TEST_DIR / "files"  # adjust if files/ is elsewhere
+
 
 # TODO(jab227): Make this test more robust
 def test_skel2graph():

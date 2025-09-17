@@ -19,6 +19,7 @@ class TerritorialVolume:
         voxscale (float): Scaling factor for converting voxel-based volumes
             into physical units (e.g., µm³ per voxel).
     """
+
     def __init__(self, masks: list[NDArray], voxscale: float) -> None:
         """Initializes a TerritorialVolume instance.
 
@@ -85,7 +86,10 @@ class TerritorialVolumeMetrics:
 
 
 def compute_metrics(
-    convex_volume: NDArray, voxscale: float, img_size: tuple[int, int, int], zplanes: int
+    convex_volume: NDArray,
+    voxscale: float,
+    img_size: tuple[int, int, int],
+    zplanes: int,
 ) -> TerritorialVolumeMetrics:
     """Computes global volume coverage metrics from convex hull volumes.
 
