@@ -13,6 +13,7 @@ dependencies = [
     "scikit-image>=0.25.2",
     "scikit-learn>=1.7.1",
     "tifffile>=2025.5.10",
+    "openpyxl>=3.1.5",
 ]
 
 [dependency-groups]
@@ -22,7 +23,8 @@ core = [
     "scikit-image>=0.25.2",
     "scikit-learn>=1.7.1",
     "tifffile>=2025.5.10",
-    "scipy>=1.15.3",    
+    "scipy>=1.15.3",
+    "openpyxl>=3.1.5",
 ]
 core-test = [
     "h5py>=3.14.0",
