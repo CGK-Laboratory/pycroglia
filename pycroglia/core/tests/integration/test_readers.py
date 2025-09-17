@@ -3,7 +3,7 @@ import pytest
 from numpy import array_equal
 from pathlib import Path
 from pycroglia.core.tests.integration.helpers import read_hdf5_results
-from pycroglia.core.files import TiffReader
+from pycroglia.core.io.readers import TiffReader
 
 # Test cases folder
 TEST_CASES_PATH = Path(__file__).parent / "cases"
