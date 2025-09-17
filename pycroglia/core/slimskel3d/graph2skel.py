@@ -3,7 +3,9 @@ from numpy.typing import NDArray
 from pycroglia.core.slimskel3d.skel2graph import Node, Link
 
 
-def graph2skel(nodes: list[Node], links: list[Link], shape: tuple[int, int, int]) -> NDArray:
+def graph2skel(
+    nodes: list[Node], links: list[Link], shape: tuple[int, int, int]
+) -> NDArray:
     """Reconstruct a 3D skeleton (binary mask) from node/link
     graph. It's not an exact recreation of the original skeleton
 
@@ -28,4 +30,3 @@ def graph2skel(nodes: list[Node], links: list[Link], shape: tuple[int, int, int]
         skel.ravel()[link.points] = True
 
     return skel
-

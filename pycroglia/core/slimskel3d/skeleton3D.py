@@ -152,8 +152,7 @@ def _fill_euler_lut() -> NDArray:
         153: 3,
         155: 1,
         157: 1,
-        159: -1,/unit/test_filters.py::test_remove_small_objects_dtype_uint8
-pycroglia/core/tests
+        159: -1,
         161: -3,
         163: -1,
         165: 3,
@@ -288,8 +287,7 @@ def skeleton3D(volume: NDArray) -> NDArray:
                     nhood = nhood[keep]
                     cands_indices = cands_indices[keep]
 
-                if cands_indices.size > 0:/unit/test_filters.py::test_remove_small_objects_dtype_uint8
-pycroglia/core/tests
+                if cands_indices.size > 0:
                     # Euler invariant filter
                     di2 = ~_compute_euler_invariant_mask(nhood, EULER_LUT)
                     if np.any(di2):
