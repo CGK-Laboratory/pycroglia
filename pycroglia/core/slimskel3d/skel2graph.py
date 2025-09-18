@@ -138,7 +138,7 @@ def _follow_link(
 
 # skeleton is the result of calling skeleton3D
 def skel2graph(
-    skeleton: NDArray, threshold: float = 100.0
+    skeleton: NDArray, threshold: float = 0.0
 ) -> tuple[csr_matrix, list[Node], list[Link]]:
     """ "Convert a 3D skeletonized volume into a graph representation.
 

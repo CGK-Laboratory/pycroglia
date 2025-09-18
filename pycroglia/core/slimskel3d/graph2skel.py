@@ -22,11 +22,14 @@ def graph2skel(
 
     """
     skel = np.zeros(shape, dtype=np.uint8)
-    for node in nodes:
-        skel.ravel()[node.indices] = True
 
-    # Mark link voxels
-    for link in links:
-        skel.ravel()[link.points] = True
+    for node in nodes:
+        if node.links:  # node has links
+            # Paint node voxels
+            skel.ravel()[node.indices] = True
+
+            # Paint link voxels
+            for link in node.links:
+                skel.ravel()[link.points] = True
 
     return skel
