@@ -4,6 +4,23 @@ from pycroglia.core.slimskel3d.skeleton3D import skeleton3D
 
 
 def test_slimskel3d():
+    """Test that slimskel3d prunes short spurs while preserving main branches.
+
+    This test constructs a synthetic 10×10×10 volume containing:
+      - A main vertical skeleton branch along the z-axis at coordinates (y=5, x=5).
+      - A short 2-voxel spur branching in the +x direction at z=5.
+
+    Assertions:
+        - The number of voxels after slimming is strictly less than before,
+          ensuring spur pruning occurred.
+        - The set of remaining voxel coordinates matches the expected slimmed
+          skeleton:
+            [[2, 5, 5],
+             [3, 5, 5],
+             [4, 5, 5],
+             [6, 5, 5],
+             [7, 5, 5],
+    """
     # Create a 10x10x10 volume
     vol = np.zeros((10, 10, 10), dtype=bool)
 
