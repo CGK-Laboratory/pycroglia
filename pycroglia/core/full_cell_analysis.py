@@ -17,6 +17,8 @@ class AnalysisResult:
             Each entry corresponds to one cell.
         convex_volumes (NDArray):
             Array of convex hull volumes for each cell, scaled by ``voxscale``.
+        cell_volumes: NDArray:
+            Array of with the approximated volume of each cell.
         cell_complexities (NDArray):
             Array of complexity values for each cell, computed as
             ``convex_volume / cell_volume``.
@@ -26,6 +28,7 @@ class AnalysisResult:
 
     convex_simplices: list[NDArray]
     convex_vertices: list[NDArray]
+    cell_volumes: NDArray
     convex_volumes: NDArray
     cell_complexities: NDArray
     max_cell_volume: np.float64
@@ -71,7 +74,7 @@ class FullCellAnalysis:
 
         Returns:
             AnalysisResult:
-                Dataclass containing convex hulls, volumes, complexities,
+                Dataclass containing convex hulls, volumes, complexities, cell volumes
                 and maximum cell volume.
         """
         voxel_counts = np.array([mask.sum() for mask in self.masks])
@@ -93,6 +96,7 @@ class FullCellAnalysis:
         complexities[valid] = convex_volumes[valid] / cell_volumes[valid]
 
         return AnalysisResult(
+            cell_volumes=cell_volumes,
             convex_simplices=convex_simplices,
             convex_vertices=convex_vertices,
             convex_volumes=convex_volumes,
