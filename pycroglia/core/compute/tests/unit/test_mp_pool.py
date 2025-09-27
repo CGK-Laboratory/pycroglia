@@ -1,6 +1,6 @@
 from typing import Any
 from pycroglia.core.compute.computable import Computable
-from pycroglia.core.compute.pool import Pool
+from pycroglia.core.compute.qt_pool import QPool
 
 
 class DummyComputable(Computable):
@@ -38,7 +38,7 @@ def test_single_task_success(qtbot):
         The finish callback is invoked with the task ID.
         The `all_finished` signal is emitted after completion.
     """
-    pool = Pool()
+    pool = QPool()
 
     results = []
     finished_called = []
@@ -66,7 +66,7 @@ def test_multiple_tasks_success(qtbot):
         Each finish callback is invoked with the corresponding task ID.
         The `all_finished` signal is emitted once all tasks complete.
     """
-    pool = Pool()
+    pool = QPool()
 
     results = []
     finished_called = []
@@ -96,7 +96,7 @@ def test_task_failure_triggers_error(qtbot):
         The finish callback is still invoked for the task.
         The `all_finished` signal is emitted after error handling.
     """
-    pool = Pool()
+    pool = QPool()
 
     results = []
     errors = []
@@ -132,7 +132,7 @@ def test_all_finished_emitted_once(qtbot):
         The `all_finished` signal is emitted only once, even when
         multiple tasks are submitted to the pool.
     """
-    pool = Pool()
+    pool = QPool()
 
     finished_signal_count = 0
 

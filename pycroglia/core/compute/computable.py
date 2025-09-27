@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+
 class Computable(ABC):
     """Abstract base class for all computable objects.
 
@@ -8,8 +9,9 @@ class Computable(ABC):
     The `compute` method executes a specific computation and returns its
     results as a dictionary, allowing flexible storage of heterogeneous values.
     """
+
     @abstractmethod
-    def compute(self)->dict[str, Any]:
+    def compute(self) -> dict[str, Any]:
         """Execute the computation and return its results.
 
         Returns:
