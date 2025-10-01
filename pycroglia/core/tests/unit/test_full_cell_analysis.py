@@ -17,6 +17,7 @@ def test_full_cell_analysis():
         - The maximum cell volume is determined correctly from voxel counts.
 
     Asserts:
+        - `cell_volumes` match expected floating-point values.
         - `convex_vertices` match the expected vertex indices for each mask.
         - `convex_volumes` match expected floating-point values.
         - `cell_complexities` match expected floating-point values.
@@ -40,6 +41,7 @@ def test_full_cell_analysis():
     fca = FullCellAnalysis(masks, voxscale)
     result = fca.compute()
     expected = AnalysisResult(
+        cell_volumes=np.array([0.4, 0.4]),
         convex_simplices=[
             np.array([[2, 3, 0], [1, 3, 0], [1, 2, 0], [1, 2, 3]], dtype=np.int32),
             np.array([[2, 1, 0], [3, 1, 0], [3, 2, 0], [3, 2, 1]], dtype=np.int32),
@@ -52,6 +54,7 @@ def test_full_cell_analysis():
         cell_complexities=np.array([0.04166667, 0.04166667]),
         max_cell_volume=np.float64(0.4),
     )
+    np.testing.assert_allclose(result.cell_volumes, expected.cell_volumes)
     np.testing.assert_allclose(result.convex_vertices, expected.convex_vertices)
     assert np.allclose(result.convex_volumes, expected.convex_volumes)
     np.testing.assert_allclose(result.cell_complexities, expected.cell_complexities)
