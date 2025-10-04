@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial.distance import pdist
@@ -15,7 +16,7 @@ class Centroids:
             where each row is (z, y, x) in voxel coordinates.
     """
 
-    def __init__(self, masks: list[NDArray]) -> None:
+    def __init__(self, masks: list[NDArray], scale: float, zscale: float) -> None:
         """Initializes the Centroids object from binary masks.
 
         Args:
@@ -30,8 +31,10 @@ class Centroids:
             centroid = coords.mean(axis=0)
             centroids.append(centroid)
         self.centroids = np.array(centroids, dtype=np.float64)
+        self.scale = scale
+        self.zscale = zscale
 
-    def compute_average_distance(self, scale: float, zscale: float) -> float:
+    def compute(self) -> dict[str, Any]:
         """Computes the average pairwise centroid distance in physical units.
 
         Args:
@@ -41,11 +44,12 @@ class Centroids:
         Returns:
             float: The average Euclidean distance between centroids in microns.
         """
-        self.centroids[:, 1] *= scale  # y
-        self.centroids[:, 2] *= scale  # x
-        self.centroids[:, 0] *= zscale  # z
+        scaled = self.centroids.copy()
+        scaled[:, 1] *= self.scale  # y
+        scaled[:, 2] *= self.scale  # x
+        scaled[:, 0] *= self.zscale  # z
 
-        dists = pdist(self.centroids)
+        dists = pdist(scaled)
         avg_dist = dists.mean()
 
-        return avg_dist
+        return {"average_distance": avg_dist}
