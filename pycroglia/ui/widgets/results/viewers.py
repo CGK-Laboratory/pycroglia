@@ -203,9 +203,11 @@ class FullAnalysisViewer(QtWidgets.QWidget):
 
         # Widgets
         self.analysis = AnalysisSummaryViewer(
-            summary_headers, analysis_data, analysis_config
+            summary_headers, analysis_data, analysis_config, parent=self
         )
-        self.cells = CellAnalysisViewer(cell_headers, cells_data, cells_config)
+        self.cells = CellAnalysisViewer(
+            cell_headers, cells_data, cells_config, parent=self
+        )
 
         # Layout
         layout = QVBoxLayout()
