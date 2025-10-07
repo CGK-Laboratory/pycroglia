@@ -57,32 +57,3 @@ class GraphSelectionWidget(QtWidgets.QWidget):
             List[str]: Names of selected graphs.
         """
         return [cb.text() for cb in self.checkboxes if cb.isChecked()]
-
-
-if __name__ == "__main__":
-    import sys
-
-    class ExampleWindow(QtWidgets.QWidget):
-        def __init__(self):
-            super().__init__()
-            self.setWindowTitle("Graph Selection Example")
-            graphs = ["Graph 1", "Graph 2", "Graph 3", "Graph 4"]
-            self.selector = GraphSelectionWidget(graphs)
-            self.selector.button.clicked.connect(self.show_selected_graphs)
-
-            layout = QtWidgets.QVBoxLayout()
-            layout.addWidget(self.selector)
-            self.setLayout(layout)
-
-        def show_selected_graphs(self):
-            selected = self.selector.get_selected_graphs()
-            QtWidgets.QMessageBox.information(
-                self,
-                "Selected Graphs",
-                "\n".join(selected) if selected else "No graphs selected.",
-            )
-
-    app = QtWidgets.QApplication(sys.argv)
-    window = ExampleWindow()
-    window.show()
-    sys.exit(app.exec())
