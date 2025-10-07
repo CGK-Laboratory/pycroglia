@@ -5,6 +5,7 @@ from scipy.interpolate import CubicSpline, PchipInterpolator
 from scipy.integrate import quad
 import numpy as np
 
+
 class InterpolationMethod(Enum):
     """Supported interpolation methods for arc length computation.
 
@@ -18,10 +19,11 @@ class InterpolationMethod(Enum):
             can give higher accuracy than PCHIP for smooth data, at
             higher computational cost.
     """
+
     LINEAR = "linear"
     PCHIP = "pchip"
     SPLINE = "spline"
-    
+
 
 def _assert_length(arr: NDArray):
     """
@@ -49,6 +51,7 @@ def _assert_length(arr: NDArray):
         # already a rectangular NumPy array
         assert arr.ndim == 2, f"Expected 2D array, got shape {arr.shape}"
 
+
 @dataclass
 class Result:
     """
@@ -58,11 +61,13 @@ class Result:
         arclength (float): Total arc length of the curve.
         segment_lengths (NDArray): Array of arc lengths for each segment.
     """
+
     arclength: float
     segment_lengths: NDArray
 
+
 def _speed(u: NDArray, splines: list[PchipInterpolator | CubicSpline]):
-     """
+    """
     Evaluate curve speed (magnitude of derivative) at parameter u.
 
     Args:
@@ -72,9 +77,14 @@ def _speed(u: NDArray, splines: list[PchipInterpolator | CubicSpline]):
     Returns:
         NDArray: Speed values at each u, i.e., sqrt(sum((dx/du)^2)).
     """
-     return np.sqrt(sum(spline(u, 1)**2 for spline in splines))
-    
-def arclength(p: NDArray, method: InterpolationMethod = InterpolationMethod.LINEAR, assert_length: bool=True):
+    return np.sqrt(sum(spline(u, 1) ** 2 for spline in splines))
+
+
+def arclength(
+    p: NDArray,
+    method: InterpolationMethod = InterpolationMethod.LINEAR,
+    assert_length: bool = True,
+):
     """Compute the arc length of a curve represented by discrete points.
 
     This function supports chordal (linear) approximation or smooth
@@ -122,14 +132,18 @@ def arclength(p: NDArray, method: InterpolationMethod = InterpolationMethod.LINE
     segments_cumsum = np.hstack(([0], np.cumsum(chord_lengths)))
 
     splines = []
-    interpolator = PchipInterpolator if method == InterpolationMethod.PCHIP else CubicSpline
-    
+    interpolator = (
+        PchipInterpolator if method == InterpolationMethod.PCHIP else CubicSpline
+    )
+
     for i in range(ndims):
         splines.append(interpolator(segments_cumsum, p[:, i]))
-        
+
     segment_lengths = np.zeros(len(chord_lengths))
     for i in range(len(chord_lengths)):
-        val, _ = quad(lambda u: _speed(u, splines), segments_cumsum[i], segments_cumsum[i + 1])
+        val, _ = quad(
+            lambda u: _speed(u, splines), segments_cumsum[i], segments_cumsum[i + 1]
+        )
         segment_lengths[i] = val
 
     return Result(arclength=sum(segment_lengths), segment_lengths=segment_lengths)
