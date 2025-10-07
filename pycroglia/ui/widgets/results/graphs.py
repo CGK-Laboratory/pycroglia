@@ -1,0 +1,88 @@
+from typing import List, Optional
+from PyQt6 import QtWidgets
+
+
+class GraphSelectionWidget(QtWidgets.QWidget):
+    """Widget to select which graphs to display and visualize each selected graph using checkboxes.
+
+    Attributes:
+        label (QLabel): Label describing the widget.
+        checkboxes (List[QCheckBox]): List of checkboxes for available graphs.
+        button (QPushButton): Button to visualize the selected graphs.
+    """
+
+    DEFAULT_BUTTON_TEXT = "Preview"
+    DEFAULT_LABEL_TEXT = "Select graphs to display:"
+
+    def __init__(
+        self,
+        graphs_list: List[str],
+        label_txt: Optional[str] = None,
+        button_txt: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
+        """Initialize the graph selection widget.
+
+        Args:
+            graphs_list (List[str]): List of available graph names.
+            label_txt (Optional[str]): Custom label text.
+            button_txt (Optional[str]): Custom button text.
+            parent (Optional[QtWidgets.QWidget]): Parent widget.
+        """
+        super().__init__(parent)
+
+        self.label_txt = label_txt or self.DEFAULT_LABEL_TEXT
+        self.button_txt = button_txt or self.DEFAULT_BUTTON_TEXT
+
+        self.label = QtWidgets.QLabel(self.label_txt)
+
+        # Create checkboxes for each graph
+        self.checkboxes = [
+            QtWidgets.QCheckBox(name, parent=self) for name in graphs_list
+        ]
+        self.button = QtWidgets.QPushButton(self.button_txt, parent=self)
+
+        # Layout
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.label)
+        for cb in self.checkboxes:
+            layout.addWidget(cb)
+        layout.addWidget(self.button)
+        self.setLayout(layout)
+
+    def get_selected_graphs(self) -> List[str]:
+        """Get the list of currently selected graphs.
+
+        Returns:
+            List[str]: Names of selected graphs.
+        """
+        return [cb.text() for cb in self.checkboxes if cb.isChecked()]
+
+
+if __name__ == "__main__":
+    import sys
+
+    class ExampleWindow(QtWidgets.QWidget):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle("Graph Selection Example")
+            graphs = ["Graph 1", "Graph 2", "Graph 3", "Graph 4"]
+            self.selector = GraphSelectionWidget(graphs)
+            self.selector.button.clicked.connect(self.show_selected_graphs)
+
+            layout = QtWidgets.QVBoxLayout()
+            layout.addWidget(self.selector)
+            self.setLayout(layout)
+
+        def show_selected_graphs(self):
+            selected = self.selector.get_selected_graphs()
+            QtWidgets.QMessageBox.information(
+                self,
+                "Selected Graphs",
+                "\n".join(selected) if selected else "No graphs selected.",
+            )
+
+    app = QtWidgets.QApplication(sys.argv)
+    window = ExampleWindow()
+    window.show()
+    sys.exit(app.exec())
