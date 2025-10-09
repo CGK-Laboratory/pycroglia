@@ -1,6 +1,7 @@
 import json
 import re
 import unicodedata
+import inspect
 
 from abc import ABC
 from dataclasses import dataclass
