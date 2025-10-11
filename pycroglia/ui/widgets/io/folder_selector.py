@@ -1,6 +1,7 @@
 from PyQt6 import QtWidgets, QtCore
 from typing import Optional
 
+
 class FolderSelector(QtWidgets.QWidget):
     """Widget for selecting a folder from the filesystem.
 
@@ -13,14 +14,17 @@ class FolderSelector(QtWidgets.QWidget):
         button (QtWidgets.QPushButton): Button widget instance.
         folderSelected (QtCore.pyqtSignal): Signal emitted with the selected folder path.
     """
+
     folderSelected = QtCore.pyqtSignal(str)
 
-    def __init__(self,
-                 label_text: str,
-                 button_text: str,
-                 dialog_title: str,
-                 dialog_path: str = QtCore.QDir.homePath(),
-                 parent: Optional[QtWidgets.QWidget] = None):
+    def __init__(
+        self,
+        label_text: str,
+        button_text: str,
+        dialog_title: str,
+        dialog_path: str = QtCore.QDir.homePath(),
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
         """Initialize the folder selector widget.
 
         Args:
@@ -54,9 +58,7 @@ class FolderSelector(QtWidgets.QWidget):
     def _on_button_click(self):
         """Open a directory selection dialog and emit the chosen path if valid."""
         folder_path = QtWidgets.QFileDialog.getExistingDirectory(
-            parent=self,
-            caption=self.dialog_title,
-            directory=self.dialog_path
+            parent=self, caption=self.dialog_title, directory=self.dialog_path
         )
         if folder_path:
             self.folderSelected.emit(folder_path)
