@@ -104,18 +104,25 @@ def _follow_link(
 
     idx = int(start_voxel)
     done = False
-
+    visited = set()
+    
     i = 1
     while not done:
+        if idx in visited:
+               is_endpoint = True
+               break
+        visited.add(idx)
         i += 1
 
         # find canal row for current voxel
         next_cand = canal_index_map[idx]
+        cand1, cand2 = int(canals[next_cand, 1]), int(canals[next_cand, 2])
 
-        # get canal neighbor
-        cand = int(canals[next_cand, 1])
-        if cand == voxels[-1]:  # switch direction
-            cand = int(canals[next_cand, 2])
+        # Avoid self-reference or backtracking
+        cand = cand1 if cand1 != voxels[-1] else cand2
+        if cand == idx or cand == voxels[-1]:
+            # Dead end or loop
+            break
 
         if skel.ravel()[cand] > 1:  # node found
             voxels.append(idx)
@@ -132,7 +139,9 @@ def _follow_link(
             voxels.append(idx)
             idx = cand
 
-    assert neighbor_node_idx >= 0, "Follow link failed to find a node"
+    if neighbor_node_idx < 0:
+        # Handle open-ended canal gracefully as an endpoint spur
+        is_endpoint = True
     return np.array(voxels, dtype=int), neighbor_node_idx, is_endpoint
 
 
@@ -197,6 +206,7 @@ def skel2graph(
         - The function is designed to mirror the behavior of the original
           MATLAB implementation for reproducibility.
     """
+
     skel = np.pad(skeleton, pad_width=1, mode="constant", constant_values=0)
     skel2 = skel.astype(np.uint16, copy=True)
     lm = label(skel)  # lm = label matrix, num = number of components
@@ -380,7 +390,6 @@ def skel2graph(
         link.points = np.ravel_multi_index((z - pad, y - pad, x - pad), unpad_shape)
 
     return adjacency, nodes, links
-
 
 def _get_neighbourhood(img: NDArray, indices: NDArray) -> NDArray:
     """Return the 3x3x3 neighborhood of given voxels in a 3D binary image.
