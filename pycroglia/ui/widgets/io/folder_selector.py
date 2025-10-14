@@ -21,6 +21,7 @@ class FolderSelector(QtWidgets.QWidget):
         self,
         label_text: str,
         button_text: str,
+        path_display_text: str,
         dialog_title: str,
         dialog_path: str = QtCore.QDir.homePath(),
         parent: Optional[QtWidgets.QWidget] = None,
@@ -39,6 +40,7 @@ class FolderSelector(QtWidgets.QWidget):
         # Configuration
         self.label_text = label_text
         self.button_text = button_text
+        self.path_display_text = path_display_text
         self.dialog_title = dialog_title
         self.dialog_path = dialog_path
 
@@ -46,13 +48,20 @@ class FolderSelector(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel(parent=self)
         self.label.setText(self.label_text)
 
-        self.button = QtWidgets.QPushButton(self.button_text, parent=parent)
+        self.button = QtWidgets.QPushButton(self.button_text, parent=self)
         self.button.clicked.connect(self._on_button_click)
 
+        self.path_display = QtWidgets.QLineEdit(parent=self)
+        self.path_display.setReadOnly(True)
+        self.path_display.setPlaceholderText(self.path_display_text)
+
         # Layout
-        layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(self.label)
-        layout.addWidget(self.button)
+        layout = QtWidgets.QVBoxLayout()
+        layout_h = QtWidgets.QHBoxLayout()
+        layout_h.addWidget(self.label)
+        layout_h.addWidget(self.button)
+        layout.addLayout(layout_h)
+        layout.addWidget(self.path_display)
         self.setLayout(layout)
 
     def _on_button_click(self):
@@ -61,4 +70,5 @@ class FolderSelector(QtWidgets.QWidget):
             parent=self, caption=self.dialog_title, directory=self.dialog_path
         )
         if folder_path:
+            self.path_display.setText(folder_path)
             self.folderSelected.emit(folder_path)
