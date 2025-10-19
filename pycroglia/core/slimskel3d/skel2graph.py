@@ -144,7 +144,7 @@ def _follow_link(
 # skeleton is the result of calling skeleton3D
 def skel2graph(
     skeleton: NDArray, threshold: float = 0.0
-) -> nx.Graph:
+) -> tuple[csr_matrix, list[Node], list[Link]]:
     """ "Convert a 3D skeletonized volume into a graph representation.
 
     This function implements the logic of the MATLAB function `Skel2Graph3D`,

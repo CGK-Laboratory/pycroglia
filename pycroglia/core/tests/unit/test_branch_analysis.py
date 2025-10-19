@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.typing import NDArray
 from pycroglia.core.branch_analysis import BranchAnalysis
 from pathlib import Path
 from scipy.io import loadmat
@@ -7,15 +8,36 @@ TEST_DIR = Path(__file__).parent  # folder where this test lives
 FILES_DIR = TEST_DIR / "files"  # adjust if files/ is elsewhere
 
 def indices_to_mask(
-    cell_indices: np.ndarray, img_shape: tuple[int, int, int]
-) -> np.ndarray:
+    cell_indices: NDArray, img_shape: tuple[int, int, int]
+) -> NDArray:
+    """Convert a 1D list of voxel indices into a 3D binary mask.
+
+    Args:
+        cell_indices (np.ndarray):
+            1D array of flattened (raveled) voxel indices where the mask
+            should be True.
+        img_shape (tuple[int, int, int]):
+            Shape of the desired output mask, given as (Z, Y, X).
+
+    Returns:
+        np.ndarray:
+            3D uint8 mask of shape `img_shape` with True (1) at all specified
+            voxel indices and False (0) elsewhere.
+    """
     mask = np.zeros(img_shape, dtype=bool)
     mask.ravel()[cell_indices] = True
     return mask.astype(np.uint8)
 
     
 def test_branch_analysis_equivalence():
-    """Compare BranchAnalysis results numerically to MATLAB output expectations."""
+    """Test BranchAnalysis matches MATLAB reference results.
+
+    Asserts:
+        - Python and MATLAB endpoint voxel masks are identical.
+        - The number of detected branch points matches MATLAB output.
+        - Branch point coordinates match element-wise.
+        - Maximum, minimum, and average branch lengths match within 1e-6.
+    """
     mat = loadmat(FILES_DIR / "branch_analysis_results.mat", squeeze_me=True, struct_as_record=False)
     mat_result = mat["result"]
 

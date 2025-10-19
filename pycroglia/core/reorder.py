@@ -9,33 +9,41 @@ def reorder_pixel_list(
     endpoint: NDArray,
     centroid: NDArray,
 ) -> NDArray:
-    """Reorder voxel coordinates by connectivity from endpoint to centroid.
+    """
+    Order the voxels of a 3D branch mask from the endpoint toward the centroid.
 
-    This function receives the list of voxels that form a 3D branch and
-    orders them so that the first voxel corresponds to the endpoint and
-    subsequent voxels follow the nearest connected voxel until reaching
-    the centroid.
+    This function takes a list of flattened voxel indices belonging to a single
+    3D branch (a connected set of True voxels) and reconstructs an ordered path
+    from a known endpoint toward a given centroid. The ordering is computed by
+    iteratively selecting the nearest unvisited voxel to the current one,
+    ensuring spatial continuity along the branch.
+
+    The resulting list starts with the endpoint voxel and progresses through
+    adjacent voxels until reaching (or approximating) the centroid region.
 
     Args:
         pixel_indices (NDArray):
-            Flat voxel indices (1D array) corresponding to `True` voxels in
-            a 3D branch mask.
+            1D array of flattened voxel indices (0-based) representing the branch.
         shape (tuple[int, int, int]):
-            Shape of the 3D mask volume (Z, Y, X).
+            Shape of the 3D binary mask `(Z, Y, X)` from which the indices were drawn.
         endpoint (NDArray):
-            Array of shape (3,) with (z, y, x) coordinates of the endpoint.
+            Array of shape `(3,)` giving the endpoint coordinates `(z, y, x)`.
+            Must be one of the voxels in the branch.
         centroid (NDArray):
-            Array of shape (3,) with (z, y, x) coordinates of the centroid.
+            Array of shape `(3,)` giving the centroid coordinates `(z, y, x)`
+            used as the stopping target for ordering.
 
     Returns:
         NDArray:
-            (N, 3) array of voxel coordinates ordered by connectivity from
-            endpoint to centroid. The first row is `endpoint`, and the last
-            row is the centroid.
+            Array of shape `(N, 3)` containing voxel coordinates ordered by
+            connectivity from endpoint to centroid. The first row equals
+            `endpoint`, and the last row corresponds to the voxel nearest
+            to `centroid`.
 
     Raises:
-        AssertionError: If input arrays have invalid shapes or contain
-            inconsistent indices.
+        AssertionError:
+            If input shapes are invalid, or if the endpoint voxel is not
+            present in the given branch.
     """
     assert len(shape) == 3, f"Expected shape of length 3, got {shape}"
     assert pixel_indices.ndim == 1, "pixel_indices must be a 1D array"

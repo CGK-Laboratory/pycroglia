@@ -3,7 +3,12 @@ from pycroglia.core.reorder import reorder_pixel_list
 
 
 def test_simple_line_path():
-    """Reorder a straight line from endpoint to centroid."""
+    """Test reorder_pixel_list correctly orders a straight vertical line.
+
+    Asserts:
+        - Voxels are reordered from the endpoint at z=0 to the centroid at z=4.
+        - The resulting order matches [[0,2,2], [1,2,2], ..., [4,2,2]].
+    """
     shape = (5, 5, 5)
     mask = np.zeros(shape, dtype=bool)
     for i in range(5):
@@ -22,7 +27,12 @@ def test_simple_line_path():
 
 
 def test_diagonal_path():
-    """Reorder a diagonal line in 3D."""
+    """Test reorder_pixel_list correctly orders a 3D diagonal line.
+
+    Asserts:
+        - Voxels are reordered from endpoint (0,0,0) to centroid (4,4,4).
+        - The resulting path matches [[0,0,0], [1,1,1], ..., [4,4,4]].
+    """
     shape = (5, 5, 5)
     mask = np.zeros(shape, dtype=bool)
     for i in range(5):

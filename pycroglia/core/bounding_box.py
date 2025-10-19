@@ -13,7 +13,7 @@ class ComputeResult:
 
 
 def compute(input_img: NDArray) -> ComputeResult:
-    """Compute the tight bounding box of a 3D binary image along the Z and Y axes.
+    """Compute the tight bounding box of a 3D binary image along the X and Y axes.
 
     The function finds the minimum and maximum foreground voxel indices
     (value == 1 / True) along the Z (rows) and Y (columns) dimensions,

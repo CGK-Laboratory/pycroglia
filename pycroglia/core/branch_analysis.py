@@ -11,22 +11,56 @@ import pycroglia.core.connection as connection
 import numpy as np
 
 def init_kernel() -> NDArray:
+    """Initialize a 3×3×3 26-connected neighborhood kernel.
+        
+    This function creates a 3D binary convolution kernel used for
+    neighborhood analysis in volumetric skeletonization and branch
+    detection. The kernel represents a **26-connected** neighborhood,
+    where all voxels in a 3×3×3 cube are considered neighbors except
+    the central voxel itself.
+
+    Returns:
+        NDArray: A 3×3×3 NumPy array of type ``int32`` with ones in all
+        positions except the center, which is zero.
+    """
     kernel = np.ones((3, 3, 3), dtype=np.int32)
     kernel[1, 1, 1] = 0
     return kernel
 
+# 26-connected 3×3×3 kernel used for neighborhood analysis
 KERNEL = init_kernel()
 
-from scipy.io import loadmat
-def indices_to_mask(
-    cell_indices: np.ndarray, img_shape: tuple[int, int, int]
-) -> np.ndarray:
-    mask = np.zeros(img_shape, dtype=bool)
-    mask.ravel()[cell_indices] = True
-    return mask.astype(np.uint8)
-    
 class BranchAnalysis:
+    """Analyze the morphological properties of 3D skeleton branches.
+
+    This class performs quantitative analysis on a 3D skeletonized cell mask,
+    identifying endpoints, branch points, and computing arc lengths for each
+    branch. It replicates the behavior of the MATLAB `BranchAnalysis` routine,
+    using connected-path reconstruction and distance-based reordering of voxels
+    from endpoints toward the cell centroid.
+
+    Attributes:
+        cell (NDArray): 
+            3D binary mask of the segmented cell volume (Z, Y, X).
+        centroid (NDArray): 
+            (3,) array with the centroid coordinates `(z, y, x)` in voxel units.
+        scale (float): 
+            XY pixel size (µm per voxel).
+        zscale (float): 
+            Z pixel size (µm per slice).
+        zslices (int): 
+            Number of Z-slices in the image stack.
+    """
     def __init__(self, cell: NDArray, centroid: NDArray, scale: float, zscale: float, zslices: int)->None:
+        """Initialize the BranchAnalysis instance.
+
+        Args:
+            cell (NDArray): 3D binary cell mask of shape `(Z, Y, X)`.
+            centroid (NDArray): (3,) array with the centroid `(z, y, x)`.
+            scale (float): XY pixel size in microns.
+            zscale (float): Z pixel size in microns.
+            zslices (int): Total number of Z slices in the volume.
+        """
         self.cell = cell
         self.centroid = centroid
         self.scale = scale
@@ -35,6 +69,29 @@ class BranchAnalysis:
         
 
     def compute(self) -> dict[str, Any]:
+        """Perform 3D branch analysis on the input cell skeleton.
+
+        This method:
+          1. Skeletonizes the cell volume using `slimskel3d`.
+          2. Computes a bounding box around the skeleton.
+          3. Identifies all endpoints via 3×3×3 convolution.
+          4. Connects each endpoint to the centroid using
+             `connect_points_along_path` (26-connected BFS).
+          5. Reorders the resulting voxel list using
+             `reorder_pixel_list` for spatial continuity.
+          6. Calculates each branch’s physical arc length in microns.
+          7. Aggregates results to find branch point counts and
+             connectivity classifications (primary to quaternary).
+
+        Returns:
+            dict[str, Any]: A dictionary containing:
+                - **endpoints (NDArray)**: 3D boolean mask of detected endpoints.
+                - **num_branchpoints (int)**: Number of detected branch points.
+                - **max_branch_length (float)**: Maximum branch length (µm).
+                - **min_branch_length (float)**: Minimum branch length (µm).
+                - **avg_branch_length (float)**: Mean branch length (µm).
+                - **branch_points (NDArray)**: (N, 3) array of branch-point coordinates `(z, y, x)`.
+        """
         whole_skel = slimskel3d(self.cell, 100)
         bounding_box_result = bounding_box.compute(whole_skel)
         bounded_skel = bounding_box_result.bounded_img

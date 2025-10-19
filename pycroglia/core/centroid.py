@@ -5,23 +5,42 @@ from scipy.spatial.distance import pdist
 
 
 class Centroids:
-    """Computes centroids of 3D cell masks and their average pairwise distance.
+    """Compute centroids of 3D cell masks and their mean spatial separation.
 
-    This class takes a list of 3D binary masks, extracts the centroid of each
-    non-empty mask, and provides a method to compute the average pairwise
-    distance between all centroids in physical units.
+    This class extracts the geometric centroids of multiple 3D binary masks,
+    representing individual segmented cells, and computes the average pairwise
+    Euclidean distance between all centroids in physical units (micrometers).
+
+    The computation accounts for anisotropic voxel scaling along the Z and XY
+    axes, allowing accurate physical distance measurements in microscopy data.
 
     Attributes:
-        centroids (NDArray[np.float64]): Array of centroids with shape (N, 3),
-            where each row is (z, y, x) in voxel coordinates.
+        centroids (NDArray[np.float64]):
+            Array of shape (N, 3) containing the centroids of non-empty masks,
+            where each row represents a centroid in (z, y, x) voxel coordinates.
+        scale (float):
+            Pixel size in the XY plane, expressed in micrometers per voxel.
+        zscale (float):
+            Z-step size (slice spacing) in micrometers per voxel.
     """
 
+
     def __init__(self, masks: list[NDArray], scale: float, zscale: float) -> None:
-        """Initializes the Centroids object from binary masks.
+        """Initialize the Centroids object from a list of binary 3D masks.
 
         Args:
-            masks (list[NDArray]): List of 3D binary masks (boolean or 0/1 arrays).
-                Each mask represents a segmented cell. The shape is (Z, Y, X).
+            masks (list[NDArray]):
+                List of 3D binary arrays of shape (Z, Y, X), where True (or 1)
+                indicates voxels belonging to a segmented cell.
+            scale (float):
+                Pixel size in the XY plane, in micrometers per voxel.
+            zscale (float):
+                Z-step size (slice spacing), in micrometers per voxel.
+
+        Notes:
+            - Empty masks (with no True voxels) are ignored.
+            - Centroids are computed as the mean of voxel coordinates
+              (`np.argwhere(mask).mean(axis=0)`), in voxel units.
         """
         centroids = []
         for mask in masks:
@@ -35,14 +54,19 @@ class Centroids:
         self.zscale = zscale
 
     def compute(self) -> dict[str, Any]:
-        """Computes the average pairwise centroid distance in physical units.
+        """Compute the mean pairwise centroid distance in micrometers.
 
-        Args:
-            scale (float): Scaling factor for X and Y dimensions (microns per pixel).
-            zscale (float): Scaling factor for Z dimension (microns per slice).
+        The method scales voxel coordinates to physical space using the
+        provided pixel and z-step sizes, then computes all pairwise
+        Euclidean distances between centroids and reports the mean.
 
         Returns:
-            float: The average Euclidean distance between centroids in microns.
+            dict[str, Any]: Dictionary containing:
+                - **average_distance (float)**: Mean pairwise distance between
+                  all centroids, expressed in micrometers.
+
+        Raises:
+            ValueError: If fewer than two centroids are available to compute distances.
         """
         scaled = self.centroids.copy()
         scaled[:, 1] *= self.scale  # y

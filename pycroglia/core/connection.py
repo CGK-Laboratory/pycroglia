@@ -18,27 +18,36 @@ CUBE = np.ones((3,3,3))
 
 def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray:
     """
-    Find the shortest path between two voxels constrained to foreground (True) voxels.
+    Compute the shortest 3D path connecting two voxels within a binary skeleton mask.
 
-    This function performs a **breadth-first search (BFS)** on a 3D binary volume to
-    trace the shortest path from `start` to `end`, moving only through connected
-    voxels that have value `True`.
+    This function performs a two-front **breadth-first search (BFS)** expansion
+    from both `start` and `end` voxels simultaneously through a 3D binary volume.
+    Expansion proceeds only through foreground voxels (`True`), and stops once
+    both fronts meet, marking all voxels that belong to the minimal connecting
+    region.
+
+    The method mirrors MATLAB’s `ConnectPointsAlongPath` behavior: it iteratively
+    dilates both fronts (start and end) through a 26-connected neighborhood
+    until they overlap, at which point the minimal connecting path is extracted.
 
     Args:
-        img (NDArray): 3D binary array of shape (Z, Y, X).
-                       Foreground voxels must have value True.
-        start (Point): Starting voxel, given as (x, y, z).
-        end (Point): Ending voxel, given as (x, y, z).
+        img (NDArray):
+            3D binary array of shape `(Z, Y, X)`. Foreground voxels (path-eligible)
+            must have value `True`.
+        start (Point):
+            Starting voxel coordinates as `(x, y, z)`. Must lie inside the foreground.
+        end (Point):
+            Ending voxel coordinates as `(x, y, z)`. Must lie inside the foreground.
 
     Returns:
-        NDArray: Array of shape (N, 3) with the sequence of voxel coordinates
-                 forming the path, ordered as (z, y, x).
-                 If no path is found, returns an empty array.
+        NDArray:
+            A 3D binary mask of the same shape as `img`, where `1` (True) marks
+            voxels belonging to the **shortest connection** between `start` and `end`.
+            If no connection exists, raises a `ValueError`.
 
-    Notes:
-        - Neighbourhood is 26-connected (includes diagonals).
-        - BFS guarantees the path found is the shortest in terms of voxel steps.
-        - The coordinate system is **0-based, z-y-x order** (NumPy convention).
+    Raises:
+        ValueError:
+            If no continuous path of foreground voxels connects `start` and `end`.
     """
     assert img.ndim == 3, "Input must be 3D"
     assert img[start.z, start.y, start.x], "Start point must be inside skeleton"
