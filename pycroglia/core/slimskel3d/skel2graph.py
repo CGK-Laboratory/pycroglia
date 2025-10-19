@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 import numpy as np
 from numpy.typing import NDArray
-from skimage.measure import label
+from skimage.measure import label as sklabel
 from scipy.sparse import csr_matrix
 import networkx as nx
 
@@ -107,6 +107,11 @@ def _follow_link(
     while not done:
         # find canal row for current voxel
         next_cand = canal_index_map[idx]
+        if next_cand == -1:
+            # open-ended canal → endpoint spur
+            is_endpoint = True
+            break
+
         cand1, cand2 = int(canals[next_cand, 1]), int(canals[next_cand, 2])
 
         # Avoid self-reference or backtracking
@@ -130,9 +135,9 @@ def _follow_link(
             voxels.append(idx)
             idx = cand
 
-    if neighbor_node_idx < 0:
-        # Handle open-ended canal gracefully as an endpoint spur
-        is_endpoint = True
+    if neighbor_node_idx < 0 or len(voxels) <= 2:
+        return np.array([], dtype=int), -1, True
+
     return np.array(voxels, dtype=int), neighbor_node_idx, is_endpoint
 
 
@@ -200,7 +205,7 @@ def skel2graph(
 
     skel = np.pad(skeleton, pad_width=1, mode="constant", constant_values=0)
     skel2 = skel.astype(np.uint16, copy=True)
-    lm = label(skel)  # lm = label matrix, num = number of components
+    lm = sklabel(skel, connectivity=3)  # lm = label matrix, num = number of components
     list_canal = np.flatnonzero(skel)
 
     # 26-neighborhood of all canal voxels (foreground voxels)
@@ -248,7 +253,7 @@ def skel2graph(
     if len(node_voxels) > 0:
         tmp[np.unravel_index(np.array(node_voxels, dtype=np.intp), skel.shape)] = True
 
-    labeled_nodes, num_realnodes = label(tmp, connectivity=3, return_num=True)
+    labeled_nodes, num_realnodes = sklabel(tmp, connectivity=3, return_num=True)
 
     for i in range(1, num_realnodes + 1):
         indices = np.flatnonzero(labeled_nodes == i)
@@ -269,7 +274,7 @@ def skel2graph(
     if len(endpoints) > 0:
         tmp[np.unravel_index(np.array(endpoints, dtype=np.intp), skel.shape)] = True
 
-    labeled_endpoints, num_endpoints = label(tmp, connectivity=3, return_num=True)
+    labeled_endpoints, num_endpoints = sklabel(tmp, connectivity=3, return_num=True)
 
     for i in range(1, num_endpoints + 1):
         indices = np.flatnonzero(labeled_endpoints == i)
@@ -312,6 +317,9 @@ def skel2graph(
                 voxels, target_node_idx, is_endpoint = _follow_link(
                     skel2, nodes, node.id, j, int(candidate), canals, canal_index_map
                 )
+                if len(voxels) == 0:
+                    continue
+                
                 skel2.ravel()[voxels[1:-1]] = 0
 
                 if (is_endpoint and len(voxels) > threshold) or (

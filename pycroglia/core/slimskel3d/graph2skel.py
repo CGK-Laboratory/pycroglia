@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 from pycroglia.core.slimskel3d.skel2graph import Node, Link
-import networkx as nx
+from skimage.measure import label
 
 def graph2skel(
     nodes: list[Node], links: list[Link], shape: tuple[int, int, int]
@@ -26,10 +26,10 @@ def graph2skel(
     for node in nodes:
         if node.links:  # node has links
             # Paint node voxels
-            skel.ravel()[node.indices] = True
+            skel.ravel()[node.indices] = 1
 
             # Paint link voxels
             for link in node.links:
-                skel.ravel()[link.points] = True
+                skel.ravel()[link.points] = 1
 
-    return skel
+    return skel.astype(np.uint8)

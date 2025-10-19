@@ -15,8 +15,6 @@ class Point:
 
 # 26-neighbourhood offsets (all possible moves except staying in place)
 CUBE = np.ones((3,3,3))
-CUBE[1, 1, 1] = 0
-
 
 def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray:
     """
