@@ -3,7 +3,7 @@ import numpy as np
 from numpy.typing import NDArray
 from skimage.measure import label
 from scipy.sparse import csr_matrix
-
+import networkx as nx
 
 @dataclass
 class CenterOfMass:
@@ -104,16 +104,7 @@ def _follow_link(
 
     idx = int(start_voxel)
     done = False
-    visited = set()
-    
-    i = 1
     while not done:
-        if idx in visited:
-               is_endpoint = True
-               break
-        visited.add(idx)
-        i += 1
-
         # find canal row for current voxel
         next_cand = canal_index_map[idx]
         cand1, cand2 = int(canals[next_cand, 1]), int(canals[next_cand, 2])
@@ -148,7 +139,7 @@ def _follow_link(
 # skeleton is the result of calling skeleton3D
 def skel2graph(
     skeleton: NDArray, threshold: float = 0.0
-) -> tuple[csr_matrix, list[Node], list[Link]]:
+) -> nx.Graph:
     """ "Convert a 3D skeletonized volume into a graph representation.
 
     This function implements the logic of the MATLAB function `Skel2Graph3D`,
@@ -296,8 +287,9 @@ def skel2graph(
         skel2.ravel()[indices] = len(nodes)
 
     # Map: linear index of a canal voxel → row index in `canals`
-    canal_index_map = np.zeros(skel.size, dtype=int)
-    canal_index_map[canals[:, 0]] = np.arange(len(canals), dtype=int)
+    canal_index_map = np.full(skel.size, -1, dtype=int)
+    if len(canals) > 0: 
+        canal_index_map[canals[:, 0]] = np.arange(len(canals), dtype=int)
 
     # Map: linear index of a skeleton voxel → row index in `neighbourhood_indices`
     skeleton_index_map = np.zeros(skel.size, dtype=int)

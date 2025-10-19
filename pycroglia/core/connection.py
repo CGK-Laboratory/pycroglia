@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from numpy.typing import NDArray
-from collections import deque
+from scipy.ndimage import convolve
 import numpy as np
-
+from skimage.morphology import star
 
 @dataclass
 class Point:
@@ -14,13 +14,8 @@ class Point:
 
 
 # 26-neighbourhood offsets (all possible moves except staying in place)
-NEIGHBOURS = [
-    (dz, dy, dx)
-    for dz in (-1, 0, 1)
-    for dy in (-1, 0, 1)
-    for dx in (-1, 0, 1)
-    if not (dz == dy == dx == 0)
-]
+CUBE = np.ones((3,3,3))
+CUBE[1, 1, 1] = 0
 
 
 def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray:
@@ -47,46 +42,46 @@ def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray
         - BFS guarantees the path found is the shortest in terms of voxel steps.
         - The coordinate system is **0-based, z-y-x order** (NumPy convention).
     """
-    assert img.ndim == 3, "the image should be 3D"
+    assert img.ndim == 3, "Input must be 3D"
+    assert img[start.z, start.y, start.x], "Start point must be inside skeleton"
+    assert img[end.z, end.y, end.x], "End point must be inside skeleton"
 
-    shape = img.shape
-    visited = np.zeros(shape, dtype=bool)
-    prev = {}
+    # Initialize D: duplicate input image into 4D [z, y, x, 2]
+    D_layer = np.where(img, np.inf, np.nan)
+    D = np.stack([D_layer.copy(), D_layer.copy()], axis=-1)
+    print(f"D.shape={D.shape}")
 
-    # BFS queue
-    q = deque()
-    q.append((start.z, start.y, start.x))
-    visited[start.z, start.y, start.x] = True
+    startt = (start.z, start.y, start.x)
+    print(startt)
+    endt = (end.z, end.y, end.x)
+    print(endt)
+    # Set start and end points to 0
+    D[start.z, start.y, start.x, 0] = 0
+    D[end.z, end.y, end.x, 1] = 0
 
-    found = False
-    while q:
-        z, y, x = q.popleft()
-        if (z, y, x) == (end.z, end.y, end.x):
-            found = True
-            break
+    mask = (D == 0)
+    n = 0
 
-        for dz, dy, dx in NEIGHBOURS:
-            zn, yn, xn = z + dz, y + dy, x + dx
-            if (
-                0 <= zn < shape[0]
-                and 0 <= yn < shape[1]
-                and 0 <= xn < shape[2]
-                and img[zn, yn, xn]
-                and not visited[zn, yn, xn]
-            ):
-                visited[zn, yn, xn] = True
-                prev[(zn, yn, xn)] = (z, y, x)
-                q.append((zn, yn, xn))
+    # Iteratively expand mask until connection found or no more reachable voxels
+    while np.isinf(D[end.z, end.y, end.x, 0]) and np.count_nonzero(mask):
+        n += 1
+        # Convolve mask to find neighboring voxels still at infinity
+        for k in range(2):
+            layer = mask[..., k].astype(float)
+            layer = convolve(layer, CUBE, mode="constant", cval=0) > 0
+            layer &= np.isinf(D[..., k])
+            D[..., k][layer] = n
+            mask[..., k] = layer
 
-    if not found:
-        return np.array([])
+    # If endpoint still infinite, no path was found
+    if np.isinf(D[end.z, end.y, end.x, 0]):
+        raise ValueError("No path found between points.")
+    else:
+        # Combine both layers and keep only voxels where sum == n
+        mask = np.sum(D, axis=-1) == n
 
-    path = []
-    curr = (end.z, end.y, end.x)
-    while curr != (start.z, start.y, start.x):
-        path.append(curr)
-        curr = prev[curr]
-    path.append((start.z, start.y, start.x))
-    path.reverse()
+    return mask.astype(np.uint8)
 
-    return np.array(path, dtype=int)  # shape (N, 3), order (z, y, x)
+
+
+

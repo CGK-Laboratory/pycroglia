@@ -45,9 +45,9 @@ def compute(
     # Apply anisotropic distance
     diffs = coords - np.array([z0, y0, x0])
     dists = np.sqrt(
-        (diffs[:, 1] * scale) ** 2  # y difference scaled
-        + (diffs[:, 0] * scale) ** 2  # z difference scaled
-        + (diffs[:, 2]) ** 2
+        (diffs[:, 0] ) ** 2  # z difference scaled        
+        + (diffs[:, 1] * scale) ** 2  # y difference scaled
+        + (diffs[:, 2] * scale) ** 2
     )  # x difference unchanged
 
     idx = np.argmin(dists)

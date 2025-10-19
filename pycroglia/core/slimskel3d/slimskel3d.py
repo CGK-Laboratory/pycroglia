@@ -1,4 +1,5 @@
 from numpy.typing import NDArray
+from pycroglia.core.slimskel3d.skeleton3D import skeleton3D
 from pycroglia.core.slimskel3d.skel2graph import skel2graph
 from pycroglia.core.slimskel3d.graph2skel import graph2skel
 import numpy as np
@@ -39,7 +40,7 @@ def slimskel3d(vol: NDArray, threshold: int) -> NDArray:
         20
     """
     # Step 1: Skeletonization
-    skel = skeletonize(vol, method='lee')
+    skel = skeleton3D(vol)
     # Step 2: Convert to graph
     _, nodes, links = skel2graph(skel, threshold=threshold)
     wl = sum(len(node.links) for node in nodes)  # total link length
@@ -50,7 +51,7 @@ def slimskel3d(vol: NDArray, threshold: int) -> NDArray:
     wl_new = sum(len(node.links) for node in nodes2)
 
     # Step 5: Iterate until stable
-    while abs(wl_new - wl) / wl > 0.005:
+    while  wl != wl_new:
         wl = wl_new
         slim_skel = graph2skel(nodes2, links2, skel.shape)
         _, nodes2, links2 = skel2graph(slim_skel, threshold=0)

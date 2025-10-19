@@ -28,8 +28,8 @@ def compute(input_img: NDArray) -> ComputeResult:
             A dataclass with the following fields:
             - bounded_img (NDArray): Cropped sub-volume
               [left:right+1, bottom:top+1, :].
-            - right (int): Max Z index (0-based).
-            - left (int): Min Z index (0-based).
+            - right (int): Max X index (0-based).
+            - left (int): Min X index (0-based).
             - top (int): Max Y index (0-based).
             - bottom (int): Min Y index (0-based).
     """
@@ -43,6 +43,7 @@ def compute(input_img: NDArray) -> ComputeResult:
 
     bottom, top = int(y.min()), int(y.max())
     left, right = int(x.min()), int(x.max())
+    
     print(f"bottom: {bottom}, top: {top}, left: {left}, right: {right}")
     bounded_img = input_img[:, bottom:top+1, left:right+1]
 

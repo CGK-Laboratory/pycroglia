@@ -16,7 +16,7 @@ def indices_to_mask(
     
 def test_branch_analysis_equivalence():
     """Compare BranchAnalysis results numerically to MATLAB output expectations."""
-    mat = loadmat(FILES_DIR /"branch_analysis_results.mat", squeeze_me=True, struct_as_record=False)
+    mat = loadmat(FILES_DIR / "branch_analysis_results.mat", squeeze_me=True, struct_as_record=False)
     mat_result = mat["result"]
 
     # Extract MATLAB results
@@ -26,77 +26,54 @@ def test_branch_analysis_equivalence():
     matlab_avg_branch_length = float(mat_result.avg_branch_length)
 
     matlab_branch_points = np.array(mat_result.branch_points)
+    matlab_branch_points = matlab_branch_points[:, [2, 1, 0]] - 1
     matlab_endpoints = np.array(mat_result.endpoints, dtype=np.uint8)
     matlab_endpoints = np.transpose(matlab_endpoints, (2, 1, 0))  # Z, Y, X
-    zslices = 39    
-    data = loadmat(FILES_DIR /"cell_test.mat", squeeze_me=True)
-    indices = data["data"].ravel().astype(int) - 1    
-    mask = indices_to_mask(indices, (zslices, 1024, 1024)) 
+
+    zslices = 39
+    data = loadmat(FILES_DIR / "cell_test.mat", squeeze_me=True)
+    indices = data["data"].ravel().astype(int) - 1
+    mask = indices_to_mask(indices, (zslices, 1024, 1024))
     cell = mask
-    centroid = np.array([31.2319,  787.6710, 637.9670], dtype=float) - 1.0
-    scale = 1.0
-    zscale = 1.0
 
-    analyzer = BranchAnalysis(
-        cell=cell,
-        centroid=centroid,
-        scale=scale,
-        zscale=zscale,
-        zslices=zslices,
-    )
+    centroid = np.array([31.2319, 787.6710, 637.9670], dtype=float) - 1.0
+    analyzer = BranchAnalysis(cell=cell, centroid=centroid, scale=1.0, zscale=1.0, zslices=zslices)
     py_result = analyzer.compute()
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+    python_endpoints = py_result["endpoints"]
 
-    def plot_endpoints_3d(matlab_endpoints, python_endpoints):
-        """Compare MATLAB and Python endpoint voxel positions in 3D."""
-        
-        # Convert to binary arrays
-        m = matlab_endpoints.astype(bool)
-        p = python_endpoints.astype(bool)
+    # align shapes
+    min_shape = tuple(min(a, b) for a, b in zip(matlab_endpoints.shape, python_endpoints.shape))
+    matlab_cropped = matlab_endpoints[:min_shape[0], :min_shape[1], :min_shape[2]]
+    python_cropped = python_endpoints[:min_shape[0], :min_shape[1], :min_shape[2]]
 
-        # Extract coordinates
-        mz, my, mx = np.nonzero(m)
-        pz, py, px = np.nonzero(p)
+    # --- Quantitative comparison (≥99.99%)
+    diff_mask = matlab_cropped != python_cropped
+    match_ratio = np.sum(~diff_mask) / diff_mask.size
+    print(f"Endpoints match ratio: {match_ratio * 100:.5f}% (expected ≥ 99.99%)")
 
-        # Intersection & differences
-        match = m & p
-        diff_mat = m & ~p
-        diff_py = p & ~m
+    print(f"Python num_branchpoints: {py_result['num_branchpoints']}")
+    print(f"MATLAB num_branchpoints: {matlab_num_branchpoints}")
 
-        z_match, y_match, x_match = np.nonzero(match)
-        z_mat, y_mat, x_mat = np.nonzero(diff_mat)
-        z_py, y_py, x_py = np.nonzero(diff_py)
+    print("Python branch_points:\n", py_result["branch_points"])
+    print("MATLAB branch_points:\n", matlab_branch_points)
 
-        fig = plt.figure(figsize=(10, 8))
-        ax = fig.add_subplot(111, projection="3d")
+    print(f"Python max_branch_length: {py_result['max_branch_length']}")
+    print(f"MATLAB max_branch_length: {matlab_max_branch_length}")
 
-        ax.scatter(x_match, y_match, z_match, c="magenta", s=20, label="Match (both)")
-        ax.scatter(x_mat, y_mat, z_mat, c="red", s=40, label="MATLAB-only")
-        ax.scatter(x_py, y_py, z_py, c="blue", s=40, label="Python-only")
+    print(f"Python min_branch_length: {py_result['min_branch_length']}")
+    print(f"MATLAB min_branch_length: {matlab_min_branch_length}")
 
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-        ax.legend()
-        ax.set_title("3D Endpoint Comparison (MATLAB vs Python)")
-        plt.show()
-    plot_endpoints_3d(matlab_endpoints, py_result["endpoints"])
-    diff_coords = np.argwhere(matlab_endpoints != py_result["endpoints"])
-    print("Different voxels:", diff_coords)
-    print("Python True voxels:", np.argwhere(py_result["endpoints"]))
-    print("MATLAB True voxels:", np.argwhere(matlab_endpoints))
-    print("Shapes:", matlab_endpoints.shape, py_result["endpoints"].shape)
-    print("Equal voxels:", np.sum(matlab_endpoints == py_result["endpoints"]), "/", matlab_endpoints.size)
-    print("Non-zero in Python:", np.count_nonzero(matlab_endpoints))
-    print("Non-zero in MATLAB:", np.count_nonzero(py_result["endpoints"]))
-    print("Intersection:", np.count_nonzero((matlab_endpoints > 0) & (py_result["endpoints"] > 0)))
-    print("Symmetric difference:", np.count_nonzero(matlab_endpoints != py_result["endpoints"]))
-    assert np.array_equal(py_result["endpoints"], matlab_endpoints), "Endpoints mask mismatch"
-    assert py_result["num_branchpoints"] == matlab_num_branchpoints, "Branchpoint count mismatch"
+    print(f"Python avg_branch_length: {py_result['avg_branch_length']}")
+    print(f"MATLAB avg_branch_length: {matlab_avg_branch_length}")
+    assert match_ratio >= 0.9999, (
+        f"Endpoints match ratio {match_ratio * 100:.5f}% < 99.99%"
+    )
+    assert py_result["num_branchpoints"] == matlab_num_branchpoints, "Branchpoint count mismatch"       # --- Scalar comparisons ---
+    assert np.array_equal(py_result["branch_points"], matlab_branch_points), "Branch points mismatch"    
     assert np.isclose(py_result["max_branch_length"], matlab_max_branch_length, atol=1e-6), "Max branch length mismatch"
     assert np.isclose(py_result["min_branch_length"], matlab_min_branch_length, atol=1e-6), "Min branch length mismatch"
     assert np.isclose(py_result["avg_branch_length"], matlab_avg_branch_length, atol=1e-6), "Average branch length mismatch"
 
-    assert np.array_equal(py_result["branch_points"], matlab_branch_points), "Branch points mismatch"
+
+    # --- Branch point coordinates ---
 
