@@ -36,63 +36,17 @@ class BranchAnalysis:
 
     def compute(self) -> dict[str, Any]:
         whole_skel = slimskel3d(self.cell, 100)
-        mat = loadmat("whole_skel.mat")
-        whole_skel_matlab = mat["WholeSkel"]
-        whole_skel_matlab = np.transpose(whole_skel_matlab, (2, 1, 0))
-        # --- Basic sanity checks
-        assert whole_skel.shape == whole_skel_matlab.shape, (
-            f"Shape mismatch: Python {whole_skel.shape} vs MATLAB {whole_skel_matlab.shape}"
-        )
-
-        # --- Normalize dtype and binary range
-        whole_skel_py = whole_skel.astype(bool)
-        whole_skel_mat = whole_skel_matlab.astype(bool)
-        diff = whole_skel_py ^ whole_skel_mat
-        print("Mismatched voxels:", np.count_nonzero(diff))
-
-        coords = np.argwhere(diff)
-        print("Differing coordinates:\n", coords)
-
-        zmax, ymax, xmax = whole_skel_py.shape
-        for coord in coords:
-            z,y,x = coord[0], coord[1], coord[2]
-            print(f"Voxel ({z},{y},{x}) -> "
-                  f"Python={whole_skel_py[z,y,x]}, MATLAB={whole_skel_mat[z,y,x]}")
-        coords = np.array([[6,603,751],[6,604,752],[36,648,765],[37,648,766],[37,649,764],[38,650,765]])
-        for c in coords:
-            z,y,x = c
-            print(f"\nVoxel {tuple(c)}")
-            print("MATLAB:")
-            print(whole_skel_mat[z-1:z+2,y-1:y+2,x-1:x+2].astype(int))
-            print("PYTHON:")
-            print(whole_skel_py[z-1:z+2,y-1:y+2,x-1:x+2].astype(int))
-                
-        # --- Numeric equivalence check
-        np.testing.assert_array_equal(
-            whole_skel_py,
-            whole_skel_mat,
-            err_msg="Python and MATLAB skeletons differ voxel-by-voxel."
-        )
-        print("Skeletons are identical voxel-for-voxel.")
-        print(f"whole_skel.dtype={whole_skel.dtype}")
         bounding_box_result = bounding_box.compute(whole_skel)
         bounded_skel = bounding_box_result.bounded_img
-        print(f"bounding box: {bounded_skel.shape}")
-        print(f"bounding box: {bounded_skel.dtype}")        
         left, right, bottom, top = bounding_box_result.left, bounding_box_result.right, bounding_box_result.bottom, bounding_box_result.top        
         i2 = np.floor(self.centroid).astype(int)
-        print(f"i2: {i2}")
-        print(f"i2 tuple: {(i2[0], i2[1], i2[2])}")
         closest_point = nearest_pixel.compute(whole_skel, (i2[0], i2[1], i2[2]), self.scale)
-        print(f"closest: {closest_point}")
         i2 = np.array([closest_point.z  , closest_point.y, closest_point.x])
         i2_local = i2 - np.array([0, bottom, left])
         
         endpoints = (convolve(bounded_skel, KERNEL, mode="constant") == 1) & bounded_skel
         endpoints_list = np.argwhere(endpoints==1)
         n_endpoints = endpoints_list.shape[0]
-        print(f'n_endpoints: {n_endpoints}')
-
         
         masklist = np.zeros((*bounded_skel.shape, n_endpoints), dtype=bool)
         arclength_of_each_branch = np.zeros(n_endpoints, dtype=float)
@@ -100,12 +54,9 @@ class BranchAnalysis:
         for j, i1 in enumerate(endpoints_list):
             # Connect current endpoint to centroid
             start = connection.Point(z=i1[0], y=i1[1], x=i1[2])
-            print(f"start={start}")
             end = connection.Point(z=i2_local[0], y=i2_local[1], x=i2_local[2])
-            print(f"end={end}")            
             path_coords = connection.connect_points_along_path(bounded_skel, start, end)
             masklist[..., j] = path_coords
-            print(f"masklist: {path_coords.shape}")
 
             # Reorder pixels by connectivity (stub; implement graph-ordering if needed)
             pxlist = np.flatnonzero(masklist[..., j] == 1)
@@ -118,7 +69,6 @@ class BranchAnalysis:
             distpoint[:, 2] *= self.scale # x
 
             # Compute arc length (microns)
-            print(distpoint.shape)
             arclen_result = arclength(distpoint)
             arclength_of_each_branch[j] = arclen_result.arclength
 

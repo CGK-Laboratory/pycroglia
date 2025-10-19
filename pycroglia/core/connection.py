@@ -47,12 +47,7 @@ def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray
     # Initialize D: duplicate input image into 4D [z, y, x, 2]
     D_layer = np.where(img, np.inf, np.nan)
     D = np.stack([D_layer.copy(), D_layer.copy()], axis=-1)
-    print(f"D.shape={D.shape}")
 
-    startt = (start.z, start.y, start.x)
-    print(startt)
-    endt = (end.z, end.y, end.x)
-    print(endt)
     # Set start and end points to 0
     D[start.z, start.y, start.x, 0] = 0
     D[end.z, end.y, end.x, 1] = 0
@@ -79,7 +74,3 @@ def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray
         mask = np.sum(D, axis=-1) == n
 
     return mask.astype(np.uint8)
-
-
-
-

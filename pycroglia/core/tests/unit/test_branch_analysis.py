@@ -41,39 +41,13 @@ def test_branch_analysis_equivalence():
     py_result = analyzer.compute()
     python_endpoints = py_result["endpoints"]
 
-    # align shapes
-    min_shape = tuple(min(a, b) for a, b in zip(matlab_endpoints.shape, python_endpoints.shape))
-    matlab_cropped = matlab_endpoints[:min_shape[0], :min_shape[1], :min_shape[2]]
-    python_cropped = python_endpoints[:min_shape[0], :min_shape[1], :min_shape[2]]
-
-    # --- Quantitative comparison (≥99.99%)
-    diff_mask = matlab_cropped != python_cropped
-    match_ratio = np.sum(~diff_mask) / diff_mask.size
-    print(f"Endpoints match ratio: {match_ratio * 100:.5f}% (expected ≥ 99.99%)")
-
-    print(f"Python num_branchpoints: {py_result['num_branchpoints']}")
-    print(f"MATLAB num_branchpoints: {matlab_num_branchpoints}")
-
-    print("Python branch_points:\n", py_result["branch_points"])
-    print("MATLAB branch_points:\n", matlab_branch_points)
-
-    print(f"Python max_branch_length: {py_result['max_branch_length']}")
-    print(f"MATLAB max_branch_length: {matlab_max_branch_length}")
-
-    print(f"Python min_branch_length: {py_result['min_branch_length']}")
-    print(f"MATLAB min_branch_length: {matlab_min_branch_length}")
-
-    print(f"Python avg_branch_length: {py_result['avg_branch_length']}")
-    print(f"MATLAB avg_branch_length: {matlab_avg_branch_length}")
-    assert match_ratio >= 0.9999, (
-        f"Endpoints match ratio {match_ratio * 100:.5f}% < 99.99%"
+    np.testing.assert_array_equal(
+        python_endpoints,
+        matlab_endpoints,
+        err_msg="Endpoint voxel masks differ voxel-by-voxel.",
     )
-    assert py_result["num_branchpoints"] == matlab_num_branchpoints, "Branchpoint count mismatch"       # --- Scalar comparisons ---
+    assert py_result["num_branchpoints"] == matlab_num_branchpoints, "Branchpoint count mismatch"   
     assert np.array_equal(py_result["branch_points"], matlab_branch_points), "Branch points mismatch"    
     assert np.isclose(py_result["max_branch_length"], matlab_max_branch_length, atol=1e-6), "Max branch length mismatch"
     assert np.isclose(py_result["min_branch_length"], matlab_min_branch_length, atol=1e-6), "Min branch length mismatch"
     assert np.isclose(py_result["avg_branch_length"], matlab_avg_branch_length, atol=1e-6), "Average branch length mismatch"
-
-
-    # --- Branch point coordinates ---
-
