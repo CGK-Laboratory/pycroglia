@@ -1,6 +1,7 @@
 import json
 import re
 import unicodedata
+import inspect
 
 from abc import ABC
 from dataclasses import dataclass
@@ -154,6 +155,24 @@ class OutputWriter(ABC):
         """
         raise NotImplementedError
 
+    @classmethod
+    def get_name(cls) -> str:
+        """Return the display name of the writer.
+
+        Returns:
+            str: Name of the writer.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def get_writers(cls):
+        """Return all non-abstract subclasses of OutputWriter.
+
+        Returns:
+            list: List of OutputWriter subclasses.
+        """
+        return [c for c in cls.__subclasses__() if not inspect.isabstract(c)]
+
 
 class ExcelOutput(OutputWriter):
     """Excel output writer for microglia analysis results.
@@ -165,6 +184,7 @@ class ExcelOutput(OutputWriter):
     DEFAULT_SUMMARY_SHEET_TITLE = "Summary"
     DEFAULT_PER_CELL_SHEET_TITLE = "PerCell"
     DEFAULT_FILE_EXTENSION = ".xlsx"
+    DEFAULT_NAME = "Multi Sheet Excel"
 
     def __init__(
         self,
@@ -188,6 +208,15 @@ class ExcelOutput(OutputWriter):
 
         self.summary_config = summary_config or AnalysisSummaryConfig.default()
         self.per_cell_config = per_cell_config or CellAnalysisConfig.default()
+
+    @classmethod
+    def get_name(cls) -> str:
+        """Return the display name of the Excel writer.
+
+        Returns:
+            str: Name of the writer.
+        """
+        return cls.DEFAULT_NAME
 
     def write(self, file_path: str, data: FullAnalysis):
         """Write analysis data to an Excel file.
@@ -295,6 +324,7 @@ class JSONOutput(OutputWriter):
     """
 
     DEFAULT_FILE_EXTENSION = ".json"
+    DEFAULT_NAME = "JSON File"
 
     def __init__(
         self,
@@ -313,6 +343,15 @@ class JSONOutput(OutputWriter):
         self.summary_config = summary_config or AnalysisSummaryConfig.default()
         self.per_cell_config = per_cell_config or CellAnalysisConfig.default()
         self.indent = indent
+
+    @classmethod
+    def get_name(cls) -> str:
+        """Return the display name of the JSON writer.
+
+        Returns:
+            str: Name of the writer.
+        """
+        return cls.DEFAULT_NAME
 
     def write(self, file_path: str, data: FullAnalysis):
         """Write analysis data to a JSON file.
