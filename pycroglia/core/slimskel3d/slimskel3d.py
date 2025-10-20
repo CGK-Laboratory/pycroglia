@@ -2,8 +2,7 @@ from numpy.typing import NDArray
 from pycroglia.core.slimskel3d.skeleton3D import skeleton3D
 from pycroglia.core.slimskel3d.skel2graph import skel2graph
 from pycroglia.core.slimskel3d.graph2skel import graph2skel
-import numpy as np
-from skimage.morphology import skeletonize
+
 
 def slimskel3d(vol: NDArray, threshold: int) -> NDArray:
     """Skeletonize and iteratively slim a 3D binary image.
@@ -51,10 +50,9 @@ def slimskel3d(vol: NDArray, threshold: int) -> NDArray:
     wl_new = sum(len(node.links) for node in nodes2)
 
     # Step 5: Iterate until stable
-    while  wl != wl_new:
+    while wl != wl_new:
         wl = wl_new
         slim_skel = graph2skel(nodes2, links2, skel.shape)
         _, nodes2, links2 = skel2graph(slim_skel, threshold=0)
         wl_new = sum(len(node.links) for node in nodes2)
-    return slim_skel        
-
+    return slim_skel

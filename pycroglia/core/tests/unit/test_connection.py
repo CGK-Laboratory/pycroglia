@@ -48,7 +48,9 @@ def test_simple_diagonal_path():
     coords = np.argwhere(mask)
     expected = np.array([[i, i, i] for i in range(5)])
 
-    np.testing.assert_array_equal(coords, expected, err_msg="Path does not follow diagonal.")
+    np.testing.assert_array_equal(
+        coords, expected, err_msg="Path does not follow diagonal."
+    )
 
 
 def test_complex_path():
@@ -77,13 +79,17 @@ def test_complex_path():
     coords = np.argwhere(mask)
 
     # BFS may take a direct 26-connected path skipping (2,1,3)
-    expected_minimal = np.array([
-        [2, 1, 1],
-        [2, 1, 2],
-        [2, 2, 3],
-        [2, 3, 3],
-    ])
+    expected_minimal = np.array(
+        [
+            [2, 1, 1],
+            [2, 1, 2],
+            [2, 2, 3],
+            [2, 3, 3],
+        ]
+    )
 
-    np.testing.assert_array_equal(coords, expected_minimal, err_msg="Path does not match expected minimal L-shape.")
-
-
+    np.testing.assert_array_equal(
+        coords,
+        expected_minimal,
+        err_msg="Path does not match expected minimal L-shape.",
+    )

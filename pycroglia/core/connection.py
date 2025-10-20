@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from numpy.typing import NDArray
 from scipy.ndimage import convolve
 import numpy as np
-from skimage.morphology import star
+
 
 @dataclass
 class Point:
@@ -14,7 +14,8 @@ class Point:
 
 
 # 26-neighbourhood offsets (all possible moves except staying in place)
-CUBE = np.ones((3,3,3))
+CUBE = np.ones((3, 3, 3))
+
 
 def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray:
     """
@@ -61,7 +62,7 @@ def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray
     D[start.z, start.y, start.x, 0] = 0
     D[end.z, end.y, end.x, 1] = 0
 
-    mask = (D == 0)
+    mask = D == 0
     n = 0
 
     # Iteratively expand mask until connection found or no more reachable voxels

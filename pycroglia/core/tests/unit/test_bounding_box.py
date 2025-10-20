@@ -32,4 +32,6 @@ def test_bounding_box_of_cell():
     assert result.bottom == 3 and result.top == 3, "Y bounds should match voxel y=3"
 
     # Check voxel presence at corresponding position
-    assert result.bounded_img[2, 0, 0], "Foreground voxel should remain in cropped volume"
+    assert result.bounded_img[2, 0, 0], (
+        "Foreground voxel should remain in cropped volume"
+    )

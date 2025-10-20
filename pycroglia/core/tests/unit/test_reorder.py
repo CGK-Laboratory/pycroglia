@@ -21,9 +21,7 @@ def test_simple_line_path():
     ordered = reorder_pixel_list(pixel_indices, shape, endpoint, centroid)
 
     expected = np.array([[i, 2, 2] for i in range(5)])
-    assert np.array_equal(ordered, expected), (
-        f"Expected:\n{expected}\nGot:\n{ordered}"
-    )
+    assert np.array_equal(ordered, expected), f"Expected:\n{expected}\nGot:\n{ordered}"
 
 
 def test_diagonal_path():

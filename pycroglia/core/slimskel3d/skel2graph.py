@@ -3,7 +3,7 @@ import numpy as np
 from numpy.typing import NDArray
 from skimage.measure import label as sklabel
 from scipy.sparse import csr_matrix
-import networkx as nx
+
 
 @dataclass
 class CenterOfMass:
@@ -293,7 +293,7 @@ def skel2graph(
 
     # Map: linear index of a canal voxel → row index in `canals`
     canal_index_map = np.full(skel.size, -1, dtype=int)
-    if len(canals) > 0: 
+    if len(canals) > 0:
         canal_index_map[canals[:, 0]] = np.arange(len(canals), dtype=int)
 
     # Map: linear index of a skeleton voxel → row index in `neighbourhood_indices`
@@ -319,7 +319,7 @@ def skel2graph(
                 )
                 if len(voxels) == 0:
                     continue
-                
+
                 skel2.ravel()[voxels[1:-1]] = 0
 
                 if (is_endpoint and len(voxels) > threshold) or (
@@ -390,6 +390,7 @@ def skel2graph(
         link.points = np.ravel_multi_index((z - pad, y - pad, x - pad), unpad_shape)
 
     return adjacency, nodes, links
+
 
 def _get_neighbourhood(img: NDArray, indices: NDArray) -> NDArray:
     """Return the 3x3x3 neighborhood of given voxels in a 3D binary image.

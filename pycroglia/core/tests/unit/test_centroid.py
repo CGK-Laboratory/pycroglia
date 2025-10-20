@@ -58,4 +58,3 @@ def test_compute_average_centroid_distance():
     result = c.compute()
 
     np.testing.assert_approx_equal(result["average_distance"], 0.3674234614174768)
-

@@ -24,7 +24,6 @@ class Centroids:
             Z-step size (slice spacing) in micrometers per voxel.
     """
 
-
     def __init__(self, masks: list[NDArray], scale: float, zscale: float) -> None:
         """Initialize the Centroids object from a list of binary 3D masks.
 

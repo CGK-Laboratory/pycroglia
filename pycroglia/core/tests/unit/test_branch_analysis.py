@@ -7,9 +7,8 @@ from scipy.io import loadmat
 TEST_DIR = Path(__file__).parent  # folder where this test lives
 FILES_DIR = TEST_DIR / "files"  # adjust if files/ is elsewhere
 
-def indices_to_mask(
-    cell_indices: NDArray, img_shape: tuple[int, int, int]
-) -> NDArray:
+
+def indices_to_mask(cell_indices: NDArray, img_shape: tuple[int, int, int]) -> NDArray:
     """Convert a 1D list of voxel indices into a 3D binary mask.
 
     Args:
@@ -28,7 +27,7 @@ def indices_to_mask(
     mask.ravel()[cell_indices] = True
     return mask.astype(np.uint8)
 
-    
+
 def test_branch_analysis_equivalence():
     """Test BranchAnalysis matches MATLAB reference results.
 
@@ -38,7 +37,11 @@ def test_branch_analysis_equivalence():
         - Branch point coordinates match element-wise.
         - Maximum, minimum, and average branch lengths match within 1e-6.
     """
-    mat = loadmat(FILES_DIR / "branch_analysis_results.mat", squeeze_me=True, struct_as_record=False)
+    mat = loadmat(
+        FILES_DIR / "branch_analysis_results.mat",
+        squeeze_me=True,
+        struct_as_record=False,
+    )
     mat_result = mat["result"]
 
     # Extract MATLAB results
@@ -59,7 +62,9 @@ def test_branch_analysis_equivalence():
     cell = mask
 
     centroid = np.array([31.2319, 787.6710, 637.9670], dtype=float) - 1.0
-    analyzer = BranchAnalysis(cell=cell, centroid=centroid, scale=1.0, zscale=1.0, zslices=zslices)
+    analyzer = BranchAnalysis(
+        cell=cell, centroid=centroid, scale=1.0, zscale=1.0, zslices=zslices
+    )
     py_result = analyzer.compute()
     python_endpoints = py_result["endpoints"]
 
@@ -68,8 +73,18 @@ def test_branch_analysis_equivalence():
         matlab_endpoints,
         err_msg="Endpoint voxel masks differ voxel-by-voxel.",
     )
-    assert py_result["num_branchpoints"] == matlab_num_branchpoints, "Branchpoint count mismatch"   
-    assert np.array_equal(py_result["branch_points"], matlab_branch_points), "Branch points mismatch"    
-    assert np.isclose(py_result["max_branch_length"], matlab_max_branch_length, atol=1e-6), "Max branch length mismatch"
-    assert np.isclose(py_result["min_branch_length"], matlab_min_branch_length, atol=1e-6), "Min branch length mismatch"
-    assert np.isclose(py_result["avg_branch_length"], matlab_avg_branch_length, atol=1e-6), "Average branch length mismatch"
+    assert py_result["num_branchpoints"] == matlab_num_branchpoints, (
+        "Branchpoint count mismatch"
+    )
+    assert np.array_equal(py_result["branch_points"], matlab_branch_points), (
+        "Branch points mismatch"
+    )
+    assert np.isclose(
+        py_result["max_branch_length"], matlab_max_branch_length, atol=1e-6
+    ), "Max branch length mismatch"
+    assert np.isclose(
+        py_result["min_branch_length"], matlab_min_branch_length, atol=1e-6
+    ), "Min branch length mismatch"
+    assert np.isclose(
+        py_result["avg_branch_length"], matlab_avg_branch_length, atol=1e-6
+    ), "Average branch length mismatch"

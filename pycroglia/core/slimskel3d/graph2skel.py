@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 from pycroglia.core.slimskel3d.skel2graph import Node, Link
-from skimage.measure import label
+
 
 def graph2skel(
     nodes: list[Node], links: list[Link], shape: tuple[int, int, int]

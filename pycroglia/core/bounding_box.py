@@ -43,8 +43,8 @@ def compute(input_img: NDArray) -> ComputeResult:
 
     bottom, top = int(y.min()), int(y.max())
     left, right = int(x.min()), int(x.max())
-    
-    bounded_img = input_img[:, bottom:top+1, left:right+1]
+
+    bounded_img = input_img[:, bottom : top + 1, left : right + 1]
 
     return ComputeResult(
         bounded_img=bounded_img,
