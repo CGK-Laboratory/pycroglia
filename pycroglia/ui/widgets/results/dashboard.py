@@ -89,6 +89,10 @@ class ResultsDashboard(QtWidgets.QWidget):
             button_txt=button_txt,
             parent=self,
         )
+
+        # Connections
+        self.graphs.buttonClicked.connect(self._preview_clicked)
+
         return self
 
     def add_build_configurator(
@@ -175,3 +179,6 @@ class ResultsDashboard(QtWidgets.QWidget):
         self._validate_components()
         self._build_layout()
         return self
+
+    def _preview_clicked(self, graphs_list: List[str]):
+        self.state.generate_graphs(graphs_list)
