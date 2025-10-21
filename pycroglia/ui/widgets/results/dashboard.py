@@ -1,24 +1,43 @@
 from __future__ import annotations
 from typing import List, Optional, Type
-from types import SimpleNamespace
-import sys
 from PyQt6 import QtWidgets, QtCore
 
-from pycroglia.core.io.output import (
-    AnalysisSummary,
-    CellAnalysis,
-    AnalysisSummaryConfig,
-    CellAnalysisConfig,
-    OutputWriter,
-)
+from pycroglia.ui.controllers.results_state import ResultsProvider
+
+from pycroglia.core.io.output import OutputWriter
 from pycroglia.ui.widgets.results.graphs import GraphSelectionWidget
 from pycroglia.ui.widgets.results.output import OutputConfigurator
 from pycroglia.ui.widgets.results.viewers import FullAnalysisViewer
 
 
 class ResultsDashboard(QtWidgets.QWidget):
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
-        super().__init__(parent)
+    """Dashboard widget that aggregates results viewers, graph selectors and output configurator.
+
+    The dashboard is constructed in three steps via builder-style methods:
+    add_results_table, add_graphs_list and add_build_configurator. After
+    configuring the three components call build() to validate and assemble
+    the layout.
+
+    Attributes:
+        state (ResultsProvider): Source of analysis, cells and graph data.
+        table (Optional[FullAnalysisViewer]): Results table widget (set by add_results_table).
+        graphs (Optional[GraphSelectionWidget]): Graph selection widget (set by add_graphs_list).
+        configurator (Optional[OutputConfigurator]): Output configuration widget (set by add_build_configurator).
+    """
+
+    def __init__(
+        self, state: ResultsProvider, parent: Optional[QtWidgets.QWidget] = None
+    ):
+        """Initialize the ResultsDashboard.
+
+        Args:
+            state (ResultsProvider): Provider supplying analysis, cells and graphs.
+            parent (Optional[QtWidgets.QWidget]): Optional parent widget.
+        """
+        super().__init__(parent=parent)
+
+        # State
+        self.state = state
 
         # Widgets
         self.table: Optional[FullAnalysisViewer] = None
@@ -29,30 +48,43 @@ class ResultsDashboard(QtWidgets.QWidget):
         self,
         summary_headers: List[str],
         cell_headers: List[str],
-        analysis_data: AnalysisSummary,
-        cells_data: List[CellAnalysis],
-        analysis_config: AnalysisSummaryConfig,
-        cells_config: CellAnalysisConfig,
     ) -> ResultsDashboard:
+        """Create and attach a FullAnalysisViewer using state-provided data.
+
+        Args:
+            summary_headers (List[str]): Column headers for the summary table.
+            cell_headers (List[str]): Column headers for the per-cell table.
+
+        Returns:
+            ResultsDashboard: self, to allow chaining.
+        """
         self.table = FullAnalysisViewer(
             summary_headers=summary_headers,
             cell_headers=cell_headers,
-            analysis_data=analysis_data,
-            cells_data=cells_data,
-            analysis_config=analysis_config,
-            cells_config=cells_config,
+            analysis_data=self.state.get_analysis_data(),
+            cells_data=self.state.get_cells_data(),
+            analysis_config=self.state.get_analysis_data_config(),
+            cells_config=self.state.get_cells_data_config(),
             parent=self,
         )
         return self
 
     def add_graphs_list(
         self,
-        graphs_list: List[str],
         label_text: Optional[str] = None,
         button_txt: Optional[str] = None,
     ) -> ResultsDashboard:
+        """Create and attach a GraphSelectionWidget using state-provided graphs list.
+
+        Args:
+            label_text (Optional[str]): Optional label text for the graphs selector.
+            button_txt (Optional[str]): Optional button text.
+
+        Returns:
+            ResultsDashboard: self, to allow chaining.
+        """
         self.graphs = GraphSelectionWidget(
-            graphs_list=graphs_list,
+            graphs_list=self.state.get_graphs_list(),
             label_txt=label_text,
             button_txt=button_txt,
             parent=self,
@@ -69,6 +101,20 @@ class ResultsDashboard(QtWidgets.QWidget):
         dialog_path: str = QtCore.QDir.homePath(),
         writers: Optional[Type[OutputWriter]] = None,
     ) -> ResultsDashboard:
+        """Create and attach an OutputConfigurator.
+
+        Args:
+            title (str): Title for the writer widget.
+            selection_label (str): Label describing the folder selector.
+            button_txt (str): Text for the folder browse button.
+            display_txt (str): Initial display text for the folder path.
+            dialog_title (str): Title for the folder selection dialog.
+            dialog_path (str): Initial path for the dialog.
+            writers (Optional[Type[OutputWriter]]): Optional writer class or registry.
+
+        Returns:
+            ResultsDashboard: self, to allow chaining.
+        """
         self.configurator = OutputConfigurator(
             writer_widget_title=title,
             folder_selection_label=selection_label,
@@ -82,6 +128,11 @@ class ResultsDashboard(QtWidgets.QWidget):
         return self
 
     def _build_layout(self):
+        """Assemble the dashboard layout.
+
+        Places the results table on the left and stacks the graphs selector
+        and configurator vertically on the right.
+        """
         layout = QtWidgets.QHBoxLayout()
 
         lvertical_layout = QtWidgets.QVBoxLayout()
@@ -93,6 +144,11 @@ class ResultsDashboard(QtWidgets.QWidget):
         self.setLayout(layout)
 
     def _validate_components(self) -> None:
+        """Validate that required child widgets have been constructed.
+
+        Raises:
+            RuntimeError: If one or more required widgets are missing.
+        """
         missing = [
             name
             for name, widget in (
@@ -108,89 +164,14 @@ class ResultsDashboard(QtWidgets.QWidget):
             )
 
     def build(self) -> ResultsDashboard:
+        """Finalize the dashboard: validate components and build layout.
+
+        Returns:
+            ResultsDashboard: self, to allow chaining.
+
+        Raises:
+            RuntimeError: If validation fails because some components are missing.
+        """
         self._validate_components()
         self._build_layout()
         return self
-
-
-# Minimal runnable demo for quick manual testing
-def _make_dummy_objects():
-    analysis_data = SimpleNamespace(
-        avg_centroid_distance=0,
-        total_territorial_volume=0,
-        total_unoccupied_volume=0,
-        percent_occupied_volume=0,
-    )
-    analysis_config = SimpleNamespace(
-        avg_centroid_distance_txt="Avg centroid distance",
-        total_territorial_volume_txt="Total territorial volume",
-        total_unoccupied_volume_txt="Total unoccupied volume",
-        percent_occupied_volume_txt="Percent occupied volume",
-    )
-
-    cell = SimpleNamespace(
-        cell_territory_volume=0,
-        cell_volume=0,
-        ramification_index=0,
-        number_of_endpoints=0,
-        number_of_branches=0,
-        avg_branch_length=0,
-        max_branch_length=0,
-        min_branch_length=0,
-    )
-    cells_config = SimpleNamespace(
-        cell_territory_volume_txt="Cell territory volume",
-        cell_volume_txt="Cell volume",
-        ramification_index_txt="Ramification index",
-        number_of_endpoints_txt="Number of endpoints",
-        number_of_branches_txt="Number of branches",
-        avg_branch_length_txt="Avg branch length",
-        max_branch_length_txt="Max branch length",
-        min_branch_length_txt="Min branch length",
-    )
-
-    return (
-        ["Metric", "Value"],
-        ["Property", "Value"],
-        analysis_data,
-        [cell],
-        analysis_config,
-        cells_config,
-    )
-
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-
-    (
-        summary_headers,
-        cell_headers,
-        analysis_data,
-        cells_data,
-        analysis_config,
-        cells_config,
-    ) = _make_dummy_objects()
-    graphs_list = ["Overview", "Volume distribution", "Branch lengths", "Ramification"]
-
-    dashboard = ResultsDashboard()
-    dashboard.add_results_table(
-        summary_headers=summary_headers,
-        cell_headers=cell_headers,
-        analysis_data=analysis_data,
-        cells_data=cells_data,
-        analysis_config=analysis_config,
-        cells_config=cells_config,
-    ).add_graphs_list(
-        graphs_list=graphs_list,
-        label_text="Select graphs:",
-        button_txt="Show",
-    ).add_build_configurator(
-        title="Output Writer",
-        selection_label="Destination folder:",
-        button_txt="Browse...",
-        display_txt="No folder selected",
-        dialog_title="Select output folder",
-    ).build()
-
-    dashboard.show()
-    raise SystemExit(app.exec())
