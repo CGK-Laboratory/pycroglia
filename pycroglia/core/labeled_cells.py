@@ -250,3 +250,21 @@ class LabeledCells:
                 border_cells.add(label)
 
         return border_cells
+
+    def selected_cells_mask(self, selected_ids: Set[int]) -> NDArray:
+        """Return a combined 3D binary mask for the provided cell IDs.
+
+        Performs a vectorized single-pass operation using np.isin over the
+        internal labels array to build the combined mask.
+
+        Args:
+            selected_ids (Set[int]): Set of cell label IDs to include.
+
+        Returns:
+            NDArray: 3D binary mask (z, y, x) with 1 where any of the selected cells are present.
+        """
+        if not selected_ids:
+            return np.zeros_like(self.labels, dtype=self.ARRAY_ELEMENTS_TYPE)
+
+        mask = np.isin(self.labels, list(selected_ids))
+        return mask.astype(self.ARRAY_ELEMENTS_TYPE)
