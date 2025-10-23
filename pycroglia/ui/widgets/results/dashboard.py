@@ -1,8 +1,12 @@
 from __future__ import annotations
 from typing import List, Optional, Type
+from numpy.typing import NDArray
 from PyQt6 import QtWidgets, QtCore
 
-from pycroglia.ui.controllers.results_state import ResultsProvider
+from pycroglia.ui.controllers.results_state import (
+    ResultsProvider,
+    ResultsDashboardState,
+)
 
 from pycroglia.core.io.output import OutputWriter
 from pycroglia.ui.widgets.results.graphs import GraphSelectionWidget
@@ -25,19 +29,21 @@ class ResultsDashboard(QtWidgets.QWidget):
         configurator (Optional[OutputConfigurator]): Output configuration widget (set by add_build_configurator).
     """
 
-    def __init__(
-        self, state: ResultsProvider, parent: Optional[QtWidgets.QWidget] = None
-    ):
+    def __init__(self, img: NDArray, parent: Optional[QtWidgets.QWidget] = None):
         """Initialize the ResultsDashboard.
 
+        The dashboard creates an internal ResultsDashboardState from the provided
+        image/array and prepares placeholders for child widgets; actual child
+        widgets are constructed via the builder methods.
+
         Args:
-            state (ResultsProvider): Provider supplying analysis, cells and graphs.
+            img (NDArray): Image or labeled array used to construct the internal state.
             parent (Optional[QtWidgets.QWidget]): Optional parent widget.
         """
         super().__init__(parent=parent)
 
         # State
-        self.state = state
+        self.state: ResultsProvider = ResultsDashboardState(img, parent=self)
 
         # Widgets
         self.table: Optional[FullAnalysisViewer] = None
@@ -181,4 +187,12 @@ class ResultsDashboard(QtWidgets.QWidget):
         return self
 
     def _preview_clicked(self, graphs_list: List[str]):
+        """Handle preview requests coming from the GraphSelectionWidget.
+
+        Delegates the list of selected graph names to the state's generate_graphs
+        implementation so the graphs are generated or displayed.
+
+        Args:
+            graphs_list (List[str]): Names of graphs requested for preview.
+        """
         self.state.generate_graphs(graphs_list)

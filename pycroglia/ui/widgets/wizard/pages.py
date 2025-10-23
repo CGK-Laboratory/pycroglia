@@ -3,9 +3,11 @@ from typing import Optional, Any, List
 
 from PyQt6 import QtCore, QtWidgets
 
+from pycroglia.ui.widgets.common.results import ImgWithPathResults
 from pycroglia.ui.widgets.imagefilters.results import FilterResults
 from pycroglia.ui.widgets.imagefilters.stacks import FilterEditorStack
 from pycroglia.ui.widgets.io.file_selection_editor import FileSelectionEditor
+from pycroglia.ui.widgets.results.stacks import ResultsDashboardStack
 from pycroglia.ui.widgets.segmentation.results import SegmentationResults
 from pycroglia.ui.widgets.segmentation.stacks import SegmentationEditorStack
 from pycroglia.ui.widgets.analysis.stacks import CellSelectorStack
@@ -211,7 +213,7 @@ class CellSelectionPage(BasePage):
             Optional[dict[str, Any]]: None, as no further processing is expected
                 after cell selection.
         """
-        pass
+        return {"results": self.main_widget.get_results()}
 
     def set_data(self, data: Optional[dict[str, list[SegmentationResults]]]):
         """Set segmentation results data to initialize cell selectors.
@@ -221,6 +223,19 @@ class CellSelectionPage(BasePage):
                 'results' key with list of SegmentationResults dictionaries.
         """
         list_of_results = [SegmentationResults(**elem) for elem in data["results"]]
+        self.main_widget.add_tabs(list_of_results)
+
+
+class DashboardPage(BasePage):
+    def __init__(self, main_widget: ResultsDashboardStack):
+        super().__init__(main_widget)
+        self.main_widget = main_widget
+
+    def get_state(self) -> Optional[dict[str, Any]]:
+        pass
+
+    def set_data(self, data: dict[str, List[ImgWithPathResults]]):
+        list_of_results = [elem for elem in data["results"]]
         self.main_widget.add_tabs(list_of_results)
 
 
