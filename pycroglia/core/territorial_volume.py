@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Any
 import numpy as np
 from numpy.typing import NDArray
@@ -63,7 +62,7 @@ class TerritorialVolume:
             # Compute convex hull volume
             hull = ConvexHull(obj)
             convex_volume[i] = hull.volume * self.voxscale
-        _,y,x = self.masks[0].shape
+        _, y, x = self.masks[0].shape
         total_volume_covered = np.sum(convex_volume)
         image_cube_volume: float = np.float64((x * y * self.zplanes) * self.voxscale)
         empty_volume = image_cube_volume - total_volume_covered
