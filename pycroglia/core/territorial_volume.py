@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial import ConvexHull
@@ -20,7 +21,7 @@ class TerritorialVolume:
             into physical units (e.g., µm³ per voxel).
     """
 
-    def __init__(self, masks: list[NDArray], voxscale: float) -> None:
+    def __init__(self, masks: list[NDArray], voxscale: float, zplanes: int) -> None:
         """Initializes a TerritorialVolume instance.
 
         Args:
@@ -32,8 +33,9 @@ class TerritorialVolume:
         """
         self.masks = masks
         self.voxscale = voxscale
+        self.zplanes = zplanes
 
-    def compute(self) -> NDArray:
+    def compute(self) -> dict[str, Any]:
         """Computes convex hull volumes for all segmented cells.
 
         For each mask:
@@ -61,57 +63,15 @@ class TerritorialVolume:
             # Compute convex hull volume
             hull = ConvexHull(obj)
             convex_volume[i] = hull.volume * self.voxscale
-
-        return convex_volume
-
-
-@dataclass
-class TerritorialVolumeMetrics:
-    """Holds summary metrics of territorial volume analysis.
-
-    Attributes:
-        total_volume_covered (np.float64): Total convex volume occupied
-            by all labeled cells.
-        image_cube_volume (np.float64): Volume of the entire image cube
-            in physical units.
-        empty_volume (np.float64): Remaining unoccupied volume.
-        covered_percentage (np.float64): Percentage of image cube
-            occupied by labeled cells.
-    """
-
-    total_volume_covered: np.float64
-    image_cube_volume: np.float64
-    empty_volume: np.float64
-    covered_percentage: np.float64
-
-
-def compute_metrics(
-    convex_volume: NDArray,
-    voxscale: float,
-    img_size: tuple[int, int, int],
-    zplanes: int,
-) -> TerritorialVolumeMetrics:
-    """Computes global volume coverage metrics from convex hull volumes.
-
-    Args:
-        convex_volume (NDArray): Array of per-cell convex hull volumes
-            in physical units (output of :meth:`TerritorialVolume.compute`).
-        voxscale (float): Scaling factor for voxel volumes (µm³ per voxel).
-        img_size (tuple[int, int, int]): Image dimensions in (x, y, z).
-        zplanes (int): Number of planes along the z-dimension.
-
-    Returns:
-        TerritorialVolumeMetrics: A dataclass containing total covered
-        volume, image cube volume, empty volume, and percentage coverage.
-    """
-    x, y, _ = img_size
-    total_volume_covered = np.sum(convex_volume)
-    image_cube_volume: float = np.float64((x * y * zplanes) * voxscale)
-    empty_volume = image_cube_volume - total_volume_covered
-    covered_percentage = (total_volume_covered / image_cube_volume) * 100
-    return TerritorialVolumeMetrics(
-        total_volume_covered=total_volume_covered,
-        image_cube_volume=image_cube_volume,
-        empty_volume=empty_volume,
-        covered_percentage=covered_percentage,
-    )
+        _,y,x = self.masks[0].shape
+        total_volume_covered = np.sum(convex_volume)
+        image_cube_volume: float = np.float64((x * y * self.zplanes) * self.voxscale)
+        empty_volume = image_cube_volume - total_volume_covered
+        covered_percentage = (total_volume_covered / image_cube_volume) * 100
+        return {
+            "cells_convex_volume": convex_volume,
+            "total_volume_covered": total_volume_covered,
+            "image_cube_volume": image_cube_volume,
+            "empty_volume": empty_volume,
+            "covered_percentage": covered_percentage,
+        }

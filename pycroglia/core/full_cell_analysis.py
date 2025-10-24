@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial import ConvexHull
@@ -63,7 +64,7 @@ class FullCellAnalysis:
         self.masks = masks
         self.voxscale = voxscale
 
-    def compute(self) -> AnalysisResult:
+    def compute(self) -> dict[str, Any]:
         """Perform convex hull and complexity analysis for all cells.
 
         For each cell:
@@ -95,11 +96,11 @@ class FullCellAnalysis:
         valid = cell_volumes > 0
         complexities[valid] = convex_volumes[valid] / cell_volumes[valid]
 
-        return AnalysisResult(
-            cell_volumes=cell_volumes,
-            convex_simplices=convex_simplices,
-            convex_vertices=convex_vertices,
-            convex_volumes=convex_volumes,
-            max_cell_volume=max_cell_volume,
-            cell_complexities=complexities,
-        )
+        return {
+            "cell_volumes": cell_volumes,
+            "convex_simplices": convex_simplices,
+            "convex_vertices": convex_vertices,
+            "convex_volumes": convex_volumes,
+            "max_cell_volume": max_cell_volume,
+            "cell_complexities": complexities,
+        }
