@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from numpy.typing import NDArray
-from collections import deque
+from scipy.ndimage import convolve
 import numpy as np
 
 
@@ -14,79 +14,73 @@ class Point:
 
 
 # 26-neighbourhood offsets (all possible moves except staying in place)
-NEIGHBOURS = [
-    (dz, dy, dx)
-    for dz in (-1, 0, 1)
-    for dy in (-1, 0, 1)
-    for dx in (-1, 0, 1)
-    if not (dz == dy == dx == 0)
-]
+CUBE = np.ones((3, 3, 3))
 
 
 def connect_points_along_path(img: NDArray, start: Point, end: Point) -> NDArray:
     """
-    Find the shortest path between two voxels constrained to foreground (True) voxels.
+    Compute the shortest 3D path connecting two voxels within a binary skeleton mask.
 
-    This function performs a **breadth-first search (BFS)** on a 3D binary volume to
-    trace the shortest path from `start` to `end`, moving only through connected
-    voxels that have value `True`.
+    This function performs a two-front **breadth-first search (BFS)** expansion
+    from both `start` and `end` voxels simultaneously through a 3D binary volume.
+    Expansion proceeds only through foreground voxels (`True`), and stops once
+    both fronts meet, marking all voxels that belong to the minimal connecting
+    region.
+
+    The method mirrors MATLAB’s `ConnectPointsAlongPath` behavior: it iteratively
+    dilates both fronts (start and end) through a 26-connected neighborhood
+    until they overlap, at which point the minimal connecting path is extracted.
 
     Args:
-        img (NDArray): 3D binary array of shape (Z, Y, X).
-                       Foreground voxels must have value True.
-        start (Point): Starting voxel, given as (x, y, z).
-        end (Point): Ending voxel, given as (x, y, z).
+        img (NDArray):
+            3D binary array of shape `(Z, Y, X)`. Foreground voxels (path-eligible)
+            must have value `True`.
+        start (Point):
+            Starting voxel coordinates as `(x, y, z)`. Must lie inside the foreground.
+        end (Point):
+            Ending voxel coordinates as `(x, y, z)`. Must lie inside the foreground.
 
     Returns:
-        NDArray: Array of shape (N, 3) with the sequence of voxel coordinates
-                 forming the path, ordered as (z, y, x).
-                 If no path is found, returns an empty array.
+        NDArray:
+            A 3D binary mask of the same shape as `img`, where `1` (True) marks
+            voxels belonging to the **shortest connection** between `start` and `end`.
+            If no connection exists, raises a `ValueError`.
 
-    Notes:
-        - Neighbourhood is 26-connected (includes diagonals).
-        - BFS guarantees the path found is the shortest in terms of voxel steps.
-        - The coordinate system is **0-based, z-y-x order** (NumPy convention).
+    Raises:
+        ValueError:
+            If no continuous path of foreground voxels connects `start` and `end`.
     """
-    assert img.ndim == 3, "the image should be 3D"
+    assert img.ndim == 3, "Input must be 3D"
+    assert img[start.z, start.y, start.x], "Start point must be inside skeleton"
+    assert img[end.z, end.y, end.x], "End point must be inside skeleton"
 
-    shape = img.shape
-    visited = np.zeros(shape, dtype=bool)
-    prev = {}
+    # Initialize D: duplicate input image into 4D [z, y, x, 2]
+    D_layer = np.where(img, np.inf, np.nan)
+    D = np.stack([D_layer.copy(), D_layer.copy()], axis=-1)
 
-    # BFS queue
-    q = deque()
-    q.append((start.z, start.y, start.x))
-    visited[start.z, start.y, start.x] = True
+    # Set start and end points to 0
+    D[start.z, start.y, start.x, 0] = 0
+    D[end.z, end.y, end.x, 1] = 0
 
-    found = False
-    while q:
-        z, y, x = q.popleft()
-        if (z, y, x) == (end.z, end.y, end.x):
-            found = True
-            break
+    mask = D == 0
+    n = 0
 
-        for dz, dy, dx in NEIGHBOURS:
-            zn, yn, xn = z + dz, y + dy, x + dx
-            if (
-                0 <= zn < shape[0]
-                and 0 <= yn < shape[1]
-                and 0 <= xn < shape[2]
-                and img[zn, yn, xn]
-                and not visited[zn, yn, xn]
-            ):
-                visited[zn, yn, xn] = True
-                prev[(zn, yn, xn)] = (z, y, x)
-                q.append((zn, yn, xn))
+    # Iteratively expand mask until connection found or no more reachable voxels
+    while np.isinf(D[end.z, end.y, end.x, 0]) and np.count_nonzero(mask):
+        n += 1
+        # Convolve mask to find neighboring voxels still at infinity
+        for k in range(2):
+            layer = mask[..., k].astype(float)
+            layer = convolve(layer, CUBE, mode="constant", cval=0) > 0
+            layer &= np.isinf(D[..., k])
+            D[..., k][layer] = n
+            mask[..., k] = layer
 
-    if not found:
-        return np.array([])
+    # If endpoint still infinite, no path was found
+    if np.isinf(D[end.z, end.y, end.x, 0]):
+        raise ValueError("No path found between points.")
+    else:
+        # Combine both layers and keep only voxels where sum == n
+        mask = np.sum(D, axis=-1) == n
 
-    path = []
-    curr = (end.z, end.y, end.x)
-    while curr != (start.z, start.y, start.x):
-        path.append(curr)
-        curr = prev[curr]
-    path.append((start.z, start.y, start.x))
-    path.reverse()
-
-    return np.array(path, dtype=int)  # shape (N, 3), order (z, y, x)
+    return mask.astype(np.uint8)

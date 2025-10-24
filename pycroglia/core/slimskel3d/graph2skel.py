@@ -26,10 +26,10 @@ def graph2skel(
     for node in nodes:
         if node.links:  # node has links
             # Paint node voxels
-            skel.ravel()[node.indices] = True
+            skel.ravel()[node.indices] = 1
 
             # Paint link voxels
             for link in node.links:
-                skel.ravel()[link.points] = True
+                skel.ravel()[link.points] = 1
 
-    return skel
+    return skel.astype(np.uint8)
