@@ -49,7 +49,7 @@ class BranchpointsCellPlot:
                 mesh = pv.PolyData(verts, faces)
                 plotter.add_mesh(
                     mesh,
-                    color=(0, 0, 1),
+                    color='#0000FF',
                     opacity=self.opacity,
                     smooth_shading=True,
                     specular=0.3,
@@ -67,7 +67,7 @@ class BranchpointsCellPlot:
                 mesh2 = pv.PolyData(verts2, faces2)
                 plotter.add_mesh(
                     mesh2,
-                    color=(1, 0, 0),
+                    color='#FF0000',
                     opacity=1.0,
                     smooth_shading=True,
                     specular=0.4,
