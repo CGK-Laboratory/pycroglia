@@ -48,7 +48,7 @@ class EndpointsCellPlot:
                 mesh = pv.PolyData(verts, faces)
                 plotter.add_mesh(
                     mesh,
-                    color=(0, 0, 1),  # Blue
+                    color="#0000FF",  # Blue
                     opacity=self.opacity,
                     smooth_shading=True,
                     specular=0.3,
@@ -67,7 +67,7 @@ class EndpointsCellPlot:
                 mesh2 = pv.PolyData(verts2, faces2)
                 plotter.add_mesh(
                     mesh2,
-                    color=(1, 0, 0),  # Red
+                    color="#FF0000",  # Red
                     opacity=1.0,
                     smooth_shading=True,
                     specular=0.4,

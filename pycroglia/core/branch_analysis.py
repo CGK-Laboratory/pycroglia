@@ -120,7 +120,7 @@ class BranchAnalysis:
 
         masklist = np.zeros((*bounded_skel.shape, n_endpoints), dtype=bool)
         arclength_of_each_branch = np.zeros(n_endpoints, dtype=float)
-
+        fullmasks = []
         for j, i1 in enumerate(endpoints_list):
             # Connect current endpoint to centroid
             start = connection.Point(z=i1[0], y=i1[1], x=i1[2])
@@ -156,7 +156,7 @@ class BranchAnalysis:
         # Combine all branch masks
         fullmask = np.sum(masklist.astype(int), axis=3)
         fullmask[fullmask > 3] = 4  # cap at quaternary connectivity
-
+        fullmasks.append(fullmask)
         quaternary = fullmask == 1
 
         branch_points = np.zeros((*bounded_skel.shape, 4), dtype=bool)
@@ -180,6 +180,7 @@ class BranchAnalysis:
         num_branchpoints = branch_points.shape[0]
 
         return {
+            "fullmasks": fullmasks,
             "endpoints": endpoints,
             "num_branchpoints": num_branchpoints,
             "max_branch_length": max_branch_length,
