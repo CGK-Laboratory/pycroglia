@@ -58,4 +58,4 @@ uv run pytest .
 
 ## Contributing
 If you are interested in contributing to the project follow the following guidelines
-(CONTRIBUTING)[https://github.com/CGK-Laboratory/pycroglia/blob/main/docs/CONTRIBUTING.md]
+[CONTRIBUTING](https://github.com/CGK-Laboratory/pycroglia/blob/main/docs/CONTRIBUTING.md)
