@@ -101,7 +101,8 @@ class BranchAnalysis:
                 - **avg_branch_length (float)**: Mean branch length (µm).
                 - **branch_points (NDArray)**: (N, 3) array of branch-point coordinates `(z, y, x)`.
         """
-        whole_skel = slimskel3d(self.cell, 100)
+        # TODO - Check hardcoded value
+        whole_skel = slimskel3d(self.cell, 0)
         bounding_box_result = bounding_box.compute(whole_skel)
         bounded_skel = bounding_box_result.bounded_img
         left, bottom = bounding_box_result.left, bounding_box_result.bottom
