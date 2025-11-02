@@ -20,6 +20,7 @@ KEY_FULLMASKS = "fullmasks"
 
 class EmptySkeleton(Exception):
     """Raised when a skeleton or image has no nonzero voxels (i.e., is empty)."""
+
     pass
 
 def init_kernel() -> NDArray:
