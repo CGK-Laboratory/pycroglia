@@ -137,6 +137,7 @@ class MetricsDAG(QtCore.QObject):
 
     @QtCore.pyqtSlot(dict)
     def _add_centroids_results(self, result: dict[str, Any]):
+        print(f"Number of cells passed {len(self._masks)}")
         self._centroids = result
 
         self._all_tasks.add()
@@ -156,7 +157,9 @@ class MetricsDAG(QtCore.QObject):
             self._qt_branch_pool.submit(
                 computable=analysis,
                 on_result=lambda res, idx=i: self._add_branch_result(idx, res),
-                on_error=lambda msg, exc: print(f"Error {msg} wit {exc}")
+                on_error=lambda msg, exc, idx=i: self._on_branch_analysis_error(
+                    msg, exc, idx
+                ),
             )
 
         self._qt_branch_pool.run()
@@ -173,7 +176,22 @@ class MetricsDAG(QtCore.QObject):
 
     @QtCore.pyqtSlot(int, dict)
     def _add_branch_result(self, idx: int, result: dict[str, Any]):
+        print(f"Finished {idx}")
         self._branch_analysis[idx] = result
+        self._all_cells.add()
+
+    @QtCore.pyqtSlot(str, Exception, int)
+    def _on_branch_analysis_error(self, msg: str, exc: Exception, idx: int):
+        print(f"Cell {idx}: Error {msg} with {exc}")
+        # TODO - Change this hardcoded value
+        self._branch_analysis[idx] = {
+            "endpoints": [],
+            "num_branchpoints": 0,
+            "max_branch_length": 0.0,
+            "min_branch_length": 0.0,
+            "avg_branch_length": 0.0,
+            "branch_points": 0.0,
+        }
         self._all_cells.add()
 
     @QtCore.pyqtSlot()
