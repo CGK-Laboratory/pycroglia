@@ -386,4 +386,7 @@ class CellSelector(QtWidgets.QWidget):
         return self.img.selected_cells_mask(selected)
 
     def get_cells_masks(self) -> List[NDArray]:
-        return self.img.get_cells_list()
+        all_masks = self.img.get_cells_list()
+        selected_ids = sorted(self.get_selected_cells())
+        # map 1-based cell IDs to 0-based list indices and guard bounds
+        return [all_masks[i - 1] for i in selected_ids if 1 <= i <= len(all_masks)]

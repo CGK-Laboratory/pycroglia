@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Set
+from typing import Set, Optional
 
 from abc import ABC, abstractmethod
 
@@ -120,6 +120,13 @@ class LabeledCells:
         self._cell_sizes = np.bincount(self.labels.ravel())
         self._n_cells = len(self._cell_sizes) - 1
 
+        # Buffer
+        self._buffer: Optional[NDArray] = None
+
+    def _get_buffer(self) -> NDArray:
+        if self._buffer is None:
+            self._buffer = np.empty(self.labels.shape, dtype=self.ARRAY_ELEMENTS_TYPE)
+
     def len(self) -> int:
         """Returns the number of labeled cells.
 
@@ -154,7 +161,7 @@ class LabeledCells:
         if not self._is_valid_index(index):
             raise PycrogliaException(error_code=2000)
 
-        return (self.labels == index).astype(self.ARRAY_ELEMENTS_TYPE)
+        return np.equal(self.labels, index, out=self._get_buffer()).copy()
 
     def get_cells_list(self) -> list[NDArray]:
         number_of_cells = self.len()
