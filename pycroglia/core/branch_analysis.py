@@ -9,6 +9,10 @@ import pycroglia.core.nearest_pixel as nearest_pixel
 import pycroglia.core.connection as connection
 import numpy as np
 
+class EmptySkeleton(Exception):
+    """Raised when a skeleton or image has no nonzero voxels (i.e., is empty)."""
+    pass
+
 
 def init_kernel() -> NDArray:
     """Initialize a 3×3×3 26-connected neighborhood kernel.
@@ -102,7 +106,9 @@ class BranchAnalysis:
                 - **branch_points (NDArray)**: (N, 3) array of branch-point coordinates `(z, y, x)`.
         """
         # TODO - Check hardcoded value
-        whole_skel = slimskel3d(self.cell, 0)
+        whole_skel = slimskel3d(self.cell, 100)
+        if np.all(whole_skel == 0):
+            raise EmptySkeleton
         bounding_box_result = bounding_box.compute(whole_skel)
         bounded_skel = bounding_box_result.bounded_img
         left, bottom = bounding_box_result.left, bounding_box_result.bottom
@@ -147,7 +153,7 @@ class BranchAnalysis:
             arclength_of_each_branch > 0.0
         ]
         # Summary statistics
-        if n_endpoints > 0:
+        if len(arclength_of_each_branch) > 0:
             max_branch_length = float(np.max(arclength_of_each_branch))
             min_branch_length = float(np.min(arclength_of_each_branch))
             avg_branch_length = float(np.mean(arclength_of_each_branch))
