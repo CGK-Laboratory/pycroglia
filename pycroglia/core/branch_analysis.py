@@ -9,8 +9,10 @@ import pycroglia.core.nearest_pixel as nearest_pixel
 import pycroglia.core.connection as connection
 import numpy as np
 
+
 class EmptySkeleton(Exception):
     """Raised when a skeleton or image has no nonzero voxels (i.e., is empty)."""
+
     pass
 
 
