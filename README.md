@@ -40,7 +40,7 @@ To start the full GUI version of Pycroglia:
 Finally while standing on the root of the project run the following (if the objective is to run the GUI)
 
 ```
-uv run .
+uv run main.py
 ```
 #### Use Pycroglia as a Library
 
