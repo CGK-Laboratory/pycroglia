@@ -75,4 +75,4 @@ class Centroids:
         dists = pdist(scaled)
         avg_dist = dists.mean()
 
-        return {"average_distance": avg_dist}
+        return {"average_distance": avg_dist, "centroids": self.centroids}

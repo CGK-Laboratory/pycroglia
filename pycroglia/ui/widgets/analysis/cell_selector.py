@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
-from typing import Optional, Set, Dict
+from typing import Optional, Set, Dict, List
 from enum import Enum
 
 from PyQt6 import QtWidgets, QtGui
@@ -384,3 +384,6 @@ class CellSelector(QtWidgets.QWidget):
         """
         selected = self.get_selected_cells()
         return self.img.selected_cells_mask(selected)
+
+    def get_cells_masks(self) -> List[NDArray]:
+        return self.img.get_cells_list()

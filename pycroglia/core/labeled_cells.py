@@ -156,6 +156,14 @@ class LabeledCells:
 
         return (self.labels == index).astype(self.ARRAY_ELEMENTS_TYPE)
 
+    def get_cells_list(self) -> list[NDArray]:
+        number_of_cells = self.len()
+        if number_of_cells == 0:
+            return []
+
+        masks = [self.get_cell(i) for i in range(1, number_of_cells + 1)]
+        return masks
+
     def get_cell_size(self, index: int) -> int:
         """Returns the size (number of voxels) of the specified cell.
 

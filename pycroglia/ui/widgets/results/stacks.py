@@ -106,7 +106,9 @@ class ResultsDashboardStack(QtWidgets.QWidget):
         self.tabs.clear()
 
         for elem in results:
-            dashboard = ResultsDashboard(elem.img)
+            dashboard = ResultsDashboard(
+                file=elem.file_path, img=elem.img, cells_masks=elem.cells_masks
+            )
             dashboard.add_results_table(
                 summary_headers=self.summary_headers, cell_headers=self.cell_headers
             ).add_graphs_list(
