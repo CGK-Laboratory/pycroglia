@@ -111,7 +111,7 @@ class BranchAnalysis:
         )
         i2 = np.array([closest_point.z, closest_point.y, closest_point.x])
         i2_local = i2 - np.array([0, bottom, left])
-        
+
         endpoints = (
             convolve(bounded_skel, KERNEL, mode="constant") == 1
         ) & bounded_skel
