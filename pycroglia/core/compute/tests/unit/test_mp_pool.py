@@ -177,6 +177,7 @@ def test_pool_cancellation():
         The `all_finished` callback is executed once after cancellation.
         The internal `tasks` list is cleared when all tasks have finished or been cancelled.
     """
+
     class SlowComputable(DummyComputable):
         def compute(self) -> dict[str, Any]:
             return {"cell_id": self.cell_id, "value": self.cell_id * 10}

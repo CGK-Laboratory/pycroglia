@@ -149,6 +149,7 @@ def test_all_finished_emitted_once(qtbot):
 
     assert finished_signal_count == 1
 
+
 def test_pool_cancellation(qtbot):
     """Test that QPool cooperatively cancels running tasks.
 
@@ -180,4 +181,4 @@ def test_pool_cancellation(qtbot):
     assert pool.cancel_flag.is_set()
     assert not results
     assert len(finished_called) == 3
-    assert not pool.tasks    
+    assert not pool.tasks
