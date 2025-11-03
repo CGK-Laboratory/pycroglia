@@ -5,6 +5,7 @@ from collections.abc import Callable
 from typing import Any
 from pycroglia.core.compute.computable import Computable
 
+
 class CancelFlag:
     """Lightweight cooperative cancellation flag for multiprocessing tasks.
 
@@ -39,15 +40,17 @@ class CancelFlag:
         """
         return self._cancelled.value
 
+
 class MPTask:
-   """A multiprocessing-compatible task that executes a Computable.
+    """A multiprocessing-compatible task that executes a Computable.
 
     Attributes:
         task_id (str): Unique identifier for this task.
         computable (Computable): The computation object to run.
         cancel_flag (CancelFlag): Shared cancellation flag.
     """
-   def __init__(self, computable: Computable, cancel_flag: CancelFlag) -> None:
+
+    def __init__(self, computable: Computable, cancel_flag: CancelFlag) -> None:
         """Initialize the multiprocessing task.
 
         Args:
@@ -58,7 +61,7 @@ class MPTask:
         self.computable = computable
         self.cancel_flag = cancel_flag
 
-   def run(self):
+    def run(self):
         """Execute the computable and return its result.
 
         The Computable is responsible for checking `cancel_flag.is_set()`
@@ -73,7 +76,6 @@ class MPTask:
             return self.computable.compute()
         except Exception as e:
             raise e
-
 
 
 class MPPool:
@@ -156,7 +158,7 @@ class MPPool:
         check it will terminate gracefully. Pending tasks are ignored.
         """
         self.cancel_flag.set()
-        
+
     def _decrement_pending(self) -> None:
         """Track task completion and trigger all_finished if done."""
         self.pending -= 1

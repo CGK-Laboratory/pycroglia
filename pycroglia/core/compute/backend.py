@@ -17,7 +17,7 @@ class Task(Protocol):
         """
         ...
 
-        
+
 class Backend(Protocol):
     """Protocol for computation backends.
 
