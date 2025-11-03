@@ -11,6 +11,7 @@ from pycroglia.core.io.output import OutputWriter
 from pycroglia.ui.controllers.graphs_state import DashboardGraphsGenerator
 from pycroglia.ui.widgets.results.graphs import GraphSelectionWidget
 from pycroglia.ui.widgets.results.output import OutputConfigurator
+from pycroglia.ui.widgets.results.scale import ScaleConfigWidget
 from pycroglia.ui.widgets.results.viewers import FullAnalysisViewer
 
 
@@ -62,6 +63,7 @@ class ResultsDashboard(QtWidgets.QWidget):
         # Widgets
         self.table: Optional[FullAnalysisViewer] = None
         self.graphs: Optional[GraphSelectionWidget] = None
+        self.scales: Optional[ScaleConfigWidget] = None
         self.configurator: Optional[OutputConfigurator] = None
 
         # Connections
@@ -90,6 +92,19 @@ class ResultsDashboard(QtWidgets.QWidget):
             cells_config=self._text_config.get_per_cell_text_config(),
             parent=self,
         )
+
+        return self
+
+    def add_scale_config(self, scale_txt: Optional[str] = None, z_scale_txt: Optional[str] = None, vox_scale_txt: Optional[str] = None, button_txt: Optional[str] = None):
+        self.scales = ScaleConfigWidget(
+            scale_txt=scale_txt,
+            z_scale_txt=z_scale_txt,
+            vox_scale_txt=vox_scale_txt,
+            button_txt=button_txt
+        )
+
+        # Connections
+        self.scales.clicked.connect(self._compute_on_demand)
 
         return self
 
@@ -163,12 +178,16 @@ class ResultsDashboard(QtWidgets.QWidget):
         """
         layout = QtWidgets.QHBoxLayout()
 
-        lvertical_layout = QtWidgets.QVBoxLayout()
-        lvertical_layout.addWidget(self.graphs)
-        lvertical_layout.addWidget(self.configurator)
+        first_row = QtWidgets.QVBoxLayout()
+        first_row.addWidget(self.table)
+        first_row.addWidget(self.scales)
 
-        layout.addWidget(self.table)
-        layout.addLayout(lvertical_layout)
+        second_row = QtWidgets.QVBoxLayout()
+        second_row.addWidget(self.graphs)
+        second_row.addWidget(self.configurator)
+
+        layout.addLayout(first_row)
+        layout.addLayout(second_row)
         self.setLayout(layout)
 
     def _validate_components(self) -> None:
@@ -183,6 +202,7 @@ class ResultsDashboard(QtWidgets.QWidget):
                 ("table", self.table),
                 ("graphs", self.graphs),
                 ("configurator", self.configurator),
+                ("scales", self.scales)
             )
             if widget is None
         ]
@@ -203,9 +223,14 @@ class ResultsDashboard(QtWidgets.QWidget):
         self._validate_components()
         self._build_layout()
 
-        # TODO - Add button for passing parameters, now it executes with default for testing
-        self._state.calculate_results()
         return self
+
+    def _compute_on_demand(self):
+        self._state.calculate_results(
+            scale=self.scales.get_scale(),
+            z_scale=self.scales.get_z_scale(),
+            vox_scale=self.scales.get_vox_scale()
+        )
 
     def _preview_clicked(self, graphs_list: List[str]):
         """Handle preview requests coming from the GraphSelectionWidget.
