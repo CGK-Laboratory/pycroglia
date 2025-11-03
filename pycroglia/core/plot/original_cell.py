@@ -8,7 +8,7 @@ class OriginalCellPlot:
     """Render 3-D isometric cell surfaces using PyVista.
 
     This class visualizes segmented cell volumes as smooth, shaded
-    3-D surfaces generated with the marching-cubes algorithm.  
+    3-D surfaces generated with the marching-cubes algorithm.
     Each cell volume is rendered with physically scaled axes,
     labeled grid lines, and an isometric camera view.
 
@@ -94,7 +94,7 @@ class OriginalCellPlot:
         Args:
             use_trame (bool, optional):
                 If ``True``, use the Trame backend for inline rendering
-                inside Jupyter notebooks (requires ``trame`` packages).  
+                inside Jupyter notebooks (requires ``trame`` packages).
                 If ``False``, open native PyVista windows. Defaults to ``False``.
 
         Example:

@@ -34,17 +34,23 @@ class EndpointsCellPlot:
         self.endpoints_list = endpoints
         self.plotters: list[pv.Plotter] = []
 
-        for i, (mask, endpts) in enumerate(zip(self.fullmask_list, self.endpoints_list), start=1):
+        for i, (mask, endpts) in enumerate(
+            zip(self.fullmask_list, self.endpoints_list), start=1
+        ):
             plotter = pv.Plotter(off_screen=False)
 
             # --- Full skeleton (blue, translucent) ---
             if np.any(mask):
-                verts, faces, _, _ = measure.marching_cubes(mask.astype(float), level=0.5)
+                verts, faces, _, _ = measure.marching_cubes(
+                    mask.astype(float), level=0.5
+                )
                 verts = verts[:, [2, 1, 0]]
                 verts[:, 0] *= scale
                 verts[:, 1] *= scale
                 verts[:, 2] *= zscale
-                faces = np.hstack([np.full((faces.shape[0], 1), 3), faces]).astype(np.int32)
+                faces = np.hstack([np.full((faces.shape[0], 1), 3), faces]).astype(
+                    np.int32
+                )
                 mesh = pv.PolyData(verts, faces)
                 plotter.add_mesh(
                     mesh,
@@ -58,12 +64,16 @@ class EndpointsCellPlot:
 
             # --- Endpoints (red, solid) ---
             if np.any(endpts):
-                verts2, faces2, _, _ = measure.marching_cubes(endpts.astype(float), level=0.5)
+                verts2, faces2, _, _ = measure.marching_cubes(
+                    endpts.astype(float), level=0.5
+                )
                 verts2 = verts2[:, [2, 1, 0]]
                 verts2[:, 0] *= scale
                 verts2[:, 1] *= scale
                 verts2[:, 2] *= zscale
-                faces2 = np.hstack([np.full((faces2.shape[0], 1), 3), faces2]).astype(np.int32)
+                faces2 = np.hstack([np.full((faces2.shape[0], 1), 3), faces2]).astype(
+                    np.int32
+                )
                 mesh2 = pv.PolyData(verts2, faces2)
                 plotter.add_mesh(
                     mesh2,

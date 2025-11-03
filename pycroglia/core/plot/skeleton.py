@@ -66,9 +66,9 @@ class SkeletonCellPlot:
                 verts[:, 0] *= self.scale
                 verts[:, 1] *= self.scale
                 verts[:, 2] *= self.zscale
-                faces = np.hstack(
-                    [np.full((faces.shape[0], 1), 3), faces]
-                ).astype(np.int32)
+                faces = np.hstack([np.full((faces.shape[0], 1), 3), faces]).astype(
+                    np.int32
+                )
 
                 mesh = pv.PolyData(verts, faces)
                 plotter.add_mesh(
