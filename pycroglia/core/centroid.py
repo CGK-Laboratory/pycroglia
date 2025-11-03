@@ -6,6 +6,7 @@ from scipy.spatial.distance import pdist
 KEY_CENTROIDS = "centroids"
 KEY_AVG_CENTROIDS_DISTANCE = "average_distance"
 
+
 class Centroids:
     """Compute centroids of 3D cell masks and their mean spatial separation.
 

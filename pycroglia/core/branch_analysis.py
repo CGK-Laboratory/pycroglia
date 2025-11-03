@@ -39,15 +39,16 @@ def init_kernel() -> NDArray:
 # 26-connected 3×3×3 kernel used for neighborhood analysis
 KERNEL = init_kernel()
 
+
 def get_empty_branch_analysis() -> dict[str, Any]:
     return {
-            "endpoints": [],
-            "num_branchpoints": 0,
-            "max_branch_length": 0.0,
-            "min_branch_length": 0.0,
-            "avg_branch_length": 0.0,
-            "branch_points": 0.0,
-        }
+        "endpoints": [],
+        "num_branchpoints": 0,
+        "max_branch_length": 0.0,
+        "min_branch_length": 0.0,
+        "avg_branch_length": 0.0,
+        "branch_points": 0.0,
+    }
 
 
 class BranchAnalysis:

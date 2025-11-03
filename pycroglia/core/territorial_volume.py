@@ -9,6 +9,7 @@ KEY_IMAGE_CUBE_VOLUME = "image_cube_volume"
 KEY_EMPTY_VOLUME = "empty_volume"
 KEY_COVERED_PERCENTAGE = "covered_percentage"
 
+
 class TerritorialVolume:
     """Compute convex hull volumes for segmented 3D cells.
 
