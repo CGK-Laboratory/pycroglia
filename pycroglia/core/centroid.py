@@ -3,6 +3,8 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial.distance import pdist
 
+KEY_CENTROIDS = "centroids"
+KEY_AVG_CENTROIDS_DISTANCE = "average_distance"
 
 class Centroids:
     """Compute centroids of 3D cell masks and their mean spatial separation.
@@ -75,4 +77,4 @@ class Centroids:
         dists = pdist(scaled)
         avg_dist = dists.mean()
 
-        return {"average_distance": avg_dist, "centroids": self.centroids}
+        return {KEY_AVG_CENTROIDS_DISTANCE: avg_dist, KEY_CENTROIDS: self.centroids}

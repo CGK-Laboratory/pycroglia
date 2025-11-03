@@ -95,12 +95,18 @@ class ResultsDashboard(QtWidgets.QWidget):
 
         return self
 
-    def add_scale_config(self, scale_txt: Optional[str] = None, z_scale_txt: Optional[str] = None, vox_scale_txt: Optional[str] = None, button_txt: Optional[str] = None):
+    def add_scale_config(
+        self,
+        scale_txt: Optional[str] = None,
+        z_scale_txt: Optional[str] = None,
+        vox_scale_txt: Optional[str] = None,
+        button_txt: Optional[str] = None,
+    ):
         self.scales = ScaleConfigWidget(
             scale_txt=scale_txt,
             z_scale_txt=z_scale_txt,
             vox_scale_txt=vox_scale_txt,
-            button_txt=button_txt
+            button_txt=button_txt,
         )
 
         # Connections
@@ -202,7 +208,7 @@ class ResultsDashboard(QtWidgets.QWidget):
                 ("table", self.table),
                 ("graphs", self.graphs),
                 ("configurator", self.configurator),
-                ("scales", self.scales)
+                ("scales", self.scales),
             )
             if widget is None
         ]
@@ -229,7 +235,7 @@ class ResultsDashboard(QtWidgets.QWidget):
         self._state.calculate_results(
             scale=self.scales.get_scale(),
             z_scale=self.scales.get_z_scale(),
-            vox_scale=self.scales.get_vox_scale()
+            vox_scale=self.scales.get_vox_scale(),
         )
 
     def _preview_clicked(self, graphs_list: List[str]):
