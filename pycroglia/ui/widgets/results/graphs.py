@@ -1,5 +1,5 @@
 from typing import List, Optional
-from PyQt6 import QtWidgets
+from PyQt6 import QtWidgets, QtCore
 
 
 class GraphSelectionWidget(QtWidgets.QWidget):
@@ -13,6 +13,8 @@ class GraphSelectionWidget(QtWidgets.QWidget):
 
     DEFAULT_BUTTON_TEXT = "Preview"
     DEFAULT_LABEL_TEXT = "Select graphs to display:"
+
+    buttonClicked = QtCore.pyqtSignal(list)
 
     def __init__(
         self,
@@ -42,6 +44,9 @@ class GraphSelectionWidget(QtWidgets.QWidget):
         ]
         self.button = QtWidgets.QPushButton(self.button_txt, parent=self)
 
+        # Connections
+        self.button.clicked.connect(self._on_button_clicked)
+
         # Layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.label)
@@ -57,3 +62,15 @@ class GraphSelectionWidget(QtWidgets.QWidget):
             List[str]: Names of selected graphs.
         """
         return [cb.text() for cb in self.checkboxes if cb.isChecked()]
+
+    def _on_button_clicked(self):
+        """Handle the preview button click.
+
+        Collects the currently selected graph names and emits them via the
+        `buttonClicked` signal so external code can react to a preview request.
+
+        Returns:
+            None
+        """
+        list_of_graphs = self.get_selected_graphs()
+        self.buttonClicked.emit(list_of_graphs)

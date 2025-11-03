@@ -1,6 +1,6 @@
 import numpy as np
 
-from pycroglia.core.full_cell_analysis import FullCellAnalysis, AnalysisResult
+from pycroglia.core.full_cell_analysis import FullCellAnalysis
 
 
 def test_full_cell_analysis():
@@ -41,10 +41,6 @@ def test_full_cell_analysis():
     fca = FullCellAnalysis(masks, voxscale)
     result = fca.compute()
     expected_cell_volumes = np.array([0.4, 0.4])
-    expected_convex_simplices = [
-        np.array([[2, 3, 0], [1, 3, 0], [1, 2, 0], [1, 2, 3]], dtype=np.int32),
-        np.array([[2, 1, 0], [3, 1, 0], [3, 2, 0], [3, 2, 1]], dtype=np.int32),
-    ]
     expected_convex_vertices = [
         np.array([0, 1, 2, 3], dtype=np.int32),
         np.array([0, 1, 2, 3], dtype=np.int32),
