@@ -3,6 +3,11 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial import ConvexHull
 
+KEY_CONVEX_VOLUME = "cells_convex_volume"
+KEY_TOTAL_VOLUME_COVERED = "total_volume_covered"
+KEY_IMAGE_CUBE_VOLUME = "image_cube_volume"
+KEY_EMPTY_VOLUME = "empty_volume"
+KEY_COVERED_PERCENTAGE = "covered_percentage"
 
 class TerritorialVolume:
     """Compute convex hull volumes for segmented 3D cells.
@@ -68,9 +73,9 @@ class TerritorialVolume:
         empty_volume = image_cube_volume - total_volume_covered
         covered_percentage = (total_volume_covered / image_cube_volume) * 100
         return {
-            "cells_convex_volume": convex_volume,
-            "total_volume_covered": total_volume_covered,
-            "image_cube_volume": image_cube_volume,
-            "empty_volume": empty_volume,
-            "covered_percentage": covered_percentage,
+            KEY_CONVEX_VOLUME: convex_volume,
+            KEY_TOTAL_VOLUME_COVERED: total_volume_covered,
+            KEY_IMAGE_CUBE_VOLUME: image_cube_volume,
+            KEY_EMPTY_VOLUME: empty_volume,
+            KEY_COVERED_PERCENTAGE: covered_percentage,
         }

@@ -10,11 +10,18 @@ class ScaleConfigWidget(QtWidgets.QWidget):
     DEFAULT_VOX_SCALE = "Vox Scale"
     DEFAULT_BUTTON_TXT = "Calculate"
 
-    def __init__(self, scale_txt: Optional[str] = None, z_scale_txt: Optional[str] = None, vox_scale_txt: Optional[str] = None, button_txt: Optional[str] = None, parent: Optional[QtWidgets.QWidget] = None):
+    def __init__(
+        self,
+        scale_txt: Optional[str] = None,
+        z_scale_txt: Optional[str] = None,
+        vox_scale_txt: Optional[str] = None,
+        button_txt: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
         super().__init__(parent=parent)
 
         # Text properties
-        self._scale_txt =  scale_txt or self.DEFAULT_SCALE_TXT
+        self._scale_txt = scale_txt or self.DEFAULT_SCALE_TXT
         self._z_scale_txt = z_scale_txt or self.DEFAULT_Z_SCALE_TXT
         self._vox_scale = vox_scale_txt or self.DEFAULT_VOX_SCALE
         self._button_txt = button_txt or self.DEFAULT_BUTTON_TXT

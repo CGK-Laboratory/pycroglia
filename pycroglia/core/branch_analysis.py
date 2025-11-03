@@ -9,6 +9,14 @@ import pycroglia.core.nearest_pixel as nearest_pixel
 import pycroglia.core.connection as connection
 import numpy as np
 
+KEY_ENDPOINTS = "endpoints"
+KEY_NUM_BRANCHPOINTS = "num_branchpoints"
+KEY_MAX_BRANCH_LENGTH = "max_branch_length"
+KEY_MIN_BRANCH_LENGTH = "min_branch_length"
+KEY_AVG_BRANCH_LENGTH = "avg_branch_length"
+KEY_BRANCH_POINTS = "branch_points"
+KEY_ALLBRANCH = "allbranch"
+KEY_FULLMASKS = "fullmasks"
 
 def init_kernel() -> NDArray:
     """Initialize a 3×3×3 26-connected neighborhood kernel.
@@ -30,6 +38,16 @@ def init_kernel() -> NDArray:
 
 # 26-connected 3×3×3 kernel used for neighborhood analysis
 KERNEL = init_kernel()
+
+def get_empty_branch_analysis() -> dict[str, Any]:
+    return {
+            "endpoints": [],
+            "num_branchpoints": 0,
+            "max_branch_length": 0.0,
+            "min_branch_length": 0.0,
+            "avg_branch_length": 0.0,
+            "branch_points": 0.0,
+        }
 
 
 class BranchAnalysis:
@@ -182,12 +200,12 @@ class BranchAnalysis:
         num_branchpoints = branch_points.shape[0]
 
         return {
-            "allbranch": allbranch,
-            "fullmasks": fullmasks,
-            "endpoints": endpoints,
-            "num_branchpoints": num_branchpoints,
-            "max_branch_length": max_branch_length,
-            "min_branch_length": min_branch_length,
-            "avg_branch_length": avg_branch_length,
-            "branch_points": branch_points,
+            KEY_ALLBRANCH: allbranch,
+            KEY_FULLMASKS: fullmasks,
+            KEY_ENDPOINTS: endpoints,
+            KEY_NUM_BRANCHPOINTS: num_branchpoints,
+            KEY_MAX_BRANCH_LENGTH: max_branch_length,
+            KEY_MIN_BRANCH_LENGTH: min_branch_length,
+            KEY_AVG_BRANCH_LENGTH: avg_branch_length,
+            KEY_BRANCH_POINTS: branch_points,
         }

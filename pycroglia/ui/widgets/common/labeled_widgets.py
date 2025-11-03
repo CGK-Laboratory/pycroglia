@@ -1,5 +1,3 @@
-import sys
-
 from PyQt6 import QtWidgets, QtCore
 from typing import Optional
 
@@ -12,6 +10,7 @@ class LabeledSpinBox(QtWidgets.QWidget):
         spin_box (QtWidgets.QSpinBox): Spin box widget.
         valueChanged (QtCore.pyqtSignal): Signal emitted when the value changes.
     """
+
     MAX_INT_SIZE = 2147483647
 
     # Signals

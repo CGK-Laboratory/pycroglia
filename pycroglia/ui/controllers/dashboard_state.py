@@ -5,11 +5,13 @@ from typing import Optional, List, Any
 from numpy.typing import NDArray
 from PyQt6 import QtCore, QtWidgets
 
+import pycroglia.core.centroid as centroids
+import pycroglia.core.territorial_volume as t_volume
+import pycroglia.core.full_cell_analysis as f_cell
+import pycroglia.core.branch_analysis as b_analysis
+
+
 from pycroglia.core.compute.qt_pool import QPool
-from pycroglia.core.branch_analysis import BranchAnalysis
-from pycroglia.core.centroid import Centroids
-from pycroglia.core.full_cell_analysis import FullCellAnalysis, AnalysisResult
-from pycroglia.core.territorial_volume import TerritorialVolume
 from pycroglia.core.io.output import (
     AnalysisSummaryConfig,
     CellAnalysisConfig,
@@ -125,8 +127,11 @@ class MetricsDAG(QtCore.QObject):
         self._scale = scale
         self._z_scale = z_scale
         self._vox_scale = vox_scale
-        # TODO - Handle empty
+        self._n_cells = len(self._masks)
+        if self._n_cells == 0:
+            raise ValueError("No image to process")
         self._z_planes = self._masks[0].shape[0]
+
 
         # Connections
         self._all_tasks.reached.connect(self._all_tasks_finished)
@@ -137,23 +142,22 @@ class MetricsDAG(QtCore.QObject):
 
     @QtCore.pyqtSlot(dict)
     def _add_centroids_results(self, result: dict[str, Any]):
-        print(f"Number of cells passed {len(self._masks)}")
+        print(f"Number of cells passed {self._n_cells}")
         self._centroids = result
 
         self._all_tasks.add()
 
-        for i in range(len(self._masks)):
+        for i in range(self._n_cells):
             mask = self._masks[i]
 
-            analysis = BranchAnalysis(
+            analysis = b_analysis.BranchAnalysis(
                 cell=copy.copy(mask),
-                centroid=self._centroids["centroids"][i],
+                centroid=self._centroids[centroids.KEY_CENTROIDS][i],
                 scale=self._scale,
                 zscale=self._z_scale,
                 zslices=self._z_planes,
             )
 
-            # TODO - Handle errors
             self._qt_branch_pool.submit(
                 computable=analysis,
                 on_result=lambda res, idx=i: self._add_branch_result(idx, res),
@@ -169,8 +173,8 @@ class MetricsDAG(QtCore.QObject):
         self._territorial_volume = result
         self._all_tasks.add()
 
-    @QtCore.pyqtSlot(object)
-    def _add_full_analysis_results(self, result: AnalysisResult):
+    @QtCore.pyqtSlot(dict)
+    def _add_full_analysis_results(self, result: dict[str, Any]):
         self._full_cell_analysis = result
         self._all_tasks.add()
 
@@ -183,15 +187,7 @@ class MetricsDAG(QtCore.QObject):
     @QtCore.pyqtSlot(str, Exception, int)
     def _on_branch_analysis_error(self, msg: str, exc: Exception, idx: int):
         print(f"Cell {idx}: Error {msg} with {exc}")
-        # TODO - Change this hardcoded value
-        self._branch_analysis[idx] = {
-            "endpoints": [],
-            "num_branchpoints": 0,
-            "max_branch_length": 0.0,
-            "min_branch_length": 0.0,
-            "avg_branch_length": 0.0,
-            "branch_points": 0.0,
-        }
+        self._branch_analysis[idx] = b_analysis.get_empty_branch_analysis()
         self._all_cells.add()
 
     @QtCore.pyqtSlot()
@@ -203,26 +199,47 @@ class MetricsDAG(QtCore.QObject):
         self._finished = True
         self.resultsAvailable.emit()
 
-    def get_analysis_summary(self) -> AnalysisSummary:
-        # TODO - Handle a way to not hardcode these string keys
+    def run(self):
+        list_of_computables = [
+            (
+                centroids.Centroids(masks=self._masks, scale=self._scale, zscale=self._z_scale),
+                self._add_centroids_results,
+            ),
+            (
+                t_volume.TerritorialVolume(
+                    masks=self._masks, voxscale=self._vox_scale, zplanes=self._z_planes
+                ),
+                self._add_territorial_volume_results,
+            ),
+            (
+                f_cell.FullCellAnalysis(masks=self._masks, voxscale=self._vox_scale),
+                self._add_full_analysis_results,
+            ),
+        ]
+
+        for computable in list_of_computables:
+            self._qt_pool.submit(computable=computable[0], on_result=computable[1])
+
+        self._qt_pool.run()
+
+    def get_analysis_summary(self, file: str) -> AnalysisSummary:
         avg_centroid_distance = (
-            self._centroids.get("average_distance", 0.0)
+            self._centroids.get(centroids.KEY_AVG_CENTROIDS_DISTANCE, 0.0)
             if isinstance(self._centroids, dict)
             else 0.0
         )
 
         territorial_volume = self._territorial_volume or {}
         total_territorial_volume = float(
-            territorial_volume.get("total_volume_covered", 0.0)
+            territorial_volume.get(t_volume.KEY_TOTAL_VOLUME_COVERED, 0.0)
         )
-        total_unoccupied_volume = float(territorial_volume.get("empty_volume", 0.0))
+        total_unoccupied_volume = float(territorial_volume.get(t_volume.KEY_EMPTY_VOLUME, 0.0))
         percent_occupied_volume = float(
-            territorial_volume.get("covered_percentage", 0.0)
+            territorial_volume.get(t_volume.KEY_COVERED_PERCENTAGE, 0.0)
         )
 
-        # TODO - Hardcoded file
         return AnalysisSummary(
-            file="",
+            file=file,
             avg_centroid_distance=avg_centroid_distance,
             total_territorial_volume=total_territorial_volume,
             total_unoccupied_volume=total_unoccupied_volume,
@@ -230,13 +247,10 @@ class MetricsDAG(QtCore.QObject):
         )
 
     def get_per_cell_analysis(self) -> List[CellAnalysis]:
-        # TODO - Should I save the n_cells?
         per_cell = []
-        n_cells = len(self._masks)
 
-        # TODO - Handle a way to not hardcode these string keys
         cells_convex = list(
-            (self._territorial_volume or {}).get("cells_convex_volume", [0.0] * n_cells)
+            (self._territorial_volume or {}).get(t_volume.KEY_CONVEX_VOLUME, [0.0] * self._n_cells)
         )
         branch_results = self._branch_analysis or {}
         full_cell_analysis = (
@@ -245,13 +259,12 @@ class MetricsDAG(QtCore.QObject):
             else {}
         )
 
-        cell_volumes = list(full_cell_analysis.get("cell_volumes", [0.0] * n_cells))
+        cell_volumes = list(full_cell_analysis.get(f_cell.KEY_CELL_VOLUMES, [0.0] * self._n_cells))
         cell_complexities = list(
-            full_cell_analysis.get("cell_complexities", [0.0] * n_cells)
+            full_cell_analysis.get(f_cell.KEY_CELL_COMPLEXITIES, [0.0] * self._n_cells)
         )
 
-        # TODO - God it must be a way to do this cleaner please
-        for i in range(n_cells):
+        for i in range(self._n_cells):
             cell_territory_volume = (
                 float(cells_convex[i]) if i < len(cells_convex) else 0.0
             )
@@ -261,12 +274,12 @@ class MetricsDAG(QtCore.QObject):
                 float(cell_complexities[i]) if i < len(cell_complexities) else 0.0
             )
 
-            number_of_branches = branch_results[i].get("num_branchpoints", 0)
-            number_of_endpoints = np.sum(branch_results[i].get("endpoints", 0))
+            number_of_branches = branch_results[i].get(b_analysis.KEY_NUM_BRANCHPOINTS, 0)
+            number_of_endpoints = np.sum(branch_results[i].get(b_analysis.KEY_ENDPOINTS, 0))
 
-            avg_branch_length = branch_results[i].get("avg_branch_length", 0.0)
-            max_branch_length = branch_results[i].get("max_branch_length", 0.0)
-            min_branch_length = branch_results[i].get("min_branch_length", 0.0)
+            avg_branch_length = branch_results[i].get(b_analysis.KEY_AVG_BRANCH_LENGTH, 0.0)
+            max_branch_length = branch_results[i].get(b_analysis.KEY_MAX_BRANCH_LENGTH, 0.0)
+            min_branch_length = branch_results[i].get(b_analysis.KEY_MIN_BRANCH_LENGTH, 0.0)
 
             per_cell.append(
                 CellAnalysis(
@@ -283,28 +296,6 @@ class MetricsDAG(QtCore.QObject):
 
         return per_cell
 
-    def run(self):
-        list_of_computables = [
-            (
-                Centroids(masks=self._masks, scale=self._scale, zscale=self._z_scale),
-                self._add_centroids_results,
-            ),
-            (
-                TerritorialVolume(
-                    masks=self._masks, voxscale=self._vox_scale, zplanes=self._z_planes
-                ),
-                self._add_territorial_volume_results,
-            ),
-            (
-                FullCellAnalysis(masks=self._masks, voxscale=self._vox_scale),
-                self._add_full_analysis_results,
-            ),
-        ]
-
-        for computable in list_of_computables:
-            self._qt_pool.submit(computable=computable[0], on_result=computable[1])
-
-        self._qt_pool.run()
 
 
 class ResultsDashboardState(QtCore.QObject):
@@ -375,7 +366,7 @@ class ResultsDashboardState(QtCore.QObject):
 
     @QtCore.pyqtSlot()
     def _handle_available_results(self):
-        self._summary_state = self._execution.get_analysis_summary()
+        self._summary_state = self._execution.get_analysis_summary(self._file)
         self._per_cell_state = self._execution.get_per_cell_analysis()
 
         # TODO - Handle how to delete this in a good way
