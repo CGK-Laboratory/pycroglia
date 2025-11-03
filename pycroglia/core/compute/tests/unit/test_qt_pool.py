@@ -144,7 +144,40 @@ def test_all_finished_emitted_once(qtbot):
 
     with qtbot.waitSignal(pool.all_finished, timeout=2000):
         for i in range(5):
-            pool.submit(DummyComputable(i), on_result=lambda r: None)
+            pool.submit(DummyComputable(i), on_result=lambda _: None)
         pool.run()
 
     assert finished_signal_count == 1
+
+def test_pool_cancellation(qtbot):
+    """Test that QPool cooperatively cancels running tasks.
+
+    Asserts:
+        Tasks running before cancellation are skipped after flag is set.
+        No results are emitted after cancellation.
+        The finish callback is invoked for all submitted tasks.
+        The `all_finished` signal is emitted once after cancellation.
+        The internal `tasks` list is cleared after all finishes.
+    """
+    pool = QPool()
+    results = []
+    finished_called = []
+
+    def on_result(res):
+        results.append(res)
+
+    def on_finished(task_id):
+        finished_called.append(task_id)
+
+    # Submit and cancel before running
+    for i in range(3):
+        pool.submit(DummyComputable(i), on_result=on_result, on_finish=on_finished)
+    pool.cancel()
+
+    with qtbot.waitSignal(pool.all_finished, timeout=2000):
+        pool.run()
+
+    assert pool.cancel_flag.is_set()
+    assert not results
+    assert len(finished_called) == 3
+    assert not pool.tasks    

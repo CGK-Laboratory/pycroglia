@@ -17,7 +17,7 @@ class Task(Protocol):
         """
         ...
 
-
+        
 class Backend(Protocol):
     """Protocol for computation backends.
 
@@ -49,4 +49,8 @@ class Backend(Protocol):
 
     def join(self) -> None:
         """Block until all submitted tasks are finished."""
+        ...
+
+    def cancel(self) -> None:
+        """Cancels execution of all submitted tasks."""
         ...

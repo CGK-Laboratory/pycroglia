@@ -1,6 +1,6 @@
 from typing import Any
 from pycroglia.core.compute.computable import Computable
-from pycroglia.core.compute.qt_pool import QPool
+from pycroglia.core.compute.mp_pool import MPPool
 
 
 class DummyComputable(Computable):
@@ -30,18 +30,18 @@ class DummyComputable(Computable):
         return {"cell_id": self.cell_id, "value": self.cell_id * 2}
 
 
-def test_single_task_success(qtbot):
+def test_single_task_success():
     """Test Pool correctly executes a single task.
 
     Asserts:
         The result callback receives the correct dictionary.
         The finish callback is invoked with the task ID.
-        The `all_finished` signal is emitted after completion.
+        The `all_finished` callback is executed after completion.
     """
-    pool = QPool()
-
+    pool = MPPool()
     results = []
     finished_called = []
+    all_finished_called = []
 
     def on_result(res):
         results.append(res)
@@ -49,27 +49,31 @@ def test_single_task_success(qtbot):
     def on_finished(task_id):
         finished_called.append(task_id)
 
-    with qtbot.waitSignal(pool.all_finished, timeout=2000):
-        pool.submit(DummyComputable(1), on_result=on_result, on_finish=on_finished)
-        pool.run()
+    def on_all_finished():
+        all_finished_called.append(True)
+
+    pool.all_finished = on_all_finished
+    pool.submit(DummyComputable(1), on_result=on_result, on_finish=on_finished)
+    pool.join()
 
     assert len(results) == 1
     assert results[0]["cell_id"] == 1
     assert finished_called
+    assert all_finished_called
 
 
-def test_multiple_tasks_success(qtbot):
+def test_multiple_tasks_success():
     """Test Pool correctly executes multiple tasks in parallel.
 
     Asserts:
         The result callback is called for each task.
         Each finish callback is invoked with the corresponding task ID.
-        The `all_finished` signal is emitted once all tasks complete.
+        The `all_finished` callback is executed once all tasks complete.
     """
-    pool = QPool()
-
+    pool = MPPool()
     results = []
     finished_called = []
+    all_finished_called = []
 
     def on_result(res):
         results.append(res)
@@ -77,30 +81,34 @@ def test_multiple_tasks_success(qtbot):
     def on_finished(task_id):
         finished_called.append(task_id)
 
-    with qtbot.waitSignal(pool.all_finished, timeout=2000):
-        for i in range(3):
-            pool.submit(DummyComputable(i), on_result=on_result, on_finish=on_finished)
-        pool.run()
+    def on_all_finished():
+        all_finished_called.append(True)
+
+    pool.all_finished = on_all_finished
+    for i in range(3):
+        pool.submit(DummyComputable(i), on_result=on_result, on_finish=on_finished)
+    pool.join()
 
     assert len(results) == 3
     assert set(r["cell_id"] for r in results) == {0, 1, 2}
     assert len(finished_called) == 3
+    assert all_finished_called
 
 
-def test_task_failure_triggers_error(qtbot):
+def test_task_failure_triggers_error():
     """Test Pool correctly propagates computation errors.
 
     Asserts:
         The error callback is called with the raised exception.
         The result callback is not invoked when computation fails.
         The finish callback is still invoked for the task.
-        The `all_finished` signal is emitted after error handling.
+        The `all_finished` callback is executed after error handling.
     """
-    pool = QPool()
-
+    pool = MPPool()
     results = []
     errors = []
     finished_called = []
+    all_finished_called = []
 
     def on_result(res):
         results.append(res)
@@ -111,40 +119,93 @@ def test_task_failure_triggers_error(qtbot):
     def on_finished(task_id):
         finished_called.append(task_id)
 
-    with qtbot.waitSignal(pool.all_finished, timeout=2000):
-        pool.submit(
-            DummyComputable(1, should_fail=True),
-            on_result=on_result,
-            on_error=on_error,
-            on_finish=on_finished,
-        )
-        pool.run()
+    def on_all_finished():
+        all_finished_called.append(True)
+
+    pool.all_finished = on_all_finished
+    pool.submit(
+        DummyComputable(1, should_fail=True),
+        on_result=on_result,
+        on_error=on_error,
+        on_finish=on_finished,
+    )
+    pool.join()
 
     assert not results
     assert errors
     assert finished_called
+    assert all_finished_called
 
 
-def test_all_finished_emitted_once(qtbot):
+def test_all_finished_emitted_once():
     """Test Pool emits `all_finished` exactly once.
 
     Asserts:
-        The `all_finished` signal is emitted only once, even when
+        The `all_finished` callback is executed only once, even when
         multiple tasks are submitted to the pool.
     """
-    pool = QPool()
+    pool = MPPool()
+    finished_called = []
+    all_finished_called = []
 
-    finished_signal_count = 0
+    def on_result(res):
+        pass
+
+    def on_finished(task_id):
+        finished_called.append(task_id)
 
     def on_all_finished():
-        nonlocal finished_signal_count
-        finished_signal_count += 1
+        all_finished_called.append(True)
 
-    pool.all_finished.connect(on_all_finished)
+    pool.all_finished = on_all_finished
+    for i in range(5):
+        pool.submit(DummyComputable(i), on_result=on_result, on_finish=on_finished)
+    pool.join()
 
-    with qtbot.waitSignal(pool.all_finished, timeout=2000):
-        for i in range(5):
-            pool.submit(DummyComputable(i), on_result=lambda r: None)
-        pool.run()
+    assert len(finished_called) == 5
+    assert len(all_finished_called) == 1
 
-    assert finished_signal_count == 1
+
+def test_pool_cancellation():
+    """Test that Pool cancels all running tasks cooperatively.
+
+    Asserts:
+        Tasks running before cancellation finish normally.
+        Pending tasks do not start after cancellation.
+        The result callback is only called for completed tasks.
+        The finish callback is invoked for each submitted task.
+        The `all_finished` callback is executed once after cancellation.
+        The internal `tasks` list is cleared when all tasks have finished or been cancelled.
+    """
+    class SlowComputable(DummyComputable):
+        def compute(self) -> dict[str, Any]:
+            return {"cell_id": self.cell_id, "value": self.cell_id * 10}
+
+    pool = MPPool(processes=2)
+    results = []
+    finished_called = []
+    all_finished_called = []
+
+    def on_result(res):
+        results.append(res)
+
+    def on_error(task_id, exc):
+        raise AssertionError(f"Unexpected error in task {task_id}: {exc}")
+
+    def on_finished(task_id):
+        finished_called.append(task_id)
+
+    def on_all_finished():
+        all_finished_called.append(True)
+
+    pool.all_finished = on_all_finished
+    for i in range(5):
+        pool.submit(SlowComputable(i), on_result, on_error, on_finished)
+    pool.cancel()
+    pool.join()
+
+    assert pool.cancel_flag.is_set()
+    assert len(results) <= 5
+    assert len(finished_called) == 5
+    assert all_finished_called
+    assert not pool.tasks
