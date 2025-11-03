@@ -132,7 +132,6 @@ class MetricsDAG(QtCore.QObject):
             raise ValueError("No image to process")
         self._z_planes = self._masks[0].shape[0]
 
-
         # Connections
         self._all_tasks.reached.connect(self._all_tasks_finished)
         self._all_cells.reached.connect(self._all_branches_finished)
@@ -202,7 +201,9 @@ class MetricsDAG(QtCore.QObject):
     def run(self):
         list_of_computables = [
             (
-                centroids.Centroids(masks=self._masks, scale=self._scale, zscale=self._z_scale),
+                centroids.Centroids(
+                    masks=self._masks, scale=self._scale, zscale=self._z_scale
+                ),
                 self._add_centroids_results,
             ),
             (
@@ -233,7 +234,9 @@ class MetricsDAG(QtCore.QObject):
         total_territorial_volume = float(
             territorial_volume.get(t_volume.KEY_TOTAL_VOLUME_COVERED, 0.0)
         )
-        total_unoccupied_volume = float(territorial_volume.get(t_volume.KEY_EMPTY_VOLUME, 0.0))
+        total_unoccupied_volume = float(
+            territorial_volume.get(t_volume.KEY_EMPTY_VOLUME, 0.0)
+        )
         percent_occupied_volume = float(
             territorial_volume.get(t_volume.KEY_COVERED_PERCENTAGE, 0.0)
         )
@@ -250,7 +253,9 @@ class MetricsDAG(QtCore.QObject):
         per_cell = []
 
         cells_convex = list(
-            (self._territorial_volume or {}).get(t_volume.KEY_CONVEX_VOLUME, [0.0] * self._n_cells)
+            (self._territorial_volume or {}).get(
+                t_volume.KEY_CONVEX_VOLUME, [0.0] * self._n_cells
+            )
         )
         branch_results = self._branch_analysis or {}
         full_cell_analysis = (
@@ -259,7 +264,9 @@ class MetricsDAG(QtCore.QObject):
             else {}
         )
 
-        cell_volumes = list(full_cell_analysis.get(f_cell.KEY_CELL_VOLUMES, [0.0] * self._n_cells))
+        cell_volumes = list(
+            full_cell_analysis.get(f_cell.KEY_CELL_VOLUMES, [0.0] * self._n_cells)
+        )
         cell_complexities = list(
             full_cell_analysis.get(f_cell.KEY_CELL_COMPLEXITIES, [0.0] * self._n_cells)
         )
@@ -274,12 +281,22 @@ class MetricsDAG(QtCore.QObject):
                 float(cell_complexities[i]) if i < len(cell_complexities) else 0.0
             )
 
-            number_of_branches = branch_results[i].get(b_analysis.KEY_NUM_BRANCHPOINTS, 0)
-            number_of_endpoints = np.sum(branch_results[i].get(b_analysis.KEY_ENDPOINTS, 0))
+            number_of_branches = branch_results[i].get(
+                b_analysis.KEY_NUM_BRANCHPOINTS, 0
+            )
+            number_of_endpoints = np.sum(
+                branch_results[i].get(b_analysis.KEY_ENDPOINTS, 0)
+            )
 
-            avg_branch_length = branch_results[i].get(b_analysis.KEY_AVG_BRANCH_LENGTH, 0.0)
-            max_branch_length = branch_results[i].get(b_analysis.KEY_MAX_BRANCH_LENGTH, 0.0)
-            min_branch_length = branch_results[i].get(b_analysis.KEY_MIN_BRANCH_LENGTH, 0.0)
+            avg_branch_length = branch_results[i].get(
+                b_analysis.KEY_AVG_BRANCH_LENGTH, 0.0
+            )
+            max_branch_length = branch_results[i].get(
+                b_analysis.KEY_MAX_BRANCH_LENGTH, 0.0
+            )
+            min_branch_length = branch_results[i].get(
+                b_analysis.KEY_MIN_BRANCH_LENGTH, 0.0
+            )
 
             per_cell.append(
                 CellAnalysis(
@@ -295,7 +312,6 @@ class MetricsDAG(QtCore.QObject):
             )
 
         return per_cell
-
 
 
 class ResultsDashboardState(QtCore.QObject):
