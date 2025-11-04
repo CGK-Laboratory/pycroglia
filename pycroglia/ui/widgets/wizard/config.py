@@ -3,6 +3,7 @@ from PyQt6 import QtCore
 
 from pycroglia.ui.widgets.imagefilters.stacks import FilterEditorStack
 from pycroglia.ui.widgets.io.file_selection_editor import FileSelectionEditor
+from pycroglia.ui.widgets.results.stacks import ResultsDashboardStack
 from pycroglia.ui.widgets.segmentation.stacks import SegmentationEditorStack
 from pycroglia.ui.widgets.analysis.stacks import CellSelectorStack
 from pycroglia.ui.widgets.wizard.pages import (
@@ -10,6 +11,7 @@ from pycroglia.ui.widgets.wizard.pages import (
     FilterEditorPage,
     SegmentationEditorPage,
     CellSelectionPage,
+    DashboardPage,
 )
 
 DEFAULT_CONFIG = {
@@ -49,6 +51,18 @@ DEFAULT_CONFIG = {
         "size_button_text": "Remove smaller than",
         "preview_button_text": "Preview",
         "border_checkbox_text": "Remove border cells",
+    },
+    # Results Dashboard
+    "results_dashboard": {
+        "summary_headers": ["Metric", "Value"],
+        "cell_headers": ["Metric", "Value"],
+        "graphs_text": "Select graphs:",
+        "graph_button_txt": "Preview",
+        "output_title_txt": "Output formats",
+        "output_select_txt": "Destination folder",
+        "output_button_txt": "Browse",
+        "output_display_txt": "No folder selected",
+        "output_dialog_title_txt": "Select a folder",
     },
     # Navigation buttons
     "navigation": {
@@ -164,8 +178,33 @@ def create_wizard_pages(config: dict[str, Any]) -> List[dict[str, Any]]:
             "page_class": CellSelectionPage,
             "navigation": {
                 "show_back_btn": True,
+                "show_next_btn": True,
+                "back_btn_txt": config["navigation"]["back_button_text"],
+                "next_btn_txt": config["navigation"]["next_button_text"],
+            },
+        },
+        {
+            "type": "results_dashboard",
+            "widget_class": ResultsDashboardStack,
+            "widget_args": {
+                "summary_headers": config["results_dashboard"]["summary_headers"],
+                "cell_headers": config["results_dashboard"]["cell_headers"],
+                "graphs_text": config["results_dashboard"]["graphs_text"],
+                "graph_button_txt": config["results_dashboard"]["graph_button_txt"],
+                "output_title_txt": config["results_dashboard"]["output_title_txt"],
+                "output_select_txt": config["results_dashboard"]["output_select_txt"],
+                "output_button_txt": config["results_dashboard"]["output_button_txt"],
+                "output_display_txt": config["results_dashboard"]["output_display_txt"],
+                "output_dialog_title_txt": config["results_dashboard"][
+                    "output_dialog_title_txt"
+                ],
+            },
+            "page_class": DashboardPage,
+            "navigation": {
+                "show_back_btn": True,
                 "show_next_btn": False,
                 "back_btn_txt": config["navigation"]["back_button_text"],
+                "next_btn_txt": config["navigation"]["next_button_text"],
             },
         },
     ]

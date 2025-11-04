@@ -20,6 +20,7 @@ class FullCellAnalysisPlot:
         figs (list[Figure]): List of Matplotlib figures generated for each cell.
         axes (list[Axes3D]): List of 3D axes corresponding to each figure.
     """
+
     def __init__(
         self,
         fca: dict[str, Any],
@@ -76,14 +77,14 @@ class FullCellAnalysisPlot:
                     )
                 )
             x, y, z = mask.shape[2], mask.shape[1], mask.shape[0]
-                
+
             # Slightly inset limits to ensure axes are visible
             ax.set_xlim(-0.02 * x, 1.02 * x)
             ax.set_ylim(-0.02 * y, 1.02 * y)
-            ax.set_zlim(-0.02 * z, 1.02 * z)                
+            ax.set_zlim(-0.02 * z, 1.02 * z)
             ax.view_init(elev=30, azim=-60)  # Top-down / orthogonal
             ax.set_proj_type("ortho")  # Orthographic projection
-            ax.set_box_aspect([1,1,1.5])
+            ax.set_box_aspect([1, 1, 1.5])
             fig.subplots_adjust(left=0.15, right=0.95, bottom=0.15, top=0.90)
             ax.set_xlabel("Z (µm)", labelpad=10, fontsize=10)
             ax.set_ylabel("Y (µm)", labelpad=10, fontsize=10)
