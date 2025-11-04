@@ -1,7 +1,7 @@
 import pytest
 
 from pycroglia.ui.widgets.common.labeled_widgets import (
-    LabeledSpinBox,
+    LabeledIntSpinBox,
     LabeledIntSlider,
     LabeledFloatSlider,
 )
@@ -15,9 +15,9 @@ def labeled_spin_box(qtbot):
         qtbot: pytest-qt bot for widget handling.
 
     Returns:
-        LabeledSpinBox: The widget instance.
+        LabeledIntSpinBox: The widget instance.
     """
-    widget = LabeledSpinBox(label_text="Example label")
+    widget = LabeledIntSpinBox(label_text="Example label")
     qtbot.addWidget(widget)
     return widget
 

@@ -20,7 +20,8 @@ KEY_BRANCH_POINTS = "branch_points"
 class EmptySkeleton(Exception):
     """Raised when a skeleton or image has no nonzero voxels (i.e., is empty)."""
 
-    pass
+    def __init__(self):
+        super().__init__("Tried to create an empty skeleton")
 
 
 def init_kernel() -> NDArray:

@@ -114,6 +114,10 @@ class TwoColumnList(QtWidgets.QWidget):
         row = indexes[0].row()
         return (self.model.item(row, 0).text(), self.model.item(row, 1).text())
 
+    def clear(self):
+        self.model.clear()
+        self.model.setHorizontalHeaderLabels(self.headers)
+
     def _on_selection_changed(self):
         """Emit the selectionChanged signal when the selection changes."""
         self.selectionChanged.emit()

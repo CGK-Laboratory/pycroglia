@@ -66,6 +66,7 @@ class AnalysisSummaryViewer(QtWidgets.QWidget):
             data (AnalysisSummary): Analysis summary data.
             config (AnalysisSummaryConfig): Configuration for labels.
         """
+        self.list.clear()
         self.list.add_item(
             config.avg_centroid_distance_txt, str(data.avg_centroid_distance)
         )
@@ -150,8 +151,7 @@ class CellAnalysisViewer(QtWidgets.QWidget):
         Args:
             idx (int): Index of the selected cell.
         """
-        self.table.model.clear()
-        self.table.model.setHorizontalHeaderLabels(self.table.headers)
+        self.table.clear()
 
         cell = self.cells[idx]
 

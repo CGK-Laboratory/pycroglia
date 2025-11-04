@@ -7,7 +7,7 @@ from PyQt6 import QtWidgets, QtGui
 
 from pycroglia.core.labeled_cells import LabeledCells
 from pycroglia.ui.widgets.cells.cells_panel import CellsPanel
-from pycroglia.ui.widgets.common.labeled_widgets import LabeledSpinBox
+from pycroglia.ui.widgets.common.labeled_widgets import LabeledIntSpinBox
 from pycroglia.ui.widgets.analysis.dialog import PreviewDialog
 
 
@@ -82,7 +82,7 @@ class CellSelectorControlPanel(QtWidgets.QWidget):
         self.remove_btn.setText(self.remove_button_text)
         self.remove_btn.setEnabled(False)
 
-        self.size_input = LabeledSpinBox(
+        self.size_input = LabeledIntSpinBox(
             label_text=self.size_label_text, min_value=0, max_value=max_cell_size
         )
         self.size_btn = QtWidgets.QPushButton(parent=self)

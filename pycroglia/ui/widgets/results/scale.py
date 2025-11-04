@@ -1,7 +1,7 @@
 from typing import Optional
 from PyQt6 import QtWidgets, QtCore
 
-from pycroglia.ui.widgets.common.labeled_widgets import LabeledSpinBox
+from pycroglia.ui.widgets.common.labeled_widgets import LabeledFloatSpinBox
 
 
 class ScaleConfigWidget(QtWidgets.QWidget):
@@ -24,8 +24,10 @@ class ScaleConfigWidget(QtWidgets.QWidget):
         self._button_txt = button_txt or self.DEFAULT_BUTTON_TXT
 
         # Widgets
-        self._scale = LabeledSpinBox(self._scale_txt, min_value=1, parent=self)
-        self._z_scale = LabeledSpinBox(self._z_scale_txt, min_value=1, parent=self)
+        self._scale = LabeledFloatSpinBox(self._scale_txt, min_value=1.0, parent=self)
+        self._z_scale = LabeledFloatSpinBox(
+            self._z_scale_txt, min_value=1.0, parent=self
+        )
         self._button = QtWidgets.QPushButton(self._button_txt, parent=self)
 
         # Layout
@@ -39,13 +41,13 @@ class ScaleConfigWidget(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
-    def get_scale(self):
+    def get_scale(self) -> float:
         return self._scale.get_value()
 
-    def get_z_scale(self):
+    def get_z_scale(self) -> float:
         return self._z_scale.get_value()
 
-    def get_vox_scale(self):
+    def get_vox_scale(self) -> float:
         return self.get_scale() * self.get_scale() * self.get_scale()
 
     @property
