@@ -5,6 +5,42 @@ from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 from pycroglia.core.compute.computable import Computable
 
 
+class CancelFlag:
+    """Lightweight cooperative cancellation flag for task management.
+
+    This class provides a simple mechanism for signalling cooperative
+    cancellation between a task backend (e.g., QThreadPool) and the
+    tasks it executes.
+
+    Attributes:
+        cancelled (bool): Internal state indicating whether cancellation
+            has been requested.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the cancellation flag.
+
+        The flag starts in a non-cancelled state (`cancelled = False`).
+        """
+        self.cancelled = False
+
+    def set(self) -> None:
+        """Request cooperative cancellation.
+
+        Sets the flag to `True`, signalling that any ongoing tasks
+        should stop as soon as possible.
+        """
+        self.cancelled = True
+
+    def is_set(self) -> bool:
+        """Check whether cancellation has been requested.
+
+        Returns:
+            bool: True if cancellation has been requested, False otherwise.
+        """
+        return self.cancelled
+
+
 class QTaskSignal(QObject):
     """Signals available from a running Task.
 
@@ -28,7 +64,7 @@ class QTask(QRunnable):
         signals (TaskSignals): Signal manager for result, error, and finished.
     """
 
-    def __init__(self, computable: Computable) -> None:
+    def __init__(self, computable: Computable, flag: CancelFlag) -> None:
         """Initialize a new Task.
 
         Args:
@@ -38,10 +74,11 @@ class QTask(QRunnable):
         self.task_id = uuid.uuid4().hex
         self.computable = computable
         self.signals = QTaskSignal()
+        self.cancel_flag = flag
 
     @pyqtSlot()
     def run(self):
-        """Execute the task.
+        """Execute the task, unless the cancel flag is set.
 
         Runs the `compute` method of the associated Computable.
         Emits:
@@ -50,8 +87,9 @@ class QTask(QRunnable):
             - finished: always, when the task ends.
         """
         try:
-            result = self.computable.compute()
-            self.signals.result.emit(result)
+            if not self.cancel_flag.is_set():
+                result = self.computable.compute()
+                self.signals.result.emit(result)
         except Exception as e:
             self.signals.error.emit(self.task_id, e)
         finally:
@@ -76,6 +114,7 @@ class QPool(QObject):
         self.threadpool = QThreadPool()
         self.tasks = []
         self.pending = 0
+        self.cancel_flag = CancelFlag()
 
     def submit(
         self,
@@ -92,7 +131,7 @@ class QPool(QObject):
             on_error (Callable[[str, Exception], None], optional): Callback for errors.
             on_finish (Callable[[str], None], optional): Callback when task finishes.
         """
-        task = QTask(computable)
+        task = QTask(computable, self.cancel_flag)
         task.signals.result.connect(on_result)
         task.signals.finished.connect(self._on_task_finished(on_finish))
         if on_error:
@@ -114,6 +153,10 @@ class QPool(QObject):
             for a non-blocking alternative.
         """
         self.threadpool.waitForDone()
+
+    def cancel(self):
+        """Cancels execution of all submitted tasks."""
+        self.cancel_flag.set()
 
     def _on_task_finished(
         self, callback: Callable[[str], None] | None = None
