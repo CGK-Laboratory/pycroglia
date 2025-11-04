@@ -99,13 +99,11 @@ class ResultsDashboard(QtWidgets.QWidget):
         self,
         scale_txt: Optional[str] = None,
         z_scale_txt: Optional[str] = None,
-        vox_scale_txt: Optional[str] = None,
         button_txt: Optional[str] = None,
     ):
         self.scales = ScaleConfigWidget(
             scale_txt=scale_txt,
             z_scale_txt=z_scale_txt,
-            vox_scale_txt=vox_scale_txt,
             button_txt=button_txt,
         )
 
