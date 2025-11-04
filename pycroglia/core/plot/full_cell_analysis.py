@@ -1,9 +1,8 @@
-from pathlib import Path
+from typing import Any
 import numpy as np
-from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from numpy.typing import NDArray
-from pycroglia.core.full_cell_analysis import AnalysisResult
 
 
 class FullCellAnalysisPlot:
@@ -24,7 +23,7 @@ class FullCellAnalysisPlot:
 
     def __init__(
         self,
-        fca: AnalysisResult,
+        fca: dict[str, Any],
         masks: list[NDArray],
         figsize: tuple[int, int] = (5, 5),
         color: str = "cyan",
@@ -55,16 +54,17 @@ class FullCellAnalysisPlot:
         """
         self.figs = []
         self.axes = []
-
+        plt.ioff()
+        
         for i, mask in enumerate(masks):
-            fig = Figure(figsize=figsize)
+            fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111, projection="3d")
             # Original voxel coordinates
             coords = np.argwhere(mask)  # (z, y, x)
             # Reorder for plotting: (z, y, x) -> (x, y, z)
             plot_coords = coords[:, [2, 1, 0]]
 
-            simplices = fca.convex_simplices[i]
+            simplices = fca["convex_simplices"][i]
             for simplex in simplices:
                 tri = plot_coords[simplex]  # reorder axes for each simplex
                 ax.add_collection3d(
@@ -93,46 +93,24 @@ class FullCellAnalysisPlot:
             # Tick formatting: even spacing across dimensions
 
             ax.set_title(
-                f"Cell {i + 1} - Volume: {fca.convex_volumes[i]:.3f}, "
-                f"Complexity: {fca.cell_complexities[i]:.3f}"
+                f"Cell {i + 1} - Volume: {fca['convex_volumes'][i]:.3f}, "
+                f"Complexity: {fca['cell_complexities'][i]:.3f}"
             )
 
             self.figs.append(fig)
             self.axes.append(ax)
 
-    def save(
-        self,
-        filepath: str | Path,
-        fmt="png",
-        dpi: int = 300,
-    ) -> list[Path]:
-        """Save all generated figures to disk.
+    def show_all(self, block=True) -> None:
+        """Display all generated figures together.
 
-        Args:
-            filepath (str | Path):
-                Destination base path for the saved figures. The file name can
-                include or omit an extension. If multiple figures are generated,
-                files are numbered sequentially (e.g., `cell_plot_1.png`).
-            fmt (str, optional):
-                Output file format (e.g., "png", "pdf", "svg"). Defaults to "png".
-            dpi (int, optional):
-                Resolution in dots per inch for the saved figures. Defaults to 300.
+        This method re-enables interactive mode and displays all
+        figures that were previously created.
 
-        Returns:
-            list[Path]: List of file paths for all saved figures.
+        Example:
+            ```python
+            plotter = FullCellAnalysisPlot(results, masks)
+            plotter.show_all()
+            ```
         """
-        saved_paths = []
-        path = Path(filepath).expanduser().resolve()
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        base_name = path.stem
-        base_dir = path.parent
-
-        if path.suffix:
-            fmt = path.suffix.lstrip(".").lower()
-
-        for i, fig in enumerate(self.figs, start=1):
-            save_path = base_dir / f"{base_name}_{i}.{fmt}"
-            fig.savefig(save_path, format=fmt, dpi=dpi)
-            saved_paths.append(save_path)
-        return saved_paths
+        plt.ion()
+        plt.show(block=block)
