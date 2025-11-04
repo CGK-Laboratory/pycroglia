@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from PyQt6 import QtWidgets
 
 from pycroglia.ui.widgets.analysis.cell_selector import CellSelector
+from pycroglia.ui.widgets.common.results import ImgWithPathResults
 from pycroglia.ui.widgets.segmentation.results import SegmentationResults
 
 
@@ -105,3 +106,28 @@ class CellSelectorStack(QtWidgets.QWidget):
                 parent=self,
             )
             self.tabs.addTab(selector, f"{Path(elem.file_path).name}")
+
+    def get_results(self) -> List[ImgWithPathResults]:
+        """Collect selected-cell 3D masks from each tab and return them.
+
+        Iterates over all tabs, queries each CellSelector for its currently
+        selected 3D mask (if available) and wraps it with the tab's file path
+        into an ImgWithPathResults instance.
+
+        Returns:
+            List[ImgWithPathResults]: List of image+path result containers for tabs
+                that expose a `get_selected_cells_3d` method.
+        """
+        list_of_results = []
+
+        for i in range(self.tabs.count()):
+            selector = self.tabs.widget(i)
+            file_path = self.tabs.tabText(i)
+            if hasattr(selector, "get_selected_cells_3d"):
+                list_of_results.append(
+                    ImgWithPathResults(
+                        file_path=file_path, img=selector.get_selected_cells_3d()
+                    )
+                )
+
+        return list_of_results

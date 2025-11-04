@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.typing import NDArray
 from typing import Optional, Set, Dict
 from enum import Enum
 
@@ -371,3 +372,15 @@ class CellSelector(QtWidgets.QWidget):
             Set[int]: Copy of the set of cell IDs that touch the image borders.
         """
         return self.border_cells.copy()
+
+    def get_selected_cells_3d(self) -> NDArray:
+        """Return a 3D array containing only the currently selected cells.
+
+        Delegates to LabeledCells.selected_cells_mask to perform a vectorized,
+        single-pass generation of the combined mask.
+
+        Returns:
+            NDArray: 3D array (z, y, x) with selected cells combined.
+        """
+        selected = self.get_selected_cells()
+        return self.img.selected_cells_mask(selected)
