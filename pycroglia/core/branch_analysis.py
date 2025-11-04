@@ -157,7 +157,7 @@ class BranchAnalysis:
         fullmask = np.sum(masklist.astype(int), axis=3)
         fullmasks.append(fullmask)
         fullmask[fullmask > 3] = 4  # cap at quaternary connectivity
-
+        fullmasks.append(fullmask)
         quaternary = fullmask == 1
 
         branch_points = np.zeros((*bounded_skel.shape, 4), dtype=bool)
