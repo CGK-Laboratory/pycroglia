@@ -100,7 +100,6 @@ class MetricsDAG(QtCore.QObject):
         masks: List[NDArray],
         scale: float = 1.0,
         z_scale: float = 1.0,
-        vox_scale: float = 1.0,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         super().__init__(parent=parent)
@@ -126,7 +125,7 @@ class MetricsDAG(QtCore.QObject):
         self._masks = copy.copy(masks)
         self._scale = scale
         self._z_scale = z_scale
-        self._vox_scale = vox_scale
+        self._vox_scale = scale * scale * z_scale
         self._n_cells = len(self._masks)
         if self._n_cells == 0:
             raise ValueError("No image to process")
@@ -308,6 +307,8 @@ class MetricsDAG(QtCore.QObject):
                     avg_branch_length=avg_branch_length,
                     max_branch_length=max_branch_length,
                     min_branch_length=min_branch_length,
+                    full_cell_analysis=full_cell_analysis,
+                    branch_analysis=branch_results,
                 )
             )
 
@@ -339,6 +340,8 @@ class ResultsDashboardState(QtCore.QObject):
                 avg_branch_length=0,
                 max_branch_length=0,
                 min_branch_length=0,
+                full_cell_analysis={},
+                branch_analysis={},
             )
         ]
 
@@ -360,20 +363,16 @@ class ResultsDashboardState(QtCore.QObject):
         self._summary_state = self._make_default_summary()
         self._summary_state.file = self._file
         self._per_cell_state = self._make_default_per_cell()
-
         # Executions
         self._execution: Optional[MetricsDAG] = None
 
-    def calculate_results(
-        self, scale: float = 1.0, z_scale: float = 1.0, vox_scale: float = 1.0
-    ):
+    def calculate_results(self, scale: float = 1.0, z_scale: float = 1.0):
         # TODO - Handle cancellation TOP TOP PRIORITY - SHOULD ADD LOGIC TO DAG
         # TODO - Check if parent is Ok (?
         self._execution = MetricsDAG(
             masks=self._cells_masks,
             scale=scale,
             z_scale=z_scale,
-            vox_scale=vox_scale,
             parent=self.parent(),
         )
 

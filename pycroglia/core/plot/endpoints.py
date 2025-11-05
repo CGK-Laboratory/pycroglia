@@ -22,7 +22,7 @@ class EndpointsCellPlot:
     def __init__(
         self,
         fullmask: list[NDArray],
-        endpoints: list[NDArray],
+        endpoints: NDArray,
         scale: float,
         zscale: float,
         opacity: float = 0.1,
@@ -31,12 +31,9 @@ class EndpointsCellPlot:
         self.zscale = zscale
         self.opacity = opacity
         self.fullmask_list = fullmask
-        self.endpoints_list = endpoints
         self.plotters: list[pv.Plotter] = []
 
-        for i, (mask, endpts) in enumerate(
-            zip(self.fullmask_list, self.endpoints_list), start=1
-        ):
+        for i, mask in enumerate(self.fullmask_list, start=1):
             plotter = pv.Plotter(off_screen=False)
 
             # --- Full skeleton (blue, translucent) ---
@@ -63,9 +60,9 @@ class EndpointsCellPlot:
                 )
 
             # --- Endpoints (red, solid) ---
-            if np.any(endpts):
+            if np.any(endpoints):
                 verts2, faces2, _, _ = measure.marching_cubes(
-                    endpts.astype(float), level=0.5
+                    endpoints.astype(float), level=0.5
                 )
                 verts2 = verts2[:, [2, 1, 0]]
                 verts2[:, 0] *= scale

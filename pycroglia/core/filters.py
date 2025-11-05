@@ -55,4 +55,5 @@ def remove_small_objects(
     filtered = skimage.morphology.remove_small_objects(
         labeled_img, min_size=min_size, connectivity=connectivity.value
     )
-    return filtered.astype(img.dtype)
+    result = filtered > 0
+    return result.astype(img.dtype)

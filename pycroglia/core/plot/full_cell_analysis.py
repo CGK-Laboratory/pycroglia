@@ -55,7 +55,7 @@ class FullCellAnalysisPlot:
         self.figs = []
         self.axes = []
         plt.ioff()
-        
+
         for i, mask in enumerate(masks):
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111, projection="3d")
@@ -100,7 +100,7 @@ class FullCellAnalysisPlot:
             self.figs.append(fig)
             self.axes.append(ax)
 
-    def show_all(self, block=True) -> None:
+    def show_all(self, block=False) -> None:
         """Display all generated figures together.
 
         This method re-enables interactive mode and displays all

@@ -88,7 +88,7 @@ class OriginalCellPlot:
             plotter.camera_position = "iso"
             self.plots.append(plotter)
 
-    def show(self, use_trame: bool = False) -> None:
+    def show_all(self, use_trame: bool = False) -> None:
         """Display each rendered cell surface interactively.
 
         Args:

@@ -6,7 +6,10 @@ import inspect
 from abc import ABC
 from dataclasses import dataclass
 from openpyxl import Workbook
-from typing import Optional, List
+from typing import Any, Optional, List
+
+from pycroglia.core.branch_analysis import BranchAnalysis
+from pycroglia.core.full_cell_analysis import FullCellAnalysis
 
 
 @dataclass
@@ -85,7 +88,8 @@ class CellAnalysis:
     avg_branch_length: float
     max_branch_length: float
     min_branch_length: float
-
+    branch_analysis: dict[str, Any]
+    full_cell_analysis: dict[str, Any]
 
 @dataclass()
 class CellAnalysisConfig:

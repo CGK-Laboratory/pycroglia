@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import List, Optional, Type
 from numpy.typing import NDArray
 from PyQt6 import QtWidgets, QtCore
+from pycroglia.core import branch_analysis
 
 from pycroglia.ui.controllers.dashboard_state import (
     ResultsDashboardState,
@@ -13,6 +14,7 @@ from pycroglia.ui.widgets.results.graphs import GraphSelectionWidget
 from pycroglia.ui.widgets.results.output import OutputConfigurator
 from pycroglia.ui.widgets.results.scale import ScaleConfigWidget
 from pycroglia.ui.widgets.results.viewers import FullAnalysisViewer
+import copy
 
 
 class ResultsDashboard(QtWidgets.QWidget):
@@ -65,7 +67,7 @@ class ResultsDashboard(QtWidgets.QWidget):
         self.graphs: Optional[GraphSelectionWidget] = None
         self.scales: Optional[ScaleConfigWidget] = None
         self.configurator: Optional[OutputConfigurator] = None
-
+        self.cell_masks = copy.copy(cells_masks)
         # Connections
         self._state.resultsChanged.connect(self._update_results_view)
 
@@ -233,10 +235,9 @@ class ResultsDashboard(QtWidgets.QWidget):
         self._state.calculate_results(
             scale=self.scales.get_scale(),
             z_scale=self.scales.get_z_scale(),
-            vox_scale=self.scales.get_vox_scale(),
         )
 
-    def _preview_clicked(self, graphs_list: List[str]):
+    def _preview_clicked(self, selected_plots: List[str]):
         """Handle preview requests coming from the GraphSelectionWidget.
 
         Delegates the list of selected graph names to the state's generate_graphs
@@ -245,7 +246,16 @@ class ResultsDashboard(QtWidgets.QWidget):
         Args:
             graphs_list (List[str]): Names of graphs requested for preview.
         """
-        self._graphs_generator.generate_graphs(graphs_list)
+
+        cells = self._state.get_per_cell()
+        self._graphs_generator.generate_plots(
+            selected_plots,
+            self.cell_masks,
+            cells[0].branch_analysis,
+            cells[0].full_cell_analysis,
+            self.scales.get_scale(),
+            self.scales.get_z_scale()
+        )
 
     def _update_results_view(self):
         self.table.update_data(
