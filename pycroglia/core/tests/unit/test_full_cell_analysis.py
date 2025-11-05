@@ -1,6 +1,7 @@
 import numpy as np
 from pycroglia.core.full_cell_analysis import FullCellAnalysis
 
+
 def test_full_cell_analysis():
     """Test FullCellAnalysis computes convex volumes and complexities.
 
