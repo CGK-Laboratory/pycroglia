@@ -50,19 +50,25 @@ class DashboardGraphsGenerator(QtCore.QObject):
         zscale: float,
     ):
         global_plot_map = {
-            "Convex cells Images": lambda: FullCellAnalysisPlot(full_cell_analysis, masks),
+            "Convex cells Images": lambda: FullCellAnalysisPlot(
+                full_cell_analysis, masks
+            ),
             "Original Cell Image": lambda: OriginalCellPlot(masks, scale, zscale),
         }
-        
+
         per_cell_plot_map = {
-            "Skeleton Image": lambda i: SkeletonCellPlot(branch_analysis[i]["fullmasks"], scale, zscale),
+            "Skeleton Image": lambda i: SkeletonCellPlot(
+                i + 1, branch_analysis[i]["fullmasks"], scale, zscale
+            ),
             "End Image": lambda i: EndpointsCellPlot(
+                i + 1,
                 branch_analysis[i]["fullmasks"],
                 branch_analysis[i]["endpoints"],
                 scale,
                 zscale,
             ),
             "Branches Image": lambda i: BranchpointsCellPlot(
+                i + 1,
                 branch_analysis[i]["fullmasks"],
                 branch_analysis[i]["allbranch"],
                 scale,
@@ -80,4 +86,3 @@ class DashboardGraphsGenerator(QtCore.QObject):
                 if plot_name in selected_plots:
                     plotter = plot_factory(i)
                     plotter.show_all()
-

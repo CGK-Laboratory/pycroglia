@@ -86,6 +86,7 @@ class OriginalCellPlot:
             )
             plotter.add_axes()
             plotter.camera_position = "iso"
+            plotter.add_text(f"Original cell {i}", font_size=10)
             self.plots.append(plotter)
 
     def show_all(self, use_trame: bool = False) -> None:

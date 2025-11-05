@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import List, Optional, Type
 from numpy.typing import NDArray
 from PyQt6 import QtWidgets, QtCore
-from pycroglia.core import branch_analysis
 
 from pycroglia.ui.controllers.dashboard_state import (
     ResultsDashboardState,
@@ -254,7 +253,7 @@ class ResultsDashboard(QtWidgets.QWidget):
             cells[0].branch_analysis,
             cells[0].full_cell_analysis,
             self.scales.get_scale(),
-            self.scales.get_z_scale()
+            self.scales.get_z_scale(),
         )
 
     def _update_results_view(self):

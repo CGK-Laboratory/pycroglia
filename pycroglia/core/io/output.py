@@ -8,9 +8,6 @@ from dataclasses import dataclass
 from openpyxl import Workbook
 from typing import Any, Optional, List
 
-from pycroglia.core.branch_analysis import BranchAnalysis
-from pycroglia.core.full_cell_analysis import FullCellAnalysis
-
 
 @dataclass
 class AnalysisSummary:
@@ -90,6 +87,7 @@ class CellAnalysis:
     min_branch_length: float
     branch_analysis: dict[str, Any]
     full_cell_analysis: dict[str, Any]
+
 
 @dataclass()
 class CellAnalysisConfig:

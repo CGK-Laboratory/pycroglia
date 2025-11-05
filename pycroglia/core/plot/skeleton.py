@@ -30,6 +30,7 @@ class SkeletonCellPlot:
 
     def __init__(
         self,
+        cell_idx: int,
         fullmask: list[NDArray],
         scale: float,
         zscale: float,
@@ -90,7 +91,7 @@ class SkeletonCellPlot:
             plotter.set_background("white")
             plotter.enable_eye_dome_lighting()
             plotter.camera.zoom(1.2)
-            plotter.add_text(f"Skeleton Cell {mask_index}", font_size=10)
+            plotter.add_text(f"Skeleton Cell {cell_idx}", font_size=10)
 
             self.plotters.append(plotter)
 

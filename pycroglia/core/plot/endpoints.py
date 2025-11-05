@@ -21,6 +21,7 @@ class EndpointsCellPlot:
 
     def __init__(
         self,
+        cell_idx: int,
         fullmask: list[NDArray],
         endpoints: NDArray,
         scale: float,
@@ -91,7 +92,7 @@ class EndpointsCellPlot:
             plotter.set_background("white")
             plotter.enable_eye_dome_lighting()
             plotter.camera.zoom(1.2)
-            plotter.add_text(f"Endpoints Cell {i}", font_size=10)
+            plotter.add_text(f"Endpoints Cell {cell_idx}", font_size=10)
 
             self.plotters.append(plotter)
 
