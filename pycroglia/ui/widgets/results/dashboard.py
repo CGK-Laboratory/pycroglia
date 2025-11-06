@@ -239,6 +239,7 @@ class ResultsDashboard(QtWidgets.QWidget):
         return self
 
     def _compute_on_demand(self):
+        self.scales.disable_button()
         self._state.calculate_results(
             scale=self.scales.get_scale(),
             z_scale=self.scales.get_z_scale(),
@@ -260,6 +261,7 @@ class ResultsDashboard(QtWidgets.QWidget):
         self.table.update_data(
             summary=self._state.get_summary(), cells=self._state.get_per_cell()
         )
+        self.scales.enable_button()
 
     @QtCore.pyqtSlot(int, int)
     def _on_progress_changed(self, completed: int, total: int):

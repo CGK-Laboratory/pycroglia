@@ -50,6 +50,12 @@ class ScaleConfigWidget(QtWidgets.QWidget):
     def get_vox_scale(self) -> float:
         return self.get_scale() * self.get_scale() * self.get_scale()
 
+    def disable_button(self):
+        self._button.setEnabled(False)
+
+    def enable_button(self):
+        self._button.setEnabled(True)
+
     @property
     def clicked(self) -> QtCore.pyqtSignal:
         return self._button.clicked

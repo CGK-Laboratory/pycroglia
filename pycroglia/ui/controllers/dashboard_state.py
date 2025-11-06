@@ -151,7 +151,6 @@ class MetricsDAG(QtCore.QObject):
 
     @QtCore.pyqtSlot(dict)
     def _add_centroids_results(self, result: dict[str, Any]):
-        print(f"Number of cells passed {self._n_cells}")
         self._centroids = result
 
         self._all_tasks.add()
@@ -192,13 +191,11 @@ class MetricsDAG(QtCore.QObject):
 
     @QtCore.pyqtSlot(int, dict)
     def _add_branch_result(self, idx: int, result: dict[str, Any]):
-        print(f"Finished {idx}")
         self._branch_analysis[idx] = result
         self._all_cells.add()
 
     @QtCore.pyqtSlot(str, Exception, int)
     def _on_branch_analysis_error(self, msg: str, exc: Exception, idx: int):
-        print(f"Cell {idx}: Error {msg} with {exc}")
         self._branch_analysis[idx] = b_analysis.get_empty_branch_analysis()
         self._all_cells.add()
 
@@ -336,6 +333,10 @@ class MetricsDAG(QtCore.QObject):
 
         return per_cell
 
+    def cancel(self):
+        self._qt_pool.cancel()
+        self._qt_branch_pool.cancel()
+
 
 class ResultsDashboardState(QtCore.QObject):
     resultsChanged = QtCore.pyqtSignal()
@@ -391,8 +392,6 @@ class ResultsDashboardState(QtCore.QObject):
     def calculate_results(
         self, scale: float = 1.0, z_scale: float = 1.0, vox_scale: float = 1.0
     ):
-        # TODO - Handle cancellation TOP TOP PRIORITY - SHOULD ADD LOGIC TO DAG
-        # TODO - Check if parent is Ok (?
         self._execution = MetricsDAG(
             masks=self._cells_masks,
             scale=scale,
@@ -414,7 +413,7 @@ class ResultsDashboardState(QtCore.QObject):
         self._summary_state = self._execution.get_analysis_summary(self._file)
         self._per_cell_state = self._execution.get_per_cell_analysis()
 
-        # TODO - Handle how to delete this in a good way
+        self._execution.cancel()
         self._execution = None
 
         self.resultsChanged.emit()
