@@ -94,6 +94,7 @@ class QCounter(QtCore.QObject):
 
 class MetricsDAG(QtCore.QObject):
     resultsAvailable = QtCore.pyqtSignal()
+    progressUpdated = QtCore.pyqtSignal(int, int)  # (completed, total)
 
     def __init__(
         self,
@@ -111,6 +112,10 @@ class MetricsDAG(QtCore.QObject):
         # Pool
         self._qt_pool = QPool()
         self._qt_branch_pool = QPool()
+
+        # Progress counters
+        self._total_tasks = 0
+        self._completed_tasks = 0
 
         # Barriers
         self._all_tasks = QCounter(4)
@@ -136,8 +141,13 @@ class MetricsDAG(QtCore.QObject):
         self._all_tasks.reached.connect(self._all_tasks_finished)
         self._all_cells.reached.connect(self._all_branches_finished)
 
-    def has_finished(self) -> bool:
-        return self._finished
+    def _on_qpool_task_finished(self, task_id: str) -> None:
+        """Internal slot invoked when any QPool task finishes.
+
+        Updates internal completed counter and emits aggregated progress.
+        """
+        self._completed_tasks += 1
+        self.progressUpdated.emit(self._completed_tasks, self._total_tasks)
 
     @QtCore.pyqtSlot(dict)
     def _add_centroids_results(self, result: dict[str, Any]):
@@ -157,12 +167,15 @@ class MetricsDAG(QtCore.QObject):
                 zslices=self._z_planes,
             )
 
+            # count branch tasks and provide a finished callback so we can track progress
+            self._total_tasks += 1
             self._qt_branch_pool.submit(
                 computable=analysis,
                 on_result=lambda res, idx=i: self._add_branch_result(idx, res),
                 on_error=lambda msg, exc, idx=i: self._on_branch_analysis_error(
                     msg, exc, idx
                 ),
+                on_finish=self._on_qpool_task_finished,
             )
 
         self._qt_branch_pool.run()
@@ -199,6 +212,10 @@ class MetricsDAG(QtCore.QObject):
         self.resultsAvailable.emit()
 
     def run(self):
+        # reset counters for a fresh run
+        self._total_tasks = 0
+        self._completed_tasks = 0
+
         list_of_computables = [
             (
                 centroids.Centroids(
@@ -218,8 +235,14 @@ class MetricsDAG(QtCore.QObject):
             ),
         ]
 
+        # submit main computables and count them
         for computable in list_of_computables:
-            self._qt_pool.submit(computable=computable[0], on_result=computable[1])
+            self._total_tasks += 1
+            self._qt_pool.submit(
+                computable=computable[0],
+                on_result=computable[1],
+                on_finish=self._on_qpool_task_finished,
+            )
 
         self._qt_pool.run()
 
@@ -316,6 +339,7 @@ class MetricsDAG(QtCore.QObject):
 
 class ResultsDashboardState(QtCore.QObject):
     resultsChanged = QtCore.pyqtSignal()
+    progressChanged = QtCore.pyqtSignal(int, int)  # forwarded (completed, total)
 
     @staticmethod
     def _make_default_summary() -> AnalysisSummary:
@@ -375,6 +399,11 @@ class ResultsDashboardState(QtCore.QObject):
             z_scale=z_scale,
             vox_scale=vox_scale,
             parent=self.parent(),
+        )
+
+        # forward progress events to outside consumers
+        self._execution.progressUpdated.connect(
+            lambda c, t: self.progressChanged.emit(c, t)
         )
 
         self._execution.resultsAvailable.connect(self._handle_available_results)

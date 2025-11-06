@@ -66,8 +66,16 @@ class ResultsDashboard(QtWidgets.QWidget):
         self.scales: Optional[ScaleConfigWidget] = None
         self.configurator: Optional[OutputConfigurator] = None
 
+        # Progress bar for tasks (hidden until work starts)
+        self._progress_bar = QtWidgets.QProgressBar(parent=self)
+        self._progress_bar.setVisible(False)
+        self._progress_bar.setMinimum(0)
+        self._progress_bar.setMaximum(1)
+        self._progress_bar.setTextVisible(True)
+
         # Connections
         self._state.resultsChanged.connect(self._update_results_view)
+        self._state.progressChanged.connect(self._on_progress_changed)
 
     def add_results_table(
         self,
@@ -185,6 +193,7 @@ class ResultsDashboard(QtWidgets.QWidget):
         first_row = QtWidgets.QVBoxLayout()
         first_row.addWidget(self.table)
         first_row.addWidget(self.scales)
+        first_row.addWidget(self._progress_bar)
 
         second_row = QtWidgets.QVBoxLayout()
         second_row.addWidget(self.graphs)
@@ -251,3 +260,22 @@ class ResultsDashboard(QtWidgets.QWidget):
         self.table.update_data(
             summary=self._state.get_summary(), cells=self._state.get_per_cell()
         )
+
+    @QtCore.pyqtSlot(int, int)
+    def _on_progress_changed(self, completed: int, total: int):
+        """Update the progress bar from state progress events.
+
+        The progress bar is shown while total > 0 and hidden again when
+        completed reaches total.
+        """
+        if total <= 0:
+            self._progress_bar.setVisible(False)
+            return
+
+        # update range/value and ensure the bar is visible while running
+        self._progress_bar.setMaximum(total)
+        self._progress_bar.setValue(completed)
+        self._progress_bar.setVisible(True)
+
+        if completed >= total:
+            self._progress_bar.setVisible(False)
