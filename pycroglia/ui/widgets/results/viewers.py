@@ -83,6 +83,14 @@ class AnalysisSummaryViewer(QtWidgets.QWidget):
     def update_data(
         self, data: AnalysisSummary, config: Optional[AnalysisSummaryConfig] = None
     ):
+        """Update the analysis summary data displayed.
+
+        If a new config is provided, the labels will be updated accordingly.
+
+        Args:
+            data (AnalysisSummary): New analysis summary data to display.
+            config (Optional[AnalysisSummaryConfig]): Optional new configuration for labels.
+        """
         if config:
             self.data_config = config
 
@@ -181,6 +189,12 @@ class CellAnalysisViewer(QtWidgets.QWidget):
     def update_data(
         self, cells: List[CellAnalysis], config: Optional[CellAnalysisConfig] = None
     ):
+        """Update the cell analysis data displayed.
+
+        Args:
+            cells (List[CellAnalysis]): New list of cell analysis data to display.
+            config (Optional[CellAnalysisConfig]): Optional new configuration for labels.
+        """
         if config:
             self.cells_config = config
 
@@ -256,5 +270,13 @@ class FullAnalysisViewer(QtWidgets.QWidget):
         summary_config: Optional[AnalysisSummaryConfig] = None,
         cells_config: Optional[CellAnalysisConfig] = None,
     ):
+        """Update both the summary and per-cell viewers with new data.
+
+        Args:
+            summary (AnalysisSummary): Updated analysis summary data.
+            cells (List[CellAnalysis]): Updated list of per-cell analysis data.
+            summary_config (Optional[AnalysisSummaryConfig]): Optional new summary display config.
+            cells_config (Optional[CellAnalysisConfig]): Optional new cell display config.
+        """
         self.analysis.update_data(summary, summary_config)
         self.cells.update_data(cells, cells_config)
