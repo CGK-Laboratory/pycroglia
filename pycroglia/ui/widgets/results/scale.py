@@ -5,8 +5,8 @@ from pycroglia.ui.widgets.common.labeled_widgets import LabeledFloatSpinBox
 
 
 class ScaleConfigWidget(QtWidgets.QWidget):
-    DEFAULT_SCALE_TXT = "Scale"
-    DEFAULT_Z_SCALE_TXT = "Z Scale"
+    DEFAULT_SCALE_TXT = "Scale (μm)"
+    DEFAULT_Z_SCALE_TXT = "Z Scale (μm)"
     DEFAULT_BUTTON_TXT = "Calculate"
 
     def __init__(

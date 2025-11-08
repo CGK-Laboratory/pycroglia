@@ -25,23 +25,23 @@ class ResultsDashboardTextConfig(QtCore.QObject):
     def _make_default_summary_config() -> AnalysisSummaryConfig:
         return AnalysisSummaryConfig(
             file_txt="",
-            avg_centroid_distance_txt="Avg centroid distance",
-            total_territorial_volume_txt="Total territorial volume",
-            total_unoccupied_volume_txt="Total unoccupied volume",
-            percent_occupied_volume_txt="Percent occupied volume",
+            avg_centroid_distance_txt="Average centroid distance (μm)",
+            total_territorial_volume_txt="Total territorial volume (μm³)",
+            total_unoccupied_volume_txt="Total unoccupied volume (μm³)",
+            percent_occupied_volume_txt="Percent occupied volume (μm³)",
         )
 
     @staticmethod
     def _make_default_per_cell_config() -> CellAnalysisConfig:
         return CellAnalysisConfig(
-            cell_territory_volume_txt="Cell territory volume",
-            cell_volume_txt="Cell volume",
+            cell_territory_volume_txt="Cell territory volume (μm³)",
+            cell_volume_txt="Cell volume (μm³)",
             ramification_index_txt="Ramification index",
             number_of_endpoints_txt="Number of endpoints",
             number_of_branches_txt="Number of branches",
-            avg_branch_length_txt="Avg branch length",
-            max_branch_length_txt="Max branch length",
-            min_branch_length_txt="Min branch length",
+            avg_branch_length_txt="Avg branch length (μm)",
+            max_branch_length_txt="Max branch length (μm)",
+            min_branch_length_txt="Min branch length (μm)",
         )
 
     def __init__(
