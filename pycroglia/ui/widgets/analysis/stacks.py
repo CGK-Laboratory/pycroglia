@@ -123,14 +123,10 @@ class CellSelectorStack(QtWidgets.QWidget):
         for i in range(self.tabs.count()):
             selector = self.tabs.widget(i)
             file_path = self.tabs.tabText(i)
-            if hasattr(selector, "get_selected_cells_3d") and hasattr(
-                selector, "get_cells_masks"
-            ):
+            if hasattr(selector, "get_selected_cells_3d"):
                 list_of_results.append(
                     ImgWithPathResults(
-                        file_path=file_path,
-                        img=selector.get_selected_cells_3d(),
-                        cells_masks=selector.get_cells_masks(),
+                        file_path=file_path, img=selector.get_selected_cells_3d()
                     )
                 )
 
