@@ -1,7 +1,7 @@
 from PyQt6 import QtWidgets
 from typing import Optional
 
-from pycroglia.ui.widgets.common.labeled_widgets import LabeledSpinBox
+from pycroglia.ui.widgets.common.labeled_widgets import LabeledIntSpinBox
 
 
 class MultiChannelConfigurator(QtWidgets.QWidget):
@@ -12,8 +12,8 @@ class MultiChannelConfigurator(QtWidgets.QWidget):
     Attributes:
         channels_label (str): Label text for the channels spin box.
         channel_of_interest_label (str): Label text for the channel of interest spin box.
-        ch_box (LabeledSpinBox): Spin box for selecting the number of channels.
-        chi_box (LabeledSpinBox): Spin box for selecting the channel of interest.
+        ch_box (LabeledIntSpinBox): Spin box for selecting the number of channels.
+        chi_box (LabeledIntSpinBox): Spin box for selecting the channel of interest.
     """
 
     DEFAULT_CHANNELS_LABEL = "Channels"
@@ -43,13 +43,13 @@ class MultiChannelConfigurator(QtWidgets.QWidget):
         )
 
         # Widgets
-        self.ch_box = LabeledSpinBox(
+        self.ch_box = LabeledIntSpinBox(
             label_text=self.channels_label,
             min_value=self.DEFAULT_MIN_CHANNELS,
             max_value=None,
             parent=self,
         )
-        self.chi_box = LabeledSpinBox(
+        self.chi_box = LabeledIntSpinBox(
             label_text=self.channel_of_interest_label,
             min_value=self.DEFAULT_MIN_CHANNEL_OF_INTEREST,
             max_value=None,

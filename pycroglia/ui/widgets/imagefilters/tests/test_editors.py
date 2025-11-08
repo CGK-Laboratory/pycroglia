@@ -84,7 +84,7 @@ def test_gray_filter_updates_on_slider(
     """
     with patch.object(
         gray_filter_editor.viewer,
-        "setImage",
+        "set_image",
         lambda img: setattr(gray_filter_editor.viewer, "image", img),
     ):
 
@@ -97,7 +97,7 @@ def test_gray_filter_updates_on_slider(
 
         gray_filter_editor.slider.set_value(1.0)
 
-    assert hasattr(gray_filter_editor.viewer, "image")
+    assert hasattr(gray_filter_editor.viewer.img_viewer, "image")
 
 
 def test_small_filter_updates_on_spinbox(
@@ -112,7 +112,7 @@ def test_small_filter_updates_on_spinbox(
     """
     with patch.object(
         small_objects_filter_editor.viewer,
-        "setImage",
+        "set_image",
         lambda img: setattr(small_objects_filter_editor.viewer, "image", img),
     ):
 
@@ -125,7 +125,7 @@ def test_small_filter_updates_on_spinbox(
 
         small_objects_filter_editor.spin_box.spin_box.setValue(5)
 
-    assert hasattr(small_objects_filter_editor.viewer, "image")
+    assert hasattr(small_objects_filter_editor.viewer.img_viewer, "image")
 
 
 def test_multichannel_filter_editor_init(qtbot, monkeypatch):

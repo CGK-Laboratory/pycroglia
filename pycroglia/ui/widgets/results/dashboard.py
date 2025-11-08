@@ -3,14 +3,15 @@ from typing import List, Optional, Type
 from numpy.typing import NDArray
 from PyQt6 import QtWidgets, QtCore
 
-from pycroglia.ui.controllers.results_state import (
-    ResultsProvider,
+from pycroglia.ui.controllers.dashboard_state import (
     ResultsDashboardState,
+    ResultsDashboardTextConfig,
 )
-
 from pycroglia.core.io.output import OutputWriter
+from pycroglia.ui.controllers.graphs_state import DashboardGraphsGenerator
 from pycroglia.ui.widgets.results.graphs import GraphSelectionWidget
 from pycroglia.ui.widgets.results.output import OutputConfigurator
+from pycroglia.ui.widgets.results.scale import ScaleConfigWidget
 from pycroglia.ui.widgets.results.viewers import FullAnalysisViewer
 
 
@@ -29,7 +30,13 @@ class ResultsDashboard(QtWidgets.QWidget):
         configurator (Optional[OutputConfigurator]): Output configuration widget (set by add_build_configurator).
     """
 
-    def __init__(self, img: NDArray, parent: Optional[QtWidgets.QWidget] = None):
+    def __init__(
+        self,
+        file: str,
+        img: NDArray,
+        cells_masks: List[NDArray],
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
         """Initialize the ResultsDashboard.
 
         The dashboard creates an internal ResultsDashboardState from the provided
@@ -42,13 +49,25 @@ class ResultsDashboard(QtWidgets.QWidget):
         """
         super().__init__(parent=parent)
 
+        # Config
+        self._text_config = ResultsDashboardTextConfig(file=file, parent=self)
+
         # State
-        self.state: ResultsProvider = ResultsDashboardState(img, parent=self)
+        self._state = ResultsDashboardState(
+            file=file, img=img, cells_masks=cells_masks, parent=self
+        )
+        self._graphs_generator = DashboardGraphsGenerator(
+            img=img, cells=cells_masks, parent=self
+        )
 
         # Widgets
         self.table: Optional[FullAnalysisViewer] = None
         self.graphs: Optional[GraphSelectionWidget] = None
+        self.scales: Optional[ScaleConfigWidget] = None
         self.configurator: Optional[OutputConfigurator] = None
+
+        # Connections
+        self._state.resultsChanged.connect(self._update_results_view)
 
     def add_results_table(
         self,
@@ -67,12 +86,30 @@ class ResultsDashboard(QtWidgets.QWidget):
         self.table = FullAnalysisViewer(
             summary_headers=summary_headers,
             cell_headers=cell_headers,
-            analysis_data=self.state.get_analysis_data(),
-            cells_data=self.state.get_cells_data(),
-            analysis_config=self.state.get_analysis_data_config(),
-            cells_config=self.state.get_cells_data_config(),
+            analysis_data=self._state.get_summary(),
+            cells_data=self._state.get_per_cell(),
+            analysis_config=self._text_config.get_summary_text_config(),
+            cells_config=self._text_config.get_per_cell_text_config(),
             parent=self,
         )
+
+        return self
+
+    def add_scale_config(
+        self,
+        scale_txt: Optional[str] = None,
+        z_scale_txt: Optional[str] = None,
+        button_txt: Optional[str] = None,
+    ):
+        self.scales = ScaleConfigWidget(
+            scale_txt=scale_txt,
+            z_scale_txt=z_scale_txt,
+            button_txt=button_txt,
+        )
+
+        # Connections
+        self.scales.clicked.connect(self._compute_on_demand)
+
         return self
 
     def add_graphs_list(
@@ -90,7 +127,7 @@ class ResultsDashboard(QtWidgets.QWidget):
             ResultsDashboard: self, to allow chaining.
         """
         self.graphs = GraphSelectionWidget(
-            graphs_list=self.state.get_graphs_list(),
+            graphs_list=self._graphs_generator.get_graphs_list(),
             label_txt=label_text,
             button_txt=button_txt,
             parent=self,
@@ -145,12 +182,16 @@ class ResultsDashboard(QtWidgets.QWidget):
         """
         layout = QtWidgets.QHBoxLayout()
 
-        lvertical_layout = QtWidgets.QVBoxLayout()
-        lvertical_layout.addWidget(self.graphs)
-        lvertical_layout.addWidget(self.configurator)
+        first_row = QtWidgets.QVBoxLayout()
+        first_row.addWidget(self.table)
+        first_row.addWidget(self.scales)
 
-        layout.addWidget(self.table)
-        layout.addLayout(lvertical_layout)
+        second_row = QtWidgets.QVBoxLayout()
+        second_row.addWidget(self.graphs)
+        second_row.addWidget(self.configurator)
+
+        layout.addLayout(first_row)
+        layout.addLayout(second_row)
         self.setLayout(layout)
 
     def _validate_components(self) -> None:
@@ -165,6 +206,7 @@ class ResultsDashboard(QtWidgets.QWidget):
                 ("table", self.table),
                 ("graphs", self.graphs),
                 ("configurator", self.configurator),
+                ("scales", self.scales),
             )
             if widget is None
         ]
@@ -184,7 +226,15 @@ class ResultsDashboard(QtWidgets.QWidget):
         """
         self._validate_components()
         self._build_layout()
+
         return self
+
+    def _compute_on_demand(self):
+        self._state.calculate_results(
+            scale=self.scales.get_scale(),
+            z_scale=self.scales.get_z_scale(),
+            vox_scale=self.scales.get_vox_scale(),
+        )
 
     def _preview_clicked(self, graphs_list: List[str]):
         """Handle preview requests coming from the GraphSelectionWidget.
@@ -195,4 +245,9 @@ class ResultsDashboard(QtWidgets.QWidget):
         Args:
             graphs_list (List[str]): Names of graphs requested for preview.
         """
-        self.state.generate_graphs(graphs_list)
+        self._graphs_generator.generate_graphs(graphs_list)
+
+    def _update_results_view(self):
+        self.table.update_data(
+            summary=self._state.get_summary(), cells=self._state.get_per_cell()
+        )

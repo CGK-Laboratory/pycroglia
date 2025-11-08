@@ -2,11 +2,11 @@ from typing import Optional
 from numpy.typing import NDArray
 
 from PyQt6 import QtWidgets, QtCore
-from pyqtgraph import ImageView
 
 from pycroglia.ui.controllers.ch_editor import MultiChImgEditorState
+from pycroglia.ui.widgets.common.img_viewer import CustomImageViewer
 from pycroglia.ui.widgets.common.labeled_widgets import (
-    LabeledSpinBox,
+    LabeledIntSpinBox,
     LabeledFloatSlider,
 )
 from pycroglia.ui.widgets.imagefilters.configurator import MultiChannelConfigurator
@@ -67,10 +67,7 @@ class MultiChannelImageViewer(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel(parent=self)
         self.label.setText(self.label_text)
 
-        viewer = ImageView(parent=self)
-        for component in (viewer.ui.histogram, viewer.ui.menuBtn, viewer.ui.roiBtn):
-            component.hide()
-        self.viewer = viewer
+        self.viewer = CustomImageViewer(parent=self)
 
         self.editor = MultiChannelConfigurator(
             channels_label=channels_label or self.DEFAULT_CHANNELS_LABEL,
@@ -105,7 +102,7 @@ class MultiChannelImageViewer(QtWidgets.QWidget):
 
     def _on_image_ready(self):
         img = self.state.get_img()
-        self.viewer.setImage(self.state.get_midslice(img))
+        self.viewer.set_image(self.state.get_midslice(img))
 
 
 class GrayFilterEditor(QtWidgets.QWidget):
@@ -158,10 +155,7 @@ class GrayFilterEditor(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel(parent=self)
         self.label.setText(self.label_text)
 
-        viewer = ImageView(parent=self)
-        for component in (viewer.ui.histogram, viewer.ui.menuBtn, viewer.ui.roiBtn):
-            component.hide()
-        self.viewer = viewer
+        self.viewer = CustomImageViewer(parent=self)
 
         self.slider = LabeledFloatSlider(
             label_text=self.slider_label_text,
@@ -190,7 +184,7 @@ class GrayFilterEditor(QtWidgets.QWidget):
     def _on_image_ready(self):
         img = self.state.get_gray_filtered_img()
         if img is not None:
-            self.viewer.setImage(self.state.get_midslice(img))
+            self.viewer.set_image(self.state.get_midslice(img))
 
 
 class SmallObjectsFilterEditor(QtWidgets.QWidget):
@@ -202,7 +196,7 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
         threshold_label_text (str): Label for the threshold spin box.
         label (QtWidgets.QLabel): Label for the editor.
         viewer (ImageView): Image viewer widget.
-        spin_box (LabeledSpinBox): Spin box for threshold value.
+        spin_box (LabeledIntSpinBox): Spin box for threshold value.
         FILTER_MIN_VALUE (int): Minimum value for the filter threshold.
         FILTER_MAX_VALUE (int): Maximum value for the filter threshold
     """
@@ -243,12 +237,9 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel(parent=self)
         self.label.setText(self.label_text)
 
-        viewer = ImageView(parent=self)
-        for component in (viewer.ui.histogram, viewer.ui.menuBtn, viewer.ui.roiBtn):
-            component.hide()
-        self.viewer = viewer
+        self.viewer = CustomImageViewer(parent=self)
 
-        self.spin_box = LabeledSpinBox(
+        self.spin_box = LabeledIntSpinBox(
             label_text=self.threshold_label_text,
             min_value=self.FILTER_MIN_VALUE,
             max_value=self.FILTER_MAX_VALUE,
@@ -277,7 +268,7 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
     def _on_image_ready(self):
         img = self.state.get_small_objects_img()
         if img is not None:
-            self.viewer.setImage(self.state.get_midslice(img))
+            self.viewer.set_image(self.state.get_midslice(img))
 
 
 class FilterResults:

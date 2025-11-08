@@ -105,8 +105,11 @@ class ResultsDashboardStack(QtWidgets.QWidget):
         """
         self.tabs.clear()
 
+        # TODO - Add scale text
         for elem in results:
-            dashboard = ResultsDashboard(elem.img)
+            dashboard = ResultsDashboard(
+                file=elem.file_path, img=elem.img, cells_masks=elem.cells_masks
+            )
             dashboard.add_results_table(
                 summary_headers=self.summary_headers, cell_headers=self.cell_headers
             ).add_graphs_list(
@@ -118,6 +121,6 @@ class ResultsDashboardStack(QtWidgets.QWidget):
                 display_txt=self.output_display_txt,
                 dialog_title=self.output_dialog_title_txt,
                 writers=self.writers,
-            ).build()
+            ).add_scale_config().build()
 
             self.tabs.addTab(dashboard, f"{Path(elem.file_path).name}")

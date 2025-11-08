@@ -66,6 +66,7 @@ class AnalysisSummaryViewer(QtWidgets.QWidget):
             data (AnalysisSummary): Analysis summary data.
             config (AnalysisSummaryConfig): Configuration for labels.
         """
+        self.list.clear()
         self.list.add_item(
             config.avg_centroid_distance_txt, str(data.avg_centroid_distance)
         )
@@ -78,6 +79,15 @@ class AnalysisSummaryViewer(QtWidgets.QWidget):
         self.list.add_item(
             config.percent_occupied_volume_txt, str(data.percent_occupied_volume)
         )
+
+    def update_data(
+        self, data: AnalysisSummary, config: Optional[AnalysisSummaryConfig] = None
+    ):
+        if config:
+            self.data_config = config
+
+        self.data = data
+        self._setup_table(self.data, self.data_config)
 
 
 class CellAnalysisViewer(QtWidgets.QWidget):
@@ -141,8 +151,7 @@ class CellAnalysisViewer(QtWidgets.QWidget):
         Args:
             idx (int): Index of the selected cell.
         """
-        self.table.model.clear()
-        self.table.model.setHorizontalHeaderLabels(self.table.headers)
+        self.table.clear()
 
         cell = self.cells[idx]
 
@@ -168,6 +177,31 @@ class CellAnalysisViewer(QtWidgets.QWidget):
         self.table.add_item(
             self.cells_config.min_branch_length_txt, str(cell.min_branch_length)
         )
+
+    def update_data(
+        self, cells: List[CellAnalysis], config: Optional[CellAnalysisConfig] = None
+    ):
+        if config:
+            self.cells_config = config
+
+        self.cells = cells
+
+        # Update selector items without emitting index change signals
+        self.selector.blockSignals(True)
+        self.selector.clear()
+        for idx, _ in enumerate(cells):
+            self.selector.addItem(f"Cell {idx + 1}")
+
+        if not cells:
+            self.selector.blockSignals(False)
+            self.table.model.clear()
+            self.table.model.setHorizontalHeaderLabels(self.table.headers)
+            return
+
+        # Select first cell and refresh table
+        self.selector.setCurrentIndex(0)
+        self.selector.blockSignals(False)
+        self.update_table(0)
 
 
 class FullAnalysisViewer(QtWidgets.QWidget):
@@ -214,3 +248,13 @@ class FullAnalysisViewer(QtWidgets.QWidget):
         layout.addWidget(self.analysis)
         layout.addWidget(self.cells)
         self.setLayout(layout)
+
+    def update_data(
+        self,
+        summary: AnalysisSummary,
+        cells: List[CellAnalysis],
+        summary_config: Optional[AnalysisSummaryConfig] = None,
+        cells_config: Optional[CellAnalysisConfig] = None,
+    ):
+        self.analysis.update_data(summary, summary_config)
+        self.cells.update_data(cells, cells_config)

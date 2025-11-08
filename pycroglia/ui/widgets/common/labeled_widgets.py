@@ -2,7 +2,7 @@ from PyQt6 import QtWidgets, QtCore
 from typing import Optional
 
 
-class LabeledSpinBox(QtWidgets.QWidget):
+class LabeledIntSpinBox(QtWidgets.QWidget):
     """SpinBox with label for integer values.
 
     Attributes:
@@ -10,6 +10,8 @@ class LabeledSpinBox(QtWidgets.QWidget):
         spin_box (QtWidgets.QSpinBox): Spin box widget.
         valueChanged (QtCore.pyqtSignal): Signal emitted when the value changes.
     """
+
+    MAX_INT_SIZE = 2147483647
 
     # Signals
     valueChanged = QtCore.pyqtSignal(int)
@@ -38,8 +40,11 @@ class LabeledSpinBox(QtWidgets.QWidget):
         self.spin_box = QtWidgets.QSpinBox()
         if min_value:
             self.spin_box.setMinimum(min_value)
+
         if max_value:
             self.spin_box.setMaximum(max_value)
+        else:
+            self.spin_box.setMaximum(self.MAX_INT_SIZE)
         self.spin_box.valueChanged.connect(self._value_changed)
 
         # Layout
@@ -69,6 +74,78 @@ class LabeledSpinBox(QtWidgets.QWidget):
 
         Returns:
             int: Current value.
+        """
+        return self.spin_box.value()
+
+
+class LabeledFloatSpinBox(QtWidgets.QWidget):
+    """SpinBox with label for float values.
+
+    Attributes:
+        label (QtWidgets.QLabel): Label widget.
+        spin_box (QtWidgets.QSpinBox): Spin box widget.
+        valueChanged (QtCore.pyqtSignal): Signal emitted when the value changes.
+    """
+
+    # Signals
+    valueChanged = QtCore.pyqtSignal(float)
+
+    def __init__(
+        self,
+        label_text: str,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
+        """Initialize the LabeledSpinBox.
+
+        Args:
+            label_text (str): Label text.
+            min_value (Optional[float]): Minimum allowed value.
+            max_value (Optional[float]): Maximum allowed value.
+            parent (Optional[QtWidgets.QWidget]): Parent widget.
+        """
+        super().__init__(parent)
+
+        # Widgets
+        self.label = QtWidgets.QLabel()
+        self.label.setText(label_text)
+
+        self.spin_box = QtWidgets.QDoubleSpinBox()
+        if min_value:
+            self.spin_box.setMinimum(min_value)
+
+        if max_value:
+            self.spin_box.setMaximum(max_value)
+        self.spin_box.valueChanged.connect(self._value_changed)
+
+        # Layout
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.spin_box)
+        self.setLayout(layout)
+
+    def _value_changed(self):
+        """Emit the signal when the value changes."""
+        self.valueChanged.emit(self.spin_box.value())
+
+    def set_max(self, max_value: float):
+        """Set the maximum allowed value.
+
+        Args:
+            max_value (float): New maximum value.
+        """
+        current_value = self.spin_box.value()
+        self.spin_box.setMaximum(max_value)
+
+        if current_value > max_value:
+            self.spin_box.setValue(current_value)
+
+    def get_value(self) -> float:
+        """Get the current value of the SpinBox.
+
+        Returns:
+            float: Current value.
         """
         return self.spin_box.value()
 

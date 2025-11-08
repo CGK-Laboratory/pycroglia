@@ -47,6 +47,10 @@ class Pool:
         """Start execution of all submitted tasks."""
         return self.backend.run()
 
+    def cancel(self) -> None:
+        """Cancels execution of all submitted tasks."""
+        return self.backend.cancel()
+
     def join(self) -> None:
         """Block until all tasks are finished."""
         return self.backend.join()

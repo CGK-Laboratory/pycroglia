@@ -1,4 +1,5 @@
 from numpy.typing import NDArray
+from typing import List
 
 from dataclasses import dataclass
 
@@ -17,3 +18,4 @@ class ImgWithPathResults:
 
     file_path: str
     img: NDArray
+    cells_masks: List[NDArray]
