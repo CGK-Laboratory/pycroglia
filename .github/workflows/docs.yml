@@ -30,7 +30,7 @@ jobs:
 
       - name: Generate API documentation
         run: |
-          uv run sphinx-apidoc -E -o docs/api pycroglia --force --exclude "*/tests/*"
+          uv run sphinx-apidoc -E -o docs/api pycroglia
 
       - name: Build HTML documentation
         run: |
