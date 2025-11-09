@@ -270,14 +270,14 @@ class ResultsDashboard(QtWidgets.QWidget):
             vox_scale=self.scales.get_vox_scale(),
         )
 
-    def _preview_clicked(self, graphs_list: List[str]):
+    def _preview_clicked(self, selected_plots: List[str]):
         """Handle preview requests coming from the GraphSelectionWidget.
 
         Delegates the list of selected graph names to the state's generate_graphs
         implementation so the graphs are generated or displayed.
 
         Args:
-            graphs_list (List[str]): Names of graphs requested for preview.
+            selected_plots (List[str]): Names of graphs requested for preview.
         """
 
         cells = self._state.get_per_cell()
