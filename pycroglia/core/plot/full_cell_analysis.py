@@ -45,7 +45,9 @@ class FullCellAnalysisPlot:
             simplices = np.asarray(fca["convex_simplices"][i], dtype=np.int32)
 
             # Build a triangular mesh for PyVista
-            faces = np.hstack([np.full((simplices.shape[0], 1), 3), simplices]).flatten()
+            faces = np.hstack(
+                [np.full((simplices.shape[0], 1), 3), simplices]
+            ).flatten()
             mesh = pv.PolyData(points, faces)
 
             plotter = pv.Plotter()
@@ -61,7 +63,7 @@ class FullCellAnalysisPlot:
             )
 
             plotter.add_text(
-                f"Cell {i+1}\nVolume: {fca['convex_volumes'][i]:.3f}\n"
+                f"Cell {i + 1}\nVolume: {fca['convex_volumes'][i]:.3f}\n"
                 f"Complexity: {fca['cell_complexities'][i]:.3f}",
                 position="upper_left",
                 font_size=10,
