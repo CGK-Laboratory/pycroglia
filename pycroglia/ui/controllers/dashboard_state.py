@@ -25,23 +25,23 @@ class ResultsDashboardTextConfig(QtCore.QObject):
     def _make_default_summary_config() -> AnalysisSummaryConfig:
         return AnalysisSummaryConfig(
             file_txt="",
-            avg_centroid_distance_txt="Avg centroid distance",
-            total_territorial_volume_txt="Total territorial volume",
-            total_unoccupied_volume_txt="Total unoccupied volume",
-            percent_occupied_volume_txt="Percent occupied volume",
+            avg_centroid_distance_txt="Average centroid distance (μm)",
+            total_territorial_volume_txt="Total territorial volume (μm³)",
+            total_unoccupied_volume_txt="Total unoccupied volume (μm³)",
+            percent_occupied_volume_txt="Percent occupied volume (μm³)",
         )
 
     @staticmethod
     def _make_default_per_cell_config() -> CellAnalysisConfig:
         return CellAnalysisConfig(
-            cell_territory_volume_txt="Cell territory volume",
-            cell_volume_txt="Cell volume",
+            cell_territory_volume_txt="Cell territory volume (μm³)",
+            cell_volume_txt="Cell volume (μm³)",
             ramification_index_txt="Ramification index",
             number_of_endpoints_txt="Number of endpoints",
             number_of_branches_txt="Number of branches",
-            avg_branch_length_txt="Avg branch length",
-            max_branch_length_txt="Max branch length",
-            min_branch_length_txt="Min branch length",
+            avg_branch_length_txt="Avg branch length (μm)",
+            max_branch_length_txt="Max branch length (μm)",
+            min_branch_length_txt="Min branch length (μm)",
         )
 
     def __init__(
@@ -94,12 +94,14 @@ class QCounter(QtCore.QObject):
 
 class MetricsDAG(QtCore.QObject):
     resultsAvailable = QtCore.pyqtSignal()
+    progressUpdated = QtCore.pyqtSignal(int, int)  # (completed, total)
 
     def __init__(
         self,
         masks: List[NDArray],
         scale: float = 1.0,
         z_scale: float = 1.0,
+        vox_scale: float = 1.0,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         super().__init__(parent=parent)
@@ -110,6 +112,10 @@ class MetricsDAG(QtCore.QObject):
         # Pool
         self._qt_pool = QPool()
         self._qt_branch_pool = QPool()
+
+        # Progress counters
+        self._total_tasks = 0
+        self._completed_tasks = 0
 
         # Barriers
         self._all_tasks = QCounter(4)
@@ -125,7 +131,7 @@ class MetricsDAG(QtCore.QObject):
         self._masks = copy.copy(masks)
         self._scale = scale
         self._z_scale = z_scale
-        self._vox_scale = scale * scale * z_scale
+        self._vox_scale = vox_scale
         self._n_cells = len(self._masks)
         if self._n_cells == 0:
             raise ValueError("No image to process")
@@ -135,12 +141,16 @@ class MetricsDAG(QtCore.QObject):
         self._all_tasks.reached.connect(self._all_tasks_finished)
         self._all_cells.reached.connect(self._all_branches_finished)
 
-    def has_finished(self) -> bool:
-        return self._finished
+    def _on_qpool_task_finished(self, task_id: str) -> None:
+        """Internal slot invoked when any QPool task finishes.
+
+        Updates internal completed counter and emits aggregated progress.
+        """
+        self._completed_tasks += 1
+        self.progressUpdated.emit(self._completed_tasks, self._total_tasks)
 
     @QtCore.pyqtSlot(dict)
     def _add_centroids_results(self, result: dict[str, Any]):
-        print(f"Number of cells passed {self._n_cells}")
         self._centroids = result
 
         self._all_tasks.add()
@@ -156,12 +166,15 @@ class MetricsDAG(QtCore.QObject):
                 zslices=self._z_planes,
             )
 
+            # count branch tasks and provide a finished callback so we can track progress
+            self._total_tasks += 1
             self._qt_branch_pool.submit(
                 computable=analysis,
                 on_result=lambda res, idx=i: self._add_branch_result(idx, res),
                 on_error=lambda msg, exc, idx=i: self._on_branch_analysis_error(
                     msg, exc, idx
                 ),
+                on_finish=self._on_qpool_task_finished,
             )
 
         self._qt_branch_pool.run()
@@ -178,13 +191,11 @@ class MetricsDAG(QtCore.QObject):
 
     @QtCore.pyqtSlot(int, dict)
     def _add_branch_result(self, idx: int, result: dict[str, Any]):
-        print(f"Finished {idx}")
         self._branch_analysis[idx] = result
         self._all_cells.add()
 
     @QtCore.pyqtSlot(str, Exception, int)
     def _on_branch_analysis_error(self, msg: str, exc: Exception, idx: int):
-        print(f"Cell {idx}: Error {msg} with {exc}")
         self._branch_analysis[idx] = b_analysis.get_empty_branch_analysis()
         self._all_cells.add()
 
@@ -198,6 +209,10 @@ class MetricsDAG(QtCore.QObject):
         self.resultsAvailable.emit()
 
     def run(self):
+        # reset counters for a fresh run
+        self._total_tasks = 0
+        self._completed_tasks = 0
+
         list_of_computables = [
             (
                 centroids.Centroids(
@@ -217,8 +232,14 @@ class MetricsDAG(QtCore.QObject):
             ),
         ]
 
+        # submit main computables and count them
         for computable in list_of_computables:
-            self._qt_pool.submit(computable=computable[0], on_result=computable[1])
+            self._total_tasks += 1
+            self._qt_pool.submit(
+                computable=computable[0],
+                on_result=computable[1],
+                on_finish=self._on_qpool_task_finished,
+            )
 
         self._qt_pool.run()
 
@@ -317,6 +338,14 @@ class MetricsDAG(QtCore.QObject):
 
 class ResultsDashboardState(QtCore.QObject):
     resultsChanged = QtCore.pyqtSignal()
+    def cancel(self):
+        self._qt_pool.cancel()
+        self._qt_branch_pool.cancel()
+
+
+class ResultsDashboardState(QtCore.QObject):
+    resultsChanged = QtCore.pyqtSignal()
+    progressChanged = QtCore.pyqtSignal(int, int)  # forwarded (completed, total)
 
     @staticmethod
     def _make_default_summary() -> AnalysisSummary:
@@ -363,17 +392,24 @@ class ResultsDashboardState(QtCore.QObject):
         self._summary_state = self._make_default_summary()
         self._summary_state.file = self._file
         self._per_cell_state = self._make_default_per_cell()
+
         # Executions
         self._execution: Optional[MetricsDAG] = None
 
-    def calculate_results(self, scale: float = 1.0, z_scale: float = 1.0):
-        # TODO - Handle cancellation TOP TOP PRIORITY - SHOULD ADD LOGIC TO DAG
-        # TODO - Check if parent is Ok (?
+    def calculate_results(
+        self, scale: float = 1.0, z_scale: float = 1.0, vox_scale: float = 1.0
+    ):
         self._execution = MetricsDAG(
             masks=self._cells_masks,
             scale=scale,
             z_scale=z_scale,
+            vox_scale=vox_scale,
             parent=self.parent(),
+        )
+
+        # forward progress events to outside consumers
+        self._execution.progressUpdated.connect(
+            lambda c, t: self.progressChanged.emit(c, t)
         )
 
         self._execution.resultsAvailable.connect(self._handle_available_results)
@@ -384,7 +420,7 @@ class ResultsDashboardState(QtCore.QObject):
         self._summary_state = self._execution.get_analysis_summary(self._file)
         self._per_cell_state = self._execution.get_per_cell_analysis()
 
-        # TODO - Handle how to delete this in a good way
+        self._execution.cancel()
         self._execution = None
 
         self.resultsChanged.emit()

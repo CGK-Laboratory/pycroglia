@@ -34,7 +34,7 @@ class CellSelectorStack(QtWidgets.QWidget):
     # UI Text Constants
     DEFAULT_HEADERS_TEXT = ["Cell number", "Cell size"]
     DEFAULT_REMOVE_BUTTON_TEXT = "Remove Cell"
-    DEFAULT_SIZE_LABEL_TEXT = "Cell Size"
+    DEFAULT_SIZE_LABEL_TEXT = "Cell Size (pixels)"
     DEFAULT_SIZE_BUTTON_TEXT = "Remove smaller than"
     DEFAULT_PREVIEW_BUTTON_TEXT = "Preview"
     DEFAULT_BORDER_CHECKBOX_TEXT = "Remove border cells"

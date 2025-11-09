@@ -28,6 +28,14 @@ class DashboardGraphsGenerator(QtCore.QObject):
         graphs_list: Optional[List[str]] = None,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
+        """Initialize the graphs generator.
+
+        Args:
+            img (NDArray): Source image array.
+            cells (List[NDArray]): Per-cell masks or arrays.
+            graphs_list (Optional[List[str]]): Optional override list of graph names.
+            parent (Optional[QtWidgets.QWidget]): Optional Qt parent.
+        """
         super().__init__(parent=parent)
 
         # State

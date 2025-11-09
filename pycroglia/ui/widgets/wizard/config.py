@@ -30,14 +30,14 @@ DEFAULT_CONFIG = {
         "read_button_text": "Load Image",
         "channels_label": "Channels:",
         "channel_of_interest_label": "Channel of Interest:",
-        "gray_filter_label": "Gray Filter",
-        "gray_filter_slider_label": "Threshold:",
-        "small_objects_filter_label": "Small Objects Filter",
-        "small_objects_threshold_label": "Min Size:",
+        "gray_filter_label": "Threshold Image",
+        "gray_filter_slider_label": "Threshold (pixel brightness)",
+        "small_objects_filter_label": "Noise Filtered Image",
+        "small_objects_threshold_label": "Min Size (pixels):",
     },
     # Segmentation editor page
     "segmentation_editor": {
-        "segmentation_headers": ["Cell Number", "Cell Size"],
+        "segmentation_headers": ["Cell Number", "Cell Size (pixels)"],
         "rollback_button_text": "Roll back segmentation",
         "segmentation_button_text": "Segment Cell",
         "progress_title": "Segmenting cell...",
@@ -45,9 +45,9 @@ DEFAULT_CONFIG = {
     },
     # Cell Selector
     "cell_selector": {
-        "headers": ["Cell Number", "Cell Size"],
+        "headers": ["Cell Number", "Cell Size (pixels)"],
         "remove_button_text": "Remove Cell",
-        "size_label_text": "Cell Size",
+        "size_label_text": "Cell Size (pixels)",
         "size_button_text": "Remove smaller than",
         "preview_button_text": "Preview",
         "border_checkbox_text": "Remove border cells",
