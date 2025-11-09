@@ -179,6 +179,10 @@ class MetricsDAG(QtCore.QObject):
 
         self._qt_branch_pool.run()
 
+    def cancel(self):
+        self._qt_pool.cancel()
+        self._qt_branch_pool.cancel()
+        
     @QtCore.pyqtSlot(dict)
     def _add_territorial_volume_results(self, result: dict[str, Any]):
         self._territorial_volume = result
@@ -328,20 +332,22 @@ class MetricsDAG(QtCore.QObject):
                     avg_branch_length=avg_branch_length,
                     max_branch_length=max_branch_length,
                     min_branch_length=min_branch_length,
+                    full_cell_analysis=full_cell_analysis,
+                    branch_analysis=branch_results,
                 )
             )
 
         return per_cell
 
-    def cancel(self):
-        self._qt_pool.cancel()
-        self._qt_branch_pool.cancel()
 
 
 class ResultsDashboardState(QtCore.QObject):
     resultsChanged = QtCore.pyqtSignal()
     progressChanged = QtCore.pyqtSignal(int, int)  # forwarded (completed, total)
 
+    resultsChanged = QtCore.pyqtSignal()
+
+        
     @staticmethod
     def _make_default_summary() -> AnalysisSummary:
         return AnalysisSummary(
@@ -364,6 +370,8 @@ class ResultsDashboardState(QtCore.QObject):
                 avg_branch_length=0,
                 max_branch_length=0,
                 min_branch_length=0,
+                full_cell_analysis={},
+                branch_analysis={},
             )
         ]
 

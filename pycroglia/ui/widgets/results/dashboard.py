@@ -13,6 +13,7 @@ from pycroglia.ui.widgets.results.graphs import GraphSelectionWidget
 from pycroglia.ui.widgets.results.output import OutputConfigurator
 from pycroglia.ui.widgets.results.scale import ScaleConfigWidget
 from pycroglia.ui.widgets.results.viewers import FullAnalysisViewer
+import copy
 
 
 class ResultsDashboard(QtWidgets.QWidget):
@@ -65,6 +66,9 @@ class ResultsDashboard(QtWidgets.QWidget):
         self.graphs: Optional[GraphSelectionWidget] = None
         self.scales: Optional[ScaleConfigWidget] = None
         self.configurator: Optional[OutputConfigurator] = None
+        self.cell_masks = copy.copy(cells_masks)
+        # Connections
+        self._state.resultsChanged.connect(self._update_results_view)
 
         # Progress bar for tasks (hidden until work starts)
         self._progress_bar = QtWidgets.QProgressBar(parent=self)
@@ -266,16 +270,25 @@ class ResultsDashboard(QtWidgets.QWidget):
             vox_scale=self.scales.get_vox_scale(),
         )
 
-    def _preview_clicked(self, graphs_list: List[str]):
+    def _preview_clicked(self, selected_plots: List[str]):
         """Handle preview requests coming from the GraphSelectionWidget.
 
         Delegates the list of selected graph names to the state's generate_graphs
         implementation so the graphs are generated or displayed.
 
         Args:
-            graphs_list (List[str]): Names of graphs requested for preview.
+            selected_plots (List[str]): Names of graphs requested for preview.
         """
-        self._graphs_generator.generate_graphs(graphs_list)
+
+        cells = self._state.get_per_cell()
+        self._graphs_generator.generate_plots(
+            selected_plots,
+            self.cell_masks,
+            cells[0].branch_analysis,
+            cells[0].full_cell_analysis,
+            self.scales.get_scale(),
+            self.scales.get_z_scale(),
+        )
 
     def _update_results_view(self):
         """Refresh the results viewer widgets with the latest computed data.

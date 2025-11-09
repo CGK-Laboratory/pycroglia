@@ -22,6 +22,7 @@ class BranchpointsCellPlot:
 
     def __init__(
         self,
+        cell_idx: int,
         fullmask: list[NDArray],
         allbranch: NDArray,
         scale: float,
@@ -91,7 +92,7 @@ class BranchpointsCellPlot:
             plotter.set_background("white")
             plotter.enable_eye_dome_lighting()
             plotter.camera.zoom(1.2)
-            plotter.add_text(f"Branchpoints Cell {i}", font_size=10)
+            plotter.add_text(f"Branchpoints Cell {cell_idx}", font_size=10)
 
             self.plotters.append(plotter)
 

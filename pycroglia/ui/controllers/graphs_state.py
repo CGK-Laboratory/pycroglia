@@ -1,29 +1,18 @@
-from typing import Optional, List
+from typing import Any, Optional, List
 from numpy.typing import NDArray
 
 from PyQt6 import QtCore, QtWidgets
+from pycroglia.core.plot.branch import BranchpointsCellPlot
+from pycroglia.core.plot.endpoints import EndpointsCellPlot
+
+from pycroglia.core.plot.full_cell_analysis import FullCellAnalysisPlot
+from pycroglia.core.plot.original_cell import OriginalCellPlot
+from pycroglia.core.plot.skeleton import SkeletonCellPlot
 
 
 class DashboardGraphsGenerator(QtCore.QObject):
-    """Utility to provide available graph names and generate requested graphs.
-
-    This lightweight controller holds a reference to the image and cell masks
-    and exposes a list of available graph types. The generate_graphs method is
-    intended to be implemented to create or display the requested graphs.
-
-    Attributes:
-        _img (NDArray): Source image used for graph generation.
-        _cells (List[NDArray]): Per-cell masks used by some graph algorithms.
-        _graphs_list (List[str]): Names of graphs available for preview/generation.
-    """
-
     @staticmethod
     def _make_default_graphs_list():
-        """Return a default list of graph names.
-
-        Returns:
-            List[str]: Default graph names provided by the dashboard.
-        """
         return [
             "Convex cells Images",
             "Skeleton Image",
@@ -57,23 +46,51 @@ class DashboardGraphsGenerator(QtCore.QObject):
         self._graphs_list = graphs_list or self._make_default_graphs_list()
 
     def get_graphs_list(self) -> List[str]:
-        """Return the list of available graph names.
-
-        Returns:
-            List[str]: List of graph names suitable for the selector widget.
-        """
         return self._graphs_list
 
-    def generate_graphs(self, list_of_graphs: List[str]):
-        """Generate or display the requested graphs.
+    def generate_plots(
+        self,
+        selected_plots: list[str],
+        masks: list[NDArray],
+        branch_analysis: dict[int, Any],
+        full_cell_analysis: dict[str, Any],
+        scale: float,
+        zscale: float,
+    ):
+        global_plot_map = {
+            "Convex cells Images": lambda: FullCellAnalysisPlot(
+                full_cell_analysis, masks
+            ),
+            "Original Cell Image": lambda: OriginalCellPlot(masks, scale, zscale),
+        }
 
-        This method is a placeholder and should perform the actual graph
-        generation or dispatch to the visualization layer.
+        per_cell_plot_map = {
+            "Skeleton Image": lambda i: SkeletonCellPlot(
+                i + 1, branch_analysis[i]["fullmasks"], scale, zscale
+            ),
+            "End Image": lambda i: EndpointsCellPlot(
+                i + 1,
+                branch_analysis[i]["fullmasks"],
+                branch_analysis[i]["endpoints"],
+                scale,
+                zscale,
+            ),
+            "Branches Image": lambda i: BranchpointsCellPlot(
+                i + 1,
+                branch_analysis[i]["fullmasks"],
+                branch_analysis[i]["allbranch"],
+                scale,
+                zscale,
+            ),
+        }
 
-        Args:
-            list_of_graphs (List[str]): Names of graphs requested.
+        for plot_name, plot_factory in global_plot_map.items():
+            if plot_name in selected_plots:
+                plotter = plot_factory()
+                plotter.show_all()
 
-        Returns:
-            None
-        """
-        pass
+        for i in range(len(masks)):
+            for plot_name, plot_factory in per_cell_plot_map.items():
+                if plot_name in selected_plots:
+                    plotter = plot_factory(i)
+                    plotter.show_all()

@@ -15,6 +15,8 @@ KEY_MAX_BRANCH_LENGTH = "max_branch_length"
 KEY_MIN_BRANCH_LENGTH = "min_branch_length"
 KEY_AVG_BRANCH_LENGTH = "avg_branch_length"
 KEY_BRANCH_POINTS = "branch_points"
+KEY_ALLBRANCH = "allbranch"
+KEY_FULLMASKS = "fullmasks"
 
 
 class EmptySkeleton(Exception):
@@ -148,7 +150,6 @@ class BranchAnalysis:
 
         masklist = np.zeros((*bounded_skel.shape, n_endpoints), dtype=bool)
         arclength_of_each_branch = np.zeros(n_endpoints, dtype=float)
-        fullmasks = []
         for j, i1 in enumerate(endpoints_list):
             # Connect current endpoint to centroid
             start = connection.Point(z=i1[0], y=i1[1], x=i1[2])
@@ -183,9 +184,7 @@ class BranchAnalysis:
 
         # Combine all branch masks
         fullmask = np.sum(masklist.astype(int), axis=3)
-        fullmasks.append(fullmask)
         fullmask[fullmask > 3] = 4  # cap at quaternary connectivity
-        fullmasks.append(fullmask)
         quaternary = fullmask == 1
 
         branch_points = np.zeros((*bounded_skel.shape, 4), dtype=bool)
@@ -209,6 +208,8 @@ class BranchAnalysis:
         num_branchpoints = branch_points.shape[0]
 
         return {
+            KEY_ALLBRANCH: allbranch,
+            KEY_FULLMASKS: [fullmask],
             KEY_ENDPOINTS: endpoints,
             KEY_NUM_BRANCHPOINTS: num_branchpoints,
             KEY_MAX_BRANCH_LENGTH: max_branch_length,
