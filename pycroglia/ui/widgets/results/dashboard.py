@@ -66,8 +66,16 @@ class ResultsDashboard(QtWidgets.QWidget):
         self.scales: Optional[ScaleConfigWidget] = None
         self.configurator: Optional[OutputConfigurator] = None
 
+        # Progress bar for tasks (hidden until work starts)
+        self._progress_bar = QtWidgets.QProgressBar(parent=self)
+        self._progress_bar.setVisible(False)
+        self._progress_bar.setMinimum(0)
+        self._progress_bar.setMaximum(1)
+        self._progress_bar.setTextVisible(True)
+
         # Connections
         self._state.resultsChanged.connect(self._update_results_view)
+        self._state.progressChanged.connect(self._on_progress_changed)
 
     def add_results_table(
         self,
@@ -101,6 +109,20 @@ class ResultsDashboard(QtWidgets.QWidget):
         z_scale_txt: Optional[str] = None,
         button_txt: Optional[str] = None,
     ):
+        """Create and attach the scale configuration widget.
+
+        The ScaleConfigWidget provides controls for scale/z-scale and a
+        Calculate button. The dashboard connects the widget's click signal to
+        start on-demand computation.
+
+        Args:
+            scale_txt (Optional[str]): Optional label for the scale control.
+            z_scale_txt (Optional[str]): Optional label for the z-scale control.
+            button_txt (Optional[str]): Optional text for the calculate button.
+
+        Returns:
+            ResultsDashboard: self, to allow chaining.
+        """
         self.scales = ScaleConfigWidget(
             scale_txt=scale_txt,
             z_scale_txt=z_scale_txt,
@@ -185,6 +207,7 @@ class ResultsDashboard(QtWidgets.QWidget):
         first_row = QtWidgets.QVBoxLayout()
         first_row.addWidget(self.table)
         first_row.addWidget(self.scales)
+        first_row.addWidget(self._progress_bar)
 
         second_row = QtWidgets.QVBoxLayout()
         second_row.addWidget(self.graphs)
@@ -230,6 +253,13 @@ class ResultsDashboard(QtWidgets.QWidget):
         return self
 
     def _compute_on_demand(self):
+        """Start on-demand computation using current scale values.
+
+        Disables the calculate button and delegates work to the ResultsDashboardState.
+        The state will emit progress/results signals that the dashboard listens to
+        to update UI and re-enable the button when finished.
+        """
+        self.scales.disable_button()
         self._state.calculate_results(
             scale=self.scales.get_scale(),
             z_scale=self.scales.get_z_scale(),
@@ -248,6 +278,32 @@ class ResultsDashboard(QtWidgets.QWidget):
         self._graphs_generator.generate_graphs(graphs_list)
 
     def _update_results_view(self):
+        """Refresh the results viewer widgets with the latest computed data.
+
+        Pulls the summary and per-cell results from the internal state and
+        updates the FullAnalysisViewer. Also re-enables the calculate button
+        since computation completion causes results to be available.
+        """
         self.table.update_data(
             summary=self._state.get_summary(), cells=self._state.get_per_cell()
         )
+        self.scales.enable_button()
+
+    @QtCore.pyqtSlot(int, int)
+    def _on_progress_changed(self, completed: int, total: int):
+        """Update the progress bar from state progress events.
+
+        The progress bar is shown while total > 0 and hidden again when
+        completed reaches total.
+        """
+        if total <= 0:
+            self._progress_bar.setVisible(False)
+            return
+
+        # update range/value and ensure the bar is visible while running
+        self._progress_bar.setMaximum(total)
+        self._progress_bar.setValue(completed)
+        self._progress_bar.setVisible(True)
+
+        if completed >= total:
+            self._progress_bar.setVisible(False)
