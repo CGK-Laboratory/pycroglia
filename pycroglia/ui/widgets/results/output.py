@@ -52,6 +52,9 @@ class OutputConfigurator(QtWidgets.QWidget):
         """
         super().__init__(parent=parent)
 
+        # State
+        self.results_ready = False
+
         # Widgets
         self.writer_selector = OutputWriterSelector(
             writers=writers if writers else OutputWriter.get_writers(),
@@ -89,11 +92,16 @@ class OutputConfigurator(QtWidgets.QWidget):
         layout.addWidget(self.button)
         self.setLayout(layout)
 
+    def set_results_ready(self, ready: bool):
+        self.results_ready = ready
+        self._on_status_changed()
+
     def _on_status_changed(self):
         if (
             self.writer_selector.has_selected_writers()
             and self.folder_selector.has_folder_selected()
             and self.filename_input.has_text()
+            and self.results_ready
         ):
             self.button.setEnabled(True)
         else:

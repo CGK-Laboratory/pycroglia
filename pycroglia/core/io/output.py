@@ -2,6 +2,8 @@ import json
 import re
 import unicodedata
 import inspect
+import numbers
+import numpy as np
 
 from abc import ABC
 from dataclasses import dataclass
@@ -292,6 +294,7 @@ class ExcelOutput(OutputWriter):
         """
         ws_per_cell = wb.create_sheet(title=self.per_cell_title)
         headers = [
+            "Index",
             self.per_cell_config.cell_territory_volume_txt,
             self.per_cell_config.cell_volume_txt,
             self.per_cell_config.ramification_index_txt,
@@ -303,9 +306,10 @@ class ExcelOutput(OutputWriter):
         ]
 
         ws_per_cell.append(headers)
-        for cell in per_cell:
+        for i, cell in enumerate(per_cell):
             ws_per_cell.append(
                 [
+                    int(i),
                     float(cell.cell_territory_volume),
                     float(cell.cell_volume),
                     float(cell.ramification_index),
@@ -365,8 +369,66 @@ class JSONOutput(OutputWriter):
         complete_path = self._create_path(file_path)
         json_data = self._convert_to_dict(data)
 
+        # Normalize any non-native JSON types (e.g. numpy.uint64, numpy arrays)
+        json_data = self._normalize_json_compatible(json_data)
+
         with open(complete_path, "w") as f:
             json.dump(json_data, f, indent=self.indent)
+
+    def _normalize_json_compatible(self, obj: Any) -> Any:
+        """Recursively convert objects into JSON-serializable native Python types.
+
+        This handles numpy scalar types (e.g. uint64, int64, float32), numpy arrays,
+        and traverses lists/tuples/sets/dicts to normalize nested structures.
+
+        Args:
+            obj: The object to normalize.
+
+        Returns:
+            A JSON-serializable representation of obj using native Python types.
+        """
+        # Primitives that json handles directly
+        if obj is None or isinstance(obj, (str, bool)):
+            return obj
+
+        if isinstance(obj, numbers.Integral) and not isinstance(obj, bool):
+            return int(obj)
+        if isinstance(obj, numbers.Real) and not isinstance(obj, bool):
+            return float(obj)
+
+        # Numpy-specific conversions when numpy is available
+        if np is not None:
+            # numpy scalar (np.integer, np.floating, np.bool_)
+            if isinstance(obj, np.generic):
+                # np.bool_ is subclass of np.generic but not numbers.Integral/Real reliably
+                if isinstance(obj, (np.integer,)):
+                    return int(obj)
+                if isinstance(obj, (np.floating,)):
+                    return float(obj)
+                if isinstance(obj, (np.bool_,)):
+                    return bool(obj)
+
+            # numpy arrays -> lists
+            if isinstance(obj, np.ndarray):
+                return self._normalize_json_compatible(obj.tolist())
+
+        # Collections
+        if isinstance(obj, dict):
+            return {str(k): self._normalize_json_compatible(v) for k, v in obj.items()}
+
+        if isinstance(obj, (list, tuple, set)):
+            return [self._normalize_json_compatible(v) for v in obj]
+
+        # Fallback for dataclass-like or other objects: try to convert via dict or attributes
+        # If it's dataclass-like (has __dict__), normalize that
+        try:
+            if hasattr(obj, "__dict__"):
+                return self._normalize_json_compatible(vars(obj))
+        except Exception:
+            pass
+
+        # Last resort: convert to string
+        return str(obj)
 
     def _create_path(self, path: str) -> str:
         """Ensure the file path has the correct JSON extension.
