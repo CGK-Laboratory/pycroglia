@@ -44,6 +44,9 @@ class FolderSelector(QtWidgets.QWidget):
         self.dialog_title = dialog_title
         self.dialog_path = dialog_path
 
+        # State
+        self._folder_selected = None
+
         # Widgets
         self.label = QtWidgets.QLabel(parent=self)
         self.label.setText(self.label_text)
@@ -70,5 +73,12 @@ class FolderSelector(QtWidgets.QWidget):
             parent=self, caption=self.dialog_title, directory=self.dialog_path
         )
         if folder_path:
+            self._folder_selected = folder_path
             self.path_display.setText(folder_path)
             self.folderSelected.emit(folder_path)
+
+    def has_folder_selected(self) -> bool:
+        return self._folder_selected is not None
+
+    def get_selected_folder(self) -> Optional[str]:
+        return self._folder_selected

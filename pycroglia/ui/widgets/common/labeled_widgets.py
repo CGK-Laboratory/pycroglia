@@ -315,3 +315,93 @@ class LabeledFloatSlider(QtWidgets.QWidget):
         """
         int_value = int(round((float_value - self._min) / self._step))
         self.slider.setValue(int_value)
+
+
+class LabeledLineEdit(QtWidgets.QWidget):
+    """LineEdit with a label for short text input.
+
+    This widget pairs a QLabel with a QLineEdit and exposes a valueChanged signal
+    that emits the current text whenever it changes.
+
+    Attributes:
+        label (QtWidgets.QLabel): Label describing the input.
+        line_edit (QtWidgets.QLineEdit): The text input widget.
+        valueChanged (QtCore.pyqtSignal): Signal emitted with the current text on change.
+    """
+
+    valueChanged = QtCore.pyqtSignal(str)
+
+    def __init__(
+        self,
+        label_text: str,
+        initial_text: Optional[str] = None,
+        placeholder: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
+        """Initialize the labeled line edit.
+
+        Args:
+            label_text (str): Text shown in the label.
+            initial_text (Optional[str]): Initial text to populate the line edit.
+            placeholder (Optional[str]): Placeholder text for the line edit.
+            parent (Optional[QtWidgets.QWidget]): Optional parent widget.
+        """
+        super().__init__(parent)
+
+        self.label = QtWidgets.QLabel(label_text, parent=self)
+
+        self.line_edit = QtWidgets.QLineEdit(parent=self)
+        if initial_text is not None:
+            self.line_edit.setText(initial_text)
+        if placeholder is not None:
+            self.line_edit.setPlaceholderText(placeholder)
+
+        self.line_edit.textChanged.connect(self._on_text_changed)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.line_edit)
+        self.setLayout(layout)
+
+    def _on_text_changed(self, text: str):
+        """Internal slot called when the text changes; emits valueChanged.
+
+        Args:
+            text (str): Current text of the line edit.
+        """
+        self.valueChanged.emit(text)
+
+    def set_text(self, text: str) -> None:
+        """Set the current text in the line edit.
+
+        Args:
+            text (str): Text to set.
+        """
+        self.line_edit.setText(text)
+
+    def get_text(self) -> str:
+        """Return the current text from the line edit.
+
+        Returns:
+            str: Current text.
+        """
+        return self.line_edit.text()
+
+    def set_placeholder(self, text: str) -> None:
+        """Set the placeholder text for the line edit.
+
+        Args:
+            text (str): Placeholder text.
+        """
+        self.line_edit.setPlaceholderText(text)
+
+    def set_enabled(self, enabled: bool) -> None:
+        """Enable or disable the line edit control.
+
+        Args:
+            enabled (bool): If True the control is enabled; otherwise disabled.
+        """
+        self.line_edit.setEnabled(enabled)
+
+    def has_text(self) -> bool:
+        return len(self.line_edit.text()) > 0

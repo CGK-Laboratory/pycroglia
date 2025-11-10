@@ -5,18 +5,19 @@
 
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'pycroglia'
-copyright = '2025, CKG Labs'
-authors = ['Juan Aguirre', 'Federico Ramos']
+project = "pycroglia"
+copyright = "2025, CKG Labs"
+authors = ["Juan Aguirre", "Federico Ramos"]
 author = ", ".join(authors)
 
-version = '0.0.1'
-release = '0.0.1'
+version = "0.0.1"
+release = "0.0.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -24,10 +25,10 @@ release = '0.0.1'
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.napoleon",       # supports Google/NumPy style docstrings
+    "sphinx.ext.napoleon",  # supports Google/NumPy style docstrings
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
-    "myst_parser",               # optional Markdown support
+    "myst_parser",  # optional Markdown support
 ]
 
 autosummary_generate = True
@@ -60,4 +61,3 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "skimage": ("https://scikit-image.org/docs/stable/", None),
 }
-

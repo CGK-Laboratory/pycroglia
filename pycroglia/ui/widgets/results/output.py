@@ -2,6 +2,7 @@ from PyQt6 import QtWidgets, QtCore
 from typing import Optional, Type
 
 from pycroglia.core.io.output import OutputWriter
+from pycroglia.ui.widgets.common.labeled_widgets import LabeledLineEdit
 from pycroglia.ui.widgets.io.folder_selector import FolderSelector
 from pycroglia.ui.widgets.results.writer import OutputWriterSelector
 
@@ -17,6 +18,12 @@ class OutputConfigurator(QtWidgets.QWidget):
         folder_selector (FolderSelector): Widget for selecting the destination folder.
     """
 
+    DEFAULT_SAVE_BUTTON_TXT = "Save"
+    DEFAULT_FILENAME_PLACEHOLDER_TXT = "Filename"
+
+    # Folder path, filename, list of writers
+    buttonCliched = QtCore.pyqtSignal(str, str, object)
+
     def __init__(
         self,
         writer_widget_title: str,
@@ -25,6 +32,8 @@ class OutputConfigurator(QtWidgets.QWidget):
         folder_path_display_text: str,
         folder_dialog_title: str,
         folder_dialog_path: str = QtCore.QDir.homePath(),
+        save_button_txt: Optional[str] = None,
+        filename_placeholder: Optional[str] = None,
         writers: Optional[Type[OutputWriter]] = None,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
@@ -58,8 +67,41 @@ class OutputConfigurator(QtWidgets.QWidget):
             parent=self,
         )
 
+        self.filename_input = LabeledLineEdit(
+            label_text=filename_placeholder or self.DEFAULT_FILENAME_PLACEHOLDER_TXT,
+            parent=self,
+        )
+        self.button = QtWidgets.QPushButton(
+            save_button_txt or self.DEFAULT_SAVE_BUTTON_TXT, parent=self
+        )
+        self.button.setEnabled(False)
+
+        self.button.clicked.connect(self._on_button_clicked)
+        self.folder_selector.folderSelected.connect(self._on_status_changed)
+        self.writer_selector.itemChanged.connect(self._on_status_changed)
+        self.filename_input.valueChanged.connect(self._on_status_changed)
+
         # Layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.writer_selector)
         layout.addWidget(self.folder_selector)
+        layout.addWidget(self.filename_input)
+        layout.addWidget(self.button)
         self.setLayout(layout)
+
+    def _on_status_changed(self):
+        if (
+            self.writer_selector.has_selected_writers()
+            and self.folder_selector.has_folder_selected()
+            and self.filename_input.has_text()
+        ):
+            self.button.setEnabled(True)
+        else:
+            self.button.setEnabled(False)
+
+    def _on_button_clicked(self):
+        folder = self.folder_selector.get_selected_folder()
+        file_name = self.filename_input.get_text()
+        writers = self.writer_selector.get_selected_writers()
+
+        self.buttonCliched.emit(folder, file_name, writers)
