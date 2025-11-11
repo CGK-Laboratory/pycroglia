@@ -1,19 +1,22 @@
 from __future__ import annotations
-from typing import List, Optional, Type
+import copy
+import os
+
+from typing import Optional, Iterable, Type, List
 from numpy.typing import NDArray
 from PyQt6 import QtWidgets, QtCore
+
 
 from pycroglia.ui.controllers.dashboard_state import (
     ResultsDashboardState,
     ResultsDashboardTextConfig,
 )
-from pycroglia.core.io.output import OutputWriter
 from pycroglia.ui.controllers.graphs_state import DashboardGraphsGenerator
 from pycroglia.ui.widgets.results.graphs import GraphSelectionWidget
 from pycroglia.ui.widgets.results.output import OutputConfigurator
 from pycroglia.ui.widgets.results.scale import ScaleConfigWidget
 from pycroglia.ui.widgets.results.viewers import FullAnalysisViewer
-import copy
+from pycroglia.core.io.output import OutputWriter, FullAnalysis
 
 
 class ResultsDashboard(QtWidgets.QWidget):
@@ -198,6 +201,9 @@ class ResultsDashboard(QtWidgets.QWidget):
             writers=writers,
             parent=self,
         )
+
+        self.configurator.buttonCliched.connect(self._on_save_clicked)
+
         return self
 
     def _build_layout(self):
@@ -264,6 +270,7 @@ class ResultsDashboard(QtWidgets.QWidget):
         to update UI and re-enable the button when finished.
         """
         self.scales.disable_button()
+        self.configurator.set_results_ready(False)
         self._state.calculate_results(
             scale=self.scales.get_scale(),
             z_scale=self.scales.get_z_scale(),
@@ -301,6 +308,7 @@ class ResultsDashboard(QtWidgets.QWidget):
             summary=self._state.get_summary(), cells=self._state.get_per_cell()
         )
         self.scales.enable_button()
+        self.configurator.set_results_ready(True)
 
     @QtCore.pyqtSlot(int, int)
     def _on_progress_changed(self, completed: int, total: int):
@@ -320,3 +328,12 @@ class ResultsDashboard(QtWidgets.QWidget):
 
         if completed >= total:
             self._progress_bar.setVisible(False)
+
+    def _on_save_clicked(
+        self, folder: str, path: str, writers: Iterable[Type[OutputWriter]]
+    ):
+        summary = self._state.get_summary()
+        cells = self._state.get_per_cell()
+
+        for writer in writers:
+            writer().write(os.path.join(folder, path), FullAnalysis(summary, cells))

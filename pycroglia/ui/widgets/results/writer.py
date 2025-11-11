@@ -14,6 +14,8 @@ class OutputWriterSelector(QtWidgets.QWidget):
         list (QtWidgets.QListWidget): List widget displaying available writers.
     """
 
+    itemChanged = QtCore.pyqtSignal()
+
     def __init__(
         self,
         writers: Iterable[Type[OutputWriter]],
@@ -47,6 +49,10 @@ class OutputWriterSelector(QtWidgets.QWidget):
 
         # Setup
         self.set_writers(self._writers)
+        self.list.itemChanged.connect(self._on_item_changed)
+
+    def _on_item_changed(self):
+        self.itemChanged.emit()
 
     def set_writers(self, writers: Iterable[Type[OutputWriter]]):
         """Set the list of available OutputWriter classes.
@@ -71,7 +77,10 @@ class OutputWriterSelector(QtWidgets.QWidget):
         selected = []
         for i in range(self.list.count()):
             item = self.list.item(i)
-            if item.checkState() == QtCore.Qt.CheckState:
+            if item.checkState() == QtCore.Qt.CheckState.Checked:
                 selected.append(self._writers[i])
 
         return selected
+
+    def has_selected_writers(self) -> bool:
+        return len(self.get_selected_writers()) > 0
