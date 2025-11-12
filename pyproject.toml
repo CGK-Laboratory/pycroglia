@@ -50,3 +50,5 @@ docs = [
 ]
 [tool.setuptools.packages.find]
 exclude = ["images*"]
+[project.scripts]
+pycroglia = "main:main"
