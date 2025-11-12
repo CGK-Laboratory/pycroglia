@@ -48,6 +48,8 @@ docs = [
   "sphinxcontrib-mermaid>=0.9",
   "sphinx-autobuild>=2024.10.3",
 ]
+[tool.setuptools]
+py-modules = ["main"]
 [tool.setuptools.packages.find]
 exclude = ["images*"]
 [project.scripts]
