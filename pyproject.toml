@@ -48,3 +48,5 @@ docs = [
   "sphinxcontrib-mermaid>=0.9",
   "sphinx-autobuild>=2024.10.3",
 ]
+[tool.setuptools.packages.find]
+exclude = ["images*"]
