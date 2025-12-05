@@ -53,4 +53,4 @@ py-modules = ["main"]
 [tool.setuptools.packages.find]
 exclude = ["images*"]
 [project.scripts]
-pycroglia = "main:main"
+pycroglia = "pycroglia.__main__:main"
