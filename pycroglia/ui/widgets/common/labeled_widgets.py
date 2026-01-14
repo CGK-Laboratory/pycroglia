@@ -38,7 +38,7 @@ class LabeledIntSpinBox(QtWidgets.QWidget):
         self.label.setText(label_text)
 
         self.spin_box = QtWidgets.QSpinBox()
-        if min_value:
+        if min_value is not None:
             self.spin_box.setMinimum(min_value)
 
         if max_value:
@@ -112,10 +112,10 @@ class LabeledFloatSpinBox(QtWidgets.QWidget):
         self.label.setText(label_text)
 
         self.spin_box = QtWidgets.QDoubleSpinBox()
-        if min_value:
+        if min_value is not None:
             self.spin_box.setMinimum(min_value)
 
-        if max_value:
+        if max_value is not None:
             self.spin_box.setMaximum(max_value)
         self.spin_box.valueChanged.connect(self._value_changed)
 
