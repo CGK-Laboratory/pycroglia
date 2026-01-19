@@ -36,9 +36,9 @@ class ScaleConfigWidget(QtWidgets.QWidget):
         self._button_txt = button_txt or self.DEFAULT_BUTTON_TXT
 
         # Widgets
-        self._scale = LabeledFloatSpinBox(self._scale_txt, min_value=1.0, parent=self)
+        self._scale = LabeledFloatSpinBox(self._scale_txt, min_value=1e-7, parent=self)
         self._z_scale = LabeledFloatSpinBox(
-            self._z_scale_txt, min_value=1.0, parent=self
+            self._z_scale_txt, min_value=1e-7, parent=self
         )
         self._button = QtWidgets.QPushButton(self._button_txt, parent=self)
 
