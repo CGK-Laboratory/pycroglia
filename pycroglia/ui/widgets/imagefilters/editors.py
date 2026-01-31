@@ -7,7 +7,7 @@ from pycroglia.ui.controllers.ch_editor import MultiChImgEditorState
 from pycroglia.ui.widgets.common.img_viewer import CustomImageViewer
 from pycroglia.ui.widgets.common.labeled_widgets import (
     LabeledIntSpinBox,
-    LabeledFloatSlider,
+    FloatSliderWithSpinBox,
 )
 from pycroglia.ui.widgets.imagefilters.configurator import MultiChannelConfigurator
 from pycroglia.ui.widgets.imagefilters.tasks import (
@@ -114,7 +114,7 @@ class GrayFilterEditor(QtWidgets.QWidget):
         slider_label_text (str): Label for the adjustment slider.
         label (QtWidgets.QLabel): Label for the editor.
         viewer (ImageView): Image viewer widget.
-        slider (LabeledFloatSlider): Slider for adjusting the gray filter.
+        slider (FloatSliderWithSpinBox): Slider and spinbox for the Otsu value.
         GRAY_FILTER_MAX (float): Maximum slider value.
         GRAY_FILTER_MIN (float): Minimum slider value.
         GRAY_FILTER_STEP (float): Step size for the slider.
@@ -157,16 +157,17 @@ class GrayFilterEditor(QtWidgets.QWidget):
 
         self.viewer = CustomImageViewer(parent=self)
 
-        self.slider = LabeledFloatSlider(
-            label_text=self.slider_label_text,
+        self.slider = FloatSliderWithSpinBox(
             min_value=self.GRAY_FILTER_MIN,
             max_value=self.GRAY_FILTER_MAX,
             step_size=self.GRAY_FILTER_STEP,
+            label_text=self.slider_label_text,
         )
 
         # Connections
         self.state.imageChanged.connect(self._on_filter_update)
-        self.slider.valueChanged.connect(self._on_filter_update)
+        self.slider.slider.sliderReleased.connect(self._on_filter_update)
+        self.slider.spin_box.valueChanged.connect(self._on_filter_update)
 
         # Layout
         layout = QtWidgets.QVBoxLayout()

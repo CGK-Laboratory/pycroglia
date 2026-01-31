@@ -75,7 +75,7 @@ def small_objects_filter_editor(qtbot, mock_editor_state):
 def test_gray_filter_updates_on_slider(
     gray_filter_editor, mock_editor_state, fake_image
 ):
-    """Test that the gray filter editor updates the image when the slider changes.
+    """Test that the gray filter editor updates the image when the slider is released.
 
     Args:
         gray_filter_editor (GrayFilterEditor): The gray filter editor widget.
@@ -96,6 +96,7 @@ def test_gray_filter_updates_on_slider(
         )
 
         gray_filter_editor.slider.set_value(1.0)
+        gray_filter_editor.slider.slider.sliderReleased.emit()
 
     assert hasattr(gray_filter_editor.viewer.img_viewer, "image")
 
