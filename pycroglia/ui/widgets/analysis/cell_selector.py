@@ -168,7 +168,8 @@ class CellSelector(QtWidgets.QWidget):
 
         # State
         self.img = img
-        self.unselected_cells= set()
+        self.unselected_cells = set()
+        self._size_filter_unselected_cells: Set[int] = set()  # cells unselected by last size filter
         self.border_cells = self.img.get_border_cells()
         self._cell_to_row_cache: Dict[int, int] = {}
 
@@ -269,7 +270,6 @@ class CellSelector(QtWidgets.QWidget):
             item = model.item(row, col)
             item.setBackground(bg_color)
             item.setForeground(text_color)
-        print('row color set', row, color_type)
 
     def _update_colors_batch(self, cell_ids: Set[int], color_type: ColorType):
         """Updates colors for multiple cells efficiently in batch.
@@ -302,9 +302,15 @@ class CellSelector(QtWidgets.QWidget):
         """Handles the size filter button click event.
 
         Marks all cells smaller than the specified threshold as unselected
-        and updates their visual appearance.
+        and updates their visual appearance. On each call, the previous size-filter
+        unselection is reverted before applying the new threshold.
         """
         threshold = self.control_panel.size_input.get_value()
+
+        # Revert previous size filter: remove those cells from unselected and restore color
+        if self._size_filter_unselected_cells:
+            self.unselected_cells.difference_update(self._size_filter_unselected_cells)
+            self._update_colors_batch(self._size_filter_unselected_cells, ColorType.SELECTED)
 
         cells_to_unselect = set()
         cells_to_select = set()
@@ -315,9 +321,9 @@ class CellSelector(QtWidgets.QWidget):
             else:
                 cells_to_select.add(cell_id)
 
+        self._size_filter_unselected_cells = cells_to_unselect.copy()
         self.unselected_cells.update(cells_to_unselect)
         self._update_colors_batch(cells_to_unselect, ColorType.UNSELECTED)
-        self._update_colors_batch(cells_to_select, ColorType.SELECTED)
 
     def _on_border_checkbox_toggled(self, checked: bool):
         """Handles the border cells checkbox toggle event.
