@@ -95,6 +95,7 @@ class LabeledFloatSpinBox(QtWidgets.QWidget):
         label_text: str,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
+        decimals: int = 2,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the LabeledSpinBox.
@@ -103,6 +104,7 @@ class LabeledFloatSpinBox(QtWidgets.QWidget):
             label_text (str): Label text.
             min_value (Optional[float]): Minimum allowed value.
             max_value (Optional[float]): Maximum allowed value.
+            decimals (int): Number of decimal places to show and allow. Default 2.
             parent (Optional[QtWidgets.QWidget]): Parent widget.
         """
         super().__init__(parent)
@@ -112,6 +114,7 @@ class LabeledFloatSpinBox(QtWidgets.QWidget):
         self.label.setText(label_text)
 
         self.spin_box = QtWidgets.QDoubleSpinBox()
+        self.spin_box.setDecimals(decimals)
         if min_value is not None:
             self.spin_box.setMinimum(min_value)
 
