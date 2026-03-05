@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("PyQt6")
+
 from typing import Any
 from pycroglia.core.compute.computable import Computable
 from pycroglia.core.compute.qt_pool import QPool
