@@ -76,7 +76,7 @@ If you cloned the repository and want to run it locally:
 ```bash
 git clone https://github.com/CGK-Laboratory/pycroglia/pycroglia.git
 cd pycroglia
-uv run main.py
+uv run python -m pycroglia
 ```
 and for running the test suite
 
