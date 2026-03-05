@@ -33,6 +33,8 @@ def sample_full_analysis():
             avg_branch_length=10.0,
             max_branch_length=15.0,
             min_branch_length=5.0,
+            full_cell_analysis={},
+            branch_analysis={},
         ),
         CellAnalysis(
             cell_territory_volume=110.0,
@@ -43,6 +45,8 @@ def sample_full_analysis():
             avg_branch_length=11.0,
             max_branch_length=16.0,
             min_branch_length=6.0,
+            full_cell_analysis={},
+            branch_analysis={},
         ),
     ]
     return FullAnalysis(summary=summary, cells=cells)
