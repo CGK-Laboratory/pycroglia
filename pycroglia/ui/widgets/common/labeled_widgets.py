@@ -95,6 +95,7 @@ class LabeledFloatSpinBox(QtWidgets.QWidget):
         label_text: str,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
+        decimals: int = 2,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the LabeledSpinBox.
@@ -103,6 +104,7 @@ class LabeledFloatSpinBox(QtWidgets.QWidget):
             label_text (str): Label text.
             min_value (Optional[float]): Minimum allowed value.
             max_value (Optional[float]): Maximum allowed value.
+            decimals (int): Number of decimal places to show and allow. Default 2.
             parent (Optional[QtWidgets.QWidget]): Parent widget.
         """
         super().__init__(parent)
@@ -112,6 +114,7 @@ class LabeledFloatSpinBox(QtWidgets.QWidget):
         self.label.setText(label_text)
 
         self.spin_box = QtWidgets.QDoubleSpinBox()
+        self.spin_box.setDecimals(decimals)
         if min_value is not None:
             self.spin_box.setMinimum(min_value)
 
@@ -315,6 +318,116 @@ class LabeledFloatSlider(QtWidgets.QWidget):
         """
         int_value = int(round((float_value - self._min) / self._step))
         self.slider.setValue(int_value)
+
+
+class FloatSliderWithSpinBox(QtWidgets.QWidget):
+    """Slider plus spinbox for float values; label and spinbox above the slider.
+
+    Attributes:
+        label (QtWidgets.QLabel): Label text (e.g. "Adjustment").
+        min_label (QtWidgets.QLabel): Label for minimum value.
+        max_label (QtWidgets.QLabel): Label for maximum value.
+        slider (QtWidgets.QSlider): Slider widget.
+        spin_box (QtWidgets.QDoubleSpinBox): Spin box for input and stepping.
+        _min (float): Minimum value.
+        _max (float): Maximum value.
+        _step (float): Step size.
+        valueChanged (QtCore.pyqtSignal): Signal emitted when the value changes.
+    """
+
+    DEFAULT_LABEL_TEXT = "Value"
+    valueChanged = QtCore.pyqtSignal(float)
+
+    def __init__(
+        self,
+        min_value: float,
+        max_value: float,
+        step_size: float,
+        label_text: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
+        """Initialize the FloatSliderWithSpinBox.
+
+        Args:
+            min_value (float): Minimum value.
+            max_value (float): Maximum value.
+            step_size (float): Step size for slider and spinbox.
+            label_text (Optional[str]): Text for the label (e.g. "Adjustment").
+            parent (Optional[QtWidgets.QWidget]): Parent widget.
+        """
+        super().__init__(parent)
+
+        self.label_text = label_text or self.DEFAULT_LABEL_TEXT
+        self._min = min_value
+        self._max = max_value
+        self._step = step_size
+
+        self._int_min = 0
+        self._int_max = int(round((self._max - self._min) / self._step))
+
+        # Widgets
+        self.label = QtWidgets.QLabel(self.label_text)
+        self.min_label = QtWidgets.QLabel(f"{self._min:.2f}")
+        self.max_label = QtWidgets.QLabel(f"{self._max:.2f}")
+
+        self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
+        self.slider.setMinimum(self._int_min)
+        self.slider.setMaximum(self._int_max)
+        self.slider.setValue(self._int_min)
+
+        self.spin_box = QtWidgets.QDoubleSpinBox()
+        self.spin_box.setMinimum(self._min)
+        self.spin_box.setMaximum(self._max)
+        self.spin_box.setSingleStep(self._step)
+        self.spin_box.setDecimals(2)
+        self.spin_box.setValue(self._min)
+
+        # Keep slider and spinbox in sync
+        self.slider.valueChanged.connect(self._slider_to_spinbox)
+        self.spin_box.valueChanged.connect(self._spinbox_to_slider)
+
+        # Layout: top row [label] [spinbox], bottom row [min] [slider] [max]
+        layout = QtWidgets.QVBoxLayout()
+        top_row = QtWidgets.QHBoxLayout()
+        top_row.addWidget(self.label)
+        top_row.addWidget(self.spin_box)
+        layout.addLayout(top_row)
+        slider_row = QtWidgets.QHBoxLayout()
+        slider_row.addWidget(self.min_label)
+        slider_row.addWidget(self.slider)
+        slider_row.addWidget(self.max_label)
+        layout.addLayout(slider_row)
+        self.setLayout(layout)
+
+    def _slider_to_spinbox(self, value: int):
+        float_value = self._min + value * self._step
+        self.spin_box.blockSignals(True)
+        self.spin_box.setValue(float_value)
+        self.spin_box.blockSignals(False)
+        self.valueChanged.emit(float_value)
+
+    def _spinbox_to_slider(self, value: float):
+        int_value = int(round((value - self._min) / self._step))
+        int_value = max(self._int_min, min(self._int_max, int_value))
+        self.slider.blockSignals(True)
+        self.slider.setValue(int_value)
+        self.slider.blockSignals(False)
+        self.valueChanged.emit(self._min + int_value * self._step)
+
+    def get_value(self) -> float:
+        """Return the current float value."""
+        return self.spin_box.value()
+
+    def set_value(self, float_value: float):
+        """Set the value from a float."""
+        int_value = int(round((float_value - self._min) / self._step))
+        int_value = max(self._int_min, min(self._int_max, int_value))
+        self.slider.blockSignals(True)
+        self.spin_box.blockSignals(True)
+        self.slider.setValue(int_value)
+        self.spin_box.setValue(self._min + int_value * self._step)
+        self.slider.blockSignals(False)
+        self.spin_box.blockSignals(False)
 
 
 class LabeledLineEdit(QtWidgets.QWidget):

@@ -33,6 +33,8 @@ def sample_full_analysis():
             avg_branch_length=10.0,
             max_branch_length=15.0,
             min_branch_length=5.0,
+            full_cell_analysis={},
+            branch_analysis={},
         ),
         CellAnalysis(
             cell_territory_volume=110.0,
@@ -43,6 +45,8 @@ def sample_full_analysis():
             avg_branch_length=11.0,
             max_branch_length=16.0,
             min_branch_length=6.0,
+            full_cell_analysis={},
+            branch_analysis={},
         ),
     ]
     return FullAnalysis(summary=summary, cells=cells)
@@ -65,12 +69,13 @@ def test_excel_output_write(tmp_path, sample_full_analysis):
     summary_rows = list(ws_summary.iter_rows(values_only=True))
     assert summary_rows[0][0] == excel_writer.summary_config.file_txt
     assert summary_rows[0][1] == sample_full_analysis.summary.file
-    # PerCell sheet
+    # PerCell sheet: column 0 is "Index", config headers start at column 1
     ws_per_cell = wb[excel_writer.per_cell_title]
     per_cell_rows = list(ws_per_cell.iter_rows(values_only=True))
-    assert per_cell_rows[0][0] == excel_writer.per_cell_config.cell_territory_volume_txt
-    assert per_cell_rows[1][0] == sample_full_analysis.cells[0].cell_territory_volume
-    assert per_cell_rows[2][1] == sample_full_analysis.cells[1].cell_volume
+    assert per_cell_rows[0][0] == "Index"
+    assert per_cell_rows[0][1] == excel_writer.per_cell_config.cell_territory_volume_txt
+    assert per_cell_rows[1][1] == sample_full_analysis.cells[0].cell_territory_volume
+    assert per_cell_rows[2][2] == sample_full_analysis.cells[1].cell_volume
 
 
 def test_excel_otuput_write_custom_config(tmp_path, sample_full_analysis):
@@ -107,8 +112,8 @@ def test_excel_otuput_write_custom_config(tmp_path, sample_full_analysis):
     assert summary_rows[0][0] == "file"
     ws_per_cell = wb["PerCell"]
     per_cell_rows = list(ws_per_cell.iter_rows(values_only=True))
-    assert per_cell_rows[0][0] == "cell_territory"
-
+    assert per_cell_rows[0][0] == "Index"
+    assert per_cell_rows[0][1] == "cell_territory"
 
 def test_json_output_write(tmp_path, sample_full_analysis):
     """Test that JSONOutput.write creates a valid JSON file with correct data and snake_case keys."""
