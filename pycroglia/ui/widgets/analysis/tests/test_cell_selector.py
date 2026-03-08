@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from unittest.mock import patch
 
-from PyQt6 import QtCore
+from PyQt6 import QtCore, QtGui
 from pycroglia.ui.widgets.analysis.cell_selector import (
     CellSelector,
     CellSelectorControlPanel,
@@ -253,16 +253,31 @@ def test_cell_selector_set_row_color_valid_cell(cell_selector):
     """Test setting row color."""
     cell_id = 1
 
-    # Test unselected color
+    # Test unselected color (theme disabled palette)
     cell_selector._set_row_color(cell_id, ColorType.UNSELECTED)
     row = cell_selector._cell_to_row_cache[cell_id]
     model = cell_selector.viewer.cell_list.list.model
     item = model.item(row, 0)
-    assert item.background().color() == CellSelector.UNSELECTED_COLOR
+    palette = cell_selector.palette()
+    disabled_bg = palette.color(
+        QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Base
+    )
+    disabled_text = palette.color(
+        QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text
+    )
+    assert item.background().color() == disabled_bg
+    assert item.foreground().color() == disabled_text
 
-    # Test selected color
+    # Test selected color (theme active palette = original colors)
     cell_selector._set_row_color(cell_id, ColorType.SELECTED)
-    assert item.background() == CellSelector.SELECTED_COLOR
+    active_bg = palette.color(
+        QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Base
+    )
+    active_text = palette.color(
+        QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Text
+    )
+    assert item.background().color() == active_bg
+    assert item.foreground().color() == active_text
 
 
 def test_cell_selector_set_row_color_invalid_cell(cell_selector):
@@ -281,7 +296,11 @@ def test_cell_selector_update_colors_batch_multiple_cells(cell_selector):
         if cell_id in cell_selector._cell_to_row_cache:
             row = cell_selector._cell_to_row_cache[cell_id]
             item = model.item(row, 0)
-            assert item.background().color() == CellSelector.UNSELECTED_COLOR
+            palette = cell_selector.palette()
+            disabled_bg = palette.color(
+                QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Base
+            )
+            assert item.background().color() == disabled_bg
 
 
 def test_cell_selector_on_cell_selection_changed_enables_remove_button(

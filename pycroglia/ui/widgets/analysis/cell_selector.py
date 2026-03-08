@@ -117,8 +117,8 @@ class CellSelector(QtWidgets.QWidget):
         DEFAULT_SIZE_BUTTON_TEXT (str): Default text for the size filter button.
         DEFAULT_PREVIEW_BUTTON_TEXT (str): Default text for the preview button.
         DEFAULT_BORDER_CHECKBOX_TEXT (str): Default text for the border checkbox.
-        UNSELECTED_COLOR (QtGui.QColor): Color for unselected cell rows.
-        SELECTED_COLOR (QtGui.QBrush): Color for selected cell rows.
+        Selected rows use the theme's active palette (Base + Text). Unselected rows
+        use the theme's disabled palette (Base + Text) for background and text.
     """
 
     # UI Text Constants
@@ -128,10 +128,6 @@ class CellSelector(QtWidgets.QWidget):
     DEFAULT_SIZE_BUTTON_TEXT = "Remove smaller than"
     DEFAULT_PREVIEW_BUTTON_TEXT = "Preview"
     DEFAULT_BORDER_CHECKBOX_TEXT = "Remove border cells"
-
-    # Color Constants
-    UNSELECTED_COLOR = QtGui.QColor(255, 200, 200)
-    SELECTED_COLOR = QtGui.QBrush()
 
     def __init__(
         self,
@@ -173,6 +169,7 @@ class CellSelector(QtWidgets.QWidget):
         # State
         self.img = img
         self.unselected_cells = set()
+        self._size_filter_unselected_cells: Set[int] = set()  # cells unselected by last size filter
         self.border_cells = self.img.get_border_cells()
         self._cell_to_row_cache: Dict[int, int] = {}
 
@@ -241,7 +238,7 @@ class CellSelector(QtWidgets.QWidget):
             self._cell_to_row_cache[cell_id] = row
 
     def _set_row_color(self, cell_id: int, color_type: ColorType):
-        """Sets the background color of a specific cell row.
+        """Sets the background and text color of a specific cell row.
 
         Args:
             cell_id (int): ID of the cell whose row color to change.
@@ -253,14 +250,26 @@ class CellSelector(QtWidgets.QWidget):
         row = self._cell_to_row_cache[cell_id]
         model = self.viewer.cell_list.list.model
 
+        palette = self.palette()
         if color_type == ColorType.UNSELECTED:
-            color = self.UNSELECTED_COLOR
-        else:  # ColorType.SELECTED
-            color = self.SELECTED_COLOR
+            bg_color = QtGui.QBrush(
+                palette.color(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Base)
+            )
+            text_color = QtGui.QBrush(
+                palette.color(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text)
+            )
+        else:  # ColorType.SELECTED — use normal (original) palette colors
+            bg_color = QtGui.QBrush(
+                palette.color(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Base)
+            )
+            text_color = QtGui.QBrush(
+                palette.color(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Text)
+            )
 
         for col in range(model.columnCount()):
             item = model.item(row, col)
-            item.setBackground(color)
+            item.setBackground(bg_color)
+            item.setForeground(text_color)
 
     def _update_colors_batch(self, cell_ids: Set[int], color_type: ColorType):
         """Updates colors for multiple cells efficiently in batch.
@@ -293,16 +302,26 @@ class CellSelector(QtWidgets.QWidget):
         """Handles the size filter button click event.
 
         Marks all cells smaller than the specified threshold as unselected
-        and updates their visual appearance.
+        and updates their visual appearance. On each call, the previous size-filter
+        unselection is reverted before applying the new threshold.
         """
         threshold = self.control_panel.size_input.get_value()
 
+        # Revert previous size filter: remove those cells from unselected and restore color
+        if self._size_filter_unselected_cells:
+            self.unselected_cells.difference_update(self._size_filter_unselected_cells)
+            self._update_colors_batch(self._size_filter_unselected_cells, ColorType.SELECTED)
+
         cells_to_unselect = set()
+        cells_to_select = set()
         for cell_id in range(1, self.img.len() + 1):
             cell_size = self.img.get_cell_size(cell_id)
             if cell_size < threshold:
                 cells_to_unselect.add(cell_id)
+            else:
+                cells_to_select.add(cell_id)
 
+        self._size_filter_unselected_cells = cells_to_unselect.copy()
         self.unselected_cells.update(cells_to_unselect)
         self._update_colors_batch(cells_to_unselect, ColorType.UNSELECTED)
 
