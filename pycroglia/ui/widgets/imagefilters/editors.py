@@ -178,7 +178,7 @@ class GrayFilterEditor(QtWidgets.QWidget):
 
     def _on_filter_update(self):
         """Update the view when the gray filter is applied."""
-        task = GrayFilterTask(state=self.state, adjust_value=self.slider.get_value())
+        task = GrayFilterTask(state=self.state, adjust_value=round(self.slider.get_value(), 2))
         task.signals.finished.connect(self._on_image_ready)
         self.tpool.start(task)
 
