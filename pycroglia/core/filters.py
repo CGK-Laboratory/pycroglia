@@ -38,7 +38,7 @@ def calculate_otsu_threshold(img: NDArray, adjust: float) -> NDArray:
 def remove_small_objects(
     img: NDArray,
     min_size: int,
-    connectivity: SkimageCellConnectivity = SkimageCellConnectivity.EDGES,
+    connectivity: SkimageCellConnectivity = SkimageCellConnectivity.CORNERS,
 ) -> NDArray:
     """Removes connected components smaller than a given size from a 3D binary mask.
 
