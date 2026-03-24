@@ -45,7 +45,7 @@ def remove_small_objects(
     Args:
         img (NDArray): 3D binary array (dtype=bool or uint8) with shape (zs, height, width).
         min_size (int): Minimum number of pixels required to keep a component.
-        connectivity (SkimageCellConnectivity): Connectivity used by skimage (4 or 8). Defaults to SkimageCellConnectivity.EDGES.
+        connectivity (SkimageCellConnectivity): Connectivity used by skimage (4 or 8). Defaults to SkimageCellConnectivity.CORNERS.
 
     Returns:
         NDArray: 3D binary array with small objects removed.

@@ -164,4 +164,6 @@ def apply_binary_erosion(img: NDArray, footprint: FootprintShape) -> NDArray:
     Returns:
         NDArray: Eroded image.
     """
-    return morphology.binary_erosion(img, footprint.get_shape())
+    se_fake_3d = footprint.get_shape()[np.newaxis, :, :]
+
+    return morphology.binary_erosion(img, se_fake_3d)

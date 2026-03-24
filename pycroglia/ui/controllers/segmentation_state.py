@@ -5,7 +5,7 @@ from PyQt6 import QtCore, QtWidgets
 from numpy.typing import NDArray
 
 from pycroglia.core.enums import SkimageCellConnectivity
-from pycroglia.core.erosion import Octahedron3DFootprint
+from pycroglia.core.erosion import Diamond2DFootprint
 from pycroglia.core.labeled_cells import (
     LabelingStrategy,
     LabeledCells,
@@ -29,7 +29,7 @@ class SegmentationEditorState(QtCore.QObject):
 
     ARRAY_ELEMENTS_TYPE = np.uint8
 
-    DEFAULT_EROSION_FOOTPRINT = Octahedron3DFootprint(r=1)
+    DEFAULT_EROSION_FOOTPRINT = Diamond2DFootprint(r=3)
     DEFAULT_SKIMAGE_CONNECTIVITY = SkimageCellConnectivity.CORNERS
 
     DEFAULT_PROGRESS_BAR_TEXT = "Processing cells..."
@@ -70,7 +70,7 @@ class SegmentationEditorState(QtCore.QObject):
 
         self._actual_state = LabeledCells(img, labeling_strategy)
         self._prev_state: Optional[LabeledCells] = None
-
+        np.save('label_cells', self._actual_state.labels)
         self._min_size = min_size
 
     def get_state(self) -> LabeledCells:
