@@ -1,3 +1,4 @@
+import warnings
 import cv2
 import skimage
 import numpy as np
@@ -52,8 +53,13 @@ def remove_small_objects(
     """
     img_bool = img.astype(bool)
     labeled_img = skimage.morphology.label(img_bool, connectivity=connectivity.value)
-    filtered = skimage.morphology.remove_small_objects(
-        labeled_img, min_size=min_size, connectivity=connectivity.value
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="Only one label was provided to `remove_small_objects`"
+        )
+        filtered = skimage.morphology.remove_small_objects(
+            labeled_img, min_size=min_size, connectivity=connectivity.value
+        )
     result = filtered > 0
     return result.astype(img.dtype)
