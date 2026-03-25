@@ -95,7 +95,7 @@ class LabeledFloatSpinBox(QtWidgets.QWidget):
         label_text: str,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
-        decimals: int = 2,
+        decimals: int = 3,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the LabeledSpinBox.
