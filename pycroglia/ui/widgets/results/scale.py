@@ -77,7 +77,7 @@ class ScaleConfigWidget(QtWidgets.QWidget):
         Returns:
             float: Derived voxel scale (scale^3).
         """
-        return self.get_scale() * self.get_scale() * self.get_scale()
+        return self.get_scale() * self.get_scale() * self.get_z_scale()
 
     def disable_button(self):
         """Disable the calculate button to prevent user interaction."""
