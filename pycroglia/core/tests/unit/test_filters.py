@@ -113,7 +113,7 @@ def test_remove_small_objects_3d():
     img[1, 1:3, 1:3] = 1
     img[2, 4, 4] = 1
 
-    result = remove_small_objects(img, min_size=4)
+    result = remove_small_objects(img, min_size=4, connectivity = SkimageCellConnectivity.EDGES)
 
     assert result.shape == img.shape
     assert np.sum(result) == 4

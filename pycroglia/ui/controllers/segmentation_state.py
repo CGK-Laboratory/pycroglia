@@ -70,7 +70,6 @@ class SegmentationEditorState(QtCore.QObject):
 
         self._actual_state = LabeledCells(img, labeling_strategy)
         self._prev_state: Optional[LabeledCells] = None
-        np.save('label_cells', self._actual_state.labels)
         self._min_size = min_size
 
     def get_state(self) -> LabeledCells:
