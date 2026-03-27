@@ -64,6 +64,7 @@ class FilterEditorStack(QtWidgets.QWidget):
 
         # Widgets
         self.tabs = QtWidgets.QTabWidget(self)
+        self.tabs.currentChanged.connect(self._on_tab_changed)
 
         # Layout
         layout = QtWidgets.QVBoxLayout(self)
@@ -93,7 +94,10 @@ class FilterEditorStack(QtWidgets.QWidget):
             )
             editor.editor_state.smallObjectsImageChanged.connect(self._on_editor_state_changed)
             self.tabs.addTab(editor, f"{Path(file).name}")
-            
+        self.readyChanged.emit()
+
+    def _on_tab_changed(self, index: int):
+        """Emit signal when active tab changes."""
         self.readyChanged.emit()
 
     def _on_editor_state_changed(self):
@@ -101,16 +105,11 @@ class FilterEditorStack(QtWidgets.QWidget):
         self.readyChanged.emit()
 
     def is_ready(self) -> bool:
-        """Check if all tabs have their images processed completely."""
-        if self.tabs.count() == 0:
-            return False
-
-        for i in range(self.tabs.count()):
-            editor = self.tabs.widget(i)
-            if hasattr(editor, "editor_state"):
-                if editor.editor_state.get_small_objects_img() is None:
-                    return False
-        return True
+        """Check if current active tab has its image processed completely."""
+        current_widget = self.tabs.currentWidget()
+        if hasattr(current_widget, "editor_state"):
+            return current_widget.editor_state.get_small_objects_img() is not None
+        return False
 
     def get_results(self) -> List[FilterResults]:
         list_of_results = []
@@ -118,6 +117,8 @@ class FilterEditorStack(QtWidgets.QWidget):
         for i in range(self.tabs.count()):
             editor = self.tabs.widget(i)
             if hasattr(editor, "get_filter_results"):
-                list_of_results.append(editor.get_filter_results())
+                res = editor.get_filter_results()
+                if res.small_object_filtered_img is not None:
+                    list_of_results.append(res)
 
         return list_of_results

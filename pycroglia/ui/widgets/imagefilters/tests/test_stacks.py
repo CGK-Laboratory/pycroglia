@@ -113,18 +113,19 @@ def test_filter_editor_stack_get_results_returns_filter_results(filter_editor_st
     """
     # Create mock editors with get_filter_results method
     mock_editor1 = Mock()
-    mock_editor1.get_filter_results.return_value = Mock(spec=FilterResults)
+    mock_res1 = Mock(spec=FilterResults)
+    mock_res1.small_object_filtered_img = "dummy_image_1"
+    mock_editor1.get_filter_results.return_value = mock_res1
+    
     mock_editor2 = Mock()
-    mock_editor2.get_filter_results.return_value = Mock(spec=FilterResults)
+    mock_res2 = Mock(spec=FilterResults)
+    mock_res2.small_object_filtered_img = "dummy_image_2"
+    mock_editor2.get_filter_results.return_value = mock_res2
 
     filter_editor_stack.tabs.count = Mock(return_value=2)
     filter_editor_stack.tabs.widget = Mock(side_effect=[mock_editor1, mock_editor2])
 
-    # Mock hasattr to simulate MultiChannelFilterEditor detection
-    with patch("builtins.hasattr") as mock_hasattr:
-        mock_hasattr.return_value = True
-
-        results = filter_editor_stack.get_results()
+    results = filter_editor_stack.get_results()
 
     assert len(results) == 2
     mock_editor1.get_filter_results.assert_called_once()
