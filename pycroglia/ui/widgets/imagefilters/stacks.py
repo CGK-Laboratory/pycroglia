@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional, List
 
-from PyQt6 import QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 from pycroglia.ui.widgets.imagefilters.editors import MultiChannelFilterEditor
 from pycroglia.ui.widgets.imagefilters.results import FilterResults
@@ -20,7 +20,10 @@ class FilterEditorStack(QtWidgets.QWidget):
         gray_filter_slider_label (Optional[str]): Label for gray filter slider.
         small_objects_filter_label (Optional[str]): Label text for small objects filter editor.
         small_objects_threshold_label (Optional[str]): Label for threshold spin box.
+        readyChanged (QtCore.pyqtSignal): Signal emitted when readiness changes.
     """
+
+    readyChanged = QtCore.pyqtSignal()
 
     def __init__(
         self,
@@ -88,7 +91,26 @@ class FilterEditorStack(QtWidgets.QWidget):
                 small_objects_threshold_label=self.small_objects_threshold_label,
                 parent=self,
             )
+            editor.editor_state.smallObjectsImageChanged.connect(self._on_editor_state_changed)
             self.tabs.addTab(editor, f"{Path(file).name}")
+            
+        self.readyChanged.emit()
+
+    def _on_editor_state_changed(self):
+        """Emit signal when any editor state changes."""
+        self.readyChanged.emit()
+
+    def is_ready(self) -> bool:
+        """Check if all tabs have their images processed completely."""
+        if self.tabs.count() == 0:
+            return False
+
+        for i in range(self.tabs.count()):
+            editor = self.tabs.widget(i)
+            if hasattr(editor, "editor_state"):
+                if editor.editor_state.get_small_objects_img() is None:
+                    return False
+        return True
 
     def get_results(self) -> List[FilterResults]:
         list_of_results = []
