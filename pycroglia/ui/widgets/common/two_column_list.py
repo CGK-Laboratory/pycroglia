@@ -114,6 +114,18 @@ class TwoColumnList(QtWidgets.QWidget):
         row = indexes[0].row()
         return (self.model.item(row, 0).text(), self.model.item(row, 1).text())
 
+    def get_selected_items(self) -> List[tuple[str, str]]:
+        """Return all currently selected items as a list of tuples.
+
+        Returns:
+            List[tuple[str, str]]: List of (first_column, second_column) tuples.
+        """
+        indexes = self.table_view.selectionModel().selectedRows()
+        if not indexes:
+            return []
+
+        return [(self.model.item(row.row(), 0).text(), self.model.item(row.row(), 1).text()) for row in indexes]
+
     def clear(self):
         self.model.clear()
         self.model.setHorizontalHeaderLabels(self.headers)

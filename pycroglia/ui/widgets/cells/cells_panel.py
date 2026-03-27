@@ -93,10 +93,20 @@ class CellsPanel(QtWidgets.QWidget):
     def _handle_cell_selection(self):
         """Handles cell selection changes from the cell list.
 
-        Updates the individual cell viewer to display the 2D projection
-        of the currently selected cell.
+        Updates the individual cell viewer to display the combined 2D projection
+        of all currently selected cells.
         """
-        selected_cell = self.cell_list.get_selected_cell_id()
-        if selected_cell:
-            cell_2d = self.img.cell_to_2d(selected_cell)
-            self.cell_viewer.set_image(cell_2d)
+        selected_cells = self.cell_list.get_selected_cell_ids()
+        if not selected_cells:
+            return
+
+        combined_2d = None
+        for cell_id in selected_cells:
+            cell_2d = self.img.cell_to_2d(cell_id)
+            if combined_2d is None:
+                combined_2d = cell_2d
+            else:
+                combined_2d += cell_2d
+
+        if combined_2d is not None:
+            self.cell_viewer.set_image(combined_2d)

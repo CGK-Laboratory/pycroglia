@@ -72,6 +72,15 @@ class CellList(QtWidgets.QWidget):
             return int(selected[0])
         return None
 
+    def get_selected_cell_ids(self) -> list[int]:
+        """Gets the IDs of all currently selected cells.
+
+        Returns:
+            list[int]: List of selected cell IDs.
+        """
+        selected = self.list.get_selected_items()
+        return [int(item[0]) for item in selected]
+
     def get_selected_cell_info(self) -> Optional[Tuple[int, int]]:
         """Gets the ID and size of the currently selected cell.
 
