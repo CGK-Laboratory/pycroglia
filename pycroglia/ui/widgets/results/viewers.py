@@ -151,7 +151,8 @@ class CellAnalysisViewer(QtWidgets.QWidget):
         self.selector.currentIndexChanged.connect(self.update_table)
 
         # Setup
-        self.update_table(0)
+        if self.cells:
+            self.update_table(0)
 
     def update_table(self, idx: int):
         """Update the table to show data for the selected cell.
@@ -160,6 +161,9 @@ class CellAnalysisViewer(QtWidgets.QWidget):
             idx (int): Index of the selected cell.
         """
         self.table.clear()
+
+        if not self.cells:
+            return
 
         cell = self.cells[idx]
 

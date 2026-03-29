@@ -43,6 +43,7 @@ class GraphSelectionWidget(QtWidgets.QWidget):
             QtWidgets.QCheckBox(name, parent=self) for name in graphs_list
         ]
         self.button = QtWidgets.QPushButton(self.button_txt, parent=self)
+        self.button.setEnabled(False)  # Initially disabled until results are ready
 
         # Connections
         self.button.clicked.connect(self._on_button_clicked)
@@ -74,3 +75,11 @@ class GraphSelectionWidget(QtWidgets.QWidget):
         """
         list_of_graphs = self.get_selected_graphs()
         self.buttonClicked.emit(list_of_graphs)
+
+    def set_results_ready(self, ready: bool):
+        """Enable or disable the preview button.
+
+        Args:
+            ready (bool): Whether results are ready to be previewed.
+        """
+        self.button.setEnabled(ready)

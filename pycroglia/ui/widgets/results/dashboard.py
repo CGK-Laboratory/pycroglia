@@ -107,6 +107,7 @@ class ResultsDashboard(QtWidgets.QWidget):
             cells_config=self._text_config.get_per_cell_text_config(),
             parent=self,
         )
+        self.table.setEnabled(False)  # Initially disabled until calculation finishes
 
         return self
 
@@ -271,6 +272,8 @@ class ResultsDashboard(QtWidgets.QWidget):
         """
         self.scales.disable_button()
         self.configurator.set_results_ready(False)
+        self.graphs.set_results_ready(False)
+        self.table.setEnabled(False)
         self._state.calculate_results(
             scale=self.scales.get_scale(),
             z_scale=self.scales.get_z_scale(),
@@ -288,14 +291,15 @@ class ResultsDashboard(QtWidgets.QWidget):
         """
 
         cells = self._state.get_per_cell()
-        self._graphs_generator.generate_plots(
-            selected_plots,
-            self.cell_masks,
-            cells[0].branch_analysis,
-            cells[0].full_cell_analysis,
-            self.scales.get_scale(),
-            self.scales.get_z_scale(),
-        )
+        if cells:
+            self._graphs_generator.generate_plots(
+                selected_plots,
+                self.cell_masks,
+                cells[0].branch_analysis,
+                cells[0].full_cell_analysis,
+                self.scales.get_scale(),
+                self.scales.get_z_scale(),
+            )
 
     def _update_results_view(self):
         """Refresh the results viewer widgets with the latest computed data.
@@ -307,8 +311,10 @@ class ResultsDashboard(QtWidgets.QWidget):
         self.table.update_data(
             summary=self._state.get_summary(), cells=self._state.get_per_cell()
         )
+        self.table.setEnabled(True)
         self.scales.enable_button()
         self.configurator.set_results_ready(True)
+        self.graphs.set_results_ready(True)
 
     @QtCore.pyqtSlot(int, int)
     def _on_progress_changed(self, completed: int, total: int):
@@ -334,6 +340,6 @@ class ResultsDashboard(QtWidgets.QWidget):
     ):
         summary = self._state.get_summary()
         cells = self._state.get_per_cell()
-
-        for writer in writers:
-            writer().write(os.path.join(folder, path), FullAnalysis(summary, cells))
+        if cells:
+            for writer in writers:
+                writer().write(os.path.join(folder, path), FullAnalysis(summary, cells))

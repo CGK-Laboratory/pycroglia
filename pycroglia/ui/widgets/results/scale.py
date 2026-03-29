@@ -35,14 +35,20 @@ class ScaleConfigWidget(QtWidgets.QWidget):
         self._z_scale_txt = z_scale_txt or self.DEFAULT_Z_SCALE_TXT
         self._button_txt = button_txt or self.DEFAULT_BUTTON_TXT
 
+        self._is_calculating = False
+
         # Widgets
         self._scale = LabeledFloatSpinBox(
-            self._scale_txt, min_value=1e-7, decimals=3, parent=self
+            self._scale_txt, min_value=0.0, decimals=3, parent=self
         )
         self._z_scale = LabeledFloatSpinBox(
-            self._z_scale_txt, min_value=1e-7, decimals=3, parent=self
+            self._z_scale_txt, min_value=0.0, decimals=3, parent=self
         )
         self._button = QtWidgets.QPushButton(self._button_txt, parent=self)
+
+        self._scale.valueChanged.connect(self._update_button_state)
+        self._z_scale.valueChanged.connect(self._update_button_state)
+        self._update_button_state()
 
         # Layout
         layout = QtWidgets.QVBoxLayout()
@@ -79,13 +85,20 @@ class ScaleConfigWidget(QtWidgets.QWidget):
         """
         return self.get_scale() * self.get_scale() * self.get_z_scale()
 
+    def _update_button_state(self, _=None):
+        """Update button state based on scale values and computing status."""
+        has_valid_scales = self.get_scale() > 0.0 and self.get_z_scale() > 0.0
+        self._button.setEnabled(has_valid_scales and not self._is_calculating)
+
     def disable_button(self):
         """Disable the calculate button to prevent user interaction."""
-        self._button.setEnabled(False)
+        self._is_calculating = True
+        self._update_button_state()
 
     def enable_button(self):
         """Enable the calculate button to allow user interaction."""
-        self._button.setEnabled(True)
+        self._is_calculating = False
+        self._update_button_state()
 
     @property
     def clicked(self) -> QtCore.pyqtSignal:
