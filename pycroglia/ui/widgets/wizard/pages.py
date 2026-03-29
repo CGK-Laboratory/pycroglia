@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from typing import Optional, Any, List
 
 from PyQt6 import QtCore, QtWidgets
@@ -13,16 +12,18 @@ from pycroglia.ui.widgets.segmentation.stacks import SegmentationEditorStack
 from pycroglia.ui.widgets.analysis.stacks import CellSelectorStack
 
 
-class BasePage(ABC):
+class BasePage(QtCore.QObject):
     """Abstract base class for wizard pages.
 
     Provides a common interface for wizard pages that can maintain state
     and exchange data between workflow steps.
 
     Attributes:
+        readyChanged (QtCore.pyqtSignal): Signal emitted when the page ready status changes.
         main_widget (QtWidgets.QWidget): The main widget contained in this page.
         page_widget (QtWidgets.QWidget): The wrapper widget for the page.
     """
+    readyChanged = QtCore.pyqtSignal(bool)
 
     def __init__(self, main_widget: QtWidgets.QWidget):
         """Initialize the base page.
@@ -35,7 +36,14 @@ class BasePage(ABC):
         self.main_widget = main_widget
         self.page_widget = QtWidgets.QWidget()
 
-    @abstractmethod
+    def is_ready(self) -> bool:
+        """Return whether the page is ready to proceed to the next step.
+        
+        Returns:
+            bool: True if ready, False otherwise.
+        """
+        return True
+
     def get_state(self) -> Optional[dict[str, Any]]:
         """Get the current state of the page.
 
@@ -43,9 +51,9 @@ class BasePage(ABC):
             Optional[dict[str, Any]]: Dictionary containing the page's current state,
                 or None if no state is available.
         """
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
+    
     def set_data(self, data: Optional[dict[str, Any]]):
         """Set data to initialize or update the page.
 
@@ -53,7 +61,7 @@ class BasePage(ABC):
             data (Optional[dict[str, Any]]): Data dictionary to set in the page,
                 or None if no data is provided.
         """
-        pass
+        raise NotImplementedError
 
 
 class FileSelectionPage(BasePage):
@@ -73,6 +81,20 @@ class FileSelectionPage(BasePage):
         """
         super().__init__(main_widget)
         self.main_widget = main_widget
+        self.main_widget.dataChanged.connect(self._check_ready)
+        self.main_widget.file_list.dataChanged.connect(self._check_ready)
+
+    def _check_ready(self):
+        """Check if the page is ready and emit signal."""
+        self.readyChanged.emit(self.is_ready())
+
+    def is_ready(self) -> bool:
+        """Check if files are selected.
+
+        Returns:
+            bool: True if at least one file is selected.
+        """
+        return len(self.main_widget.get_files()) > 0
 
     def get_state(self) -> Optional[dict[str, Any]]:
         """Get the current state containing selected files.
@@ -115,6 +137,19 @@ class FilterEditorPage(BasePage):
         """
         super().__init__(main_widget)
         self.main_widget = main_widget
+        self.main_widget.readyChanged.connect(self._check_ready)
+
+    def _check_ready(self):
+        """Check if the page is ready and emit signal."""
+        self.readyChanged.emit(self.is_ready())
+
+    def is_ready(self) -> bool:
+        """Check if all images are loaded.
+
+        Returns:
+            bool: True if images are loaded.
+        """
+        return self.main_widget.is_ready()
 
     def get_state(self) -> Optional[dict[str, Any]]:
         """Get the current state containing filter results.
@@ -311,6 +346,8 @@ class PageManager(QtCore.QObject):
                     next_btn_txt if next_btn_txt else self.DEFAULT_NEXT_BTN_TXT
                 )
                 next_btn.clicked.connect(lambda: self._handle_next(current_page_index))
+                page.readyChanged.connect(next_btn.setEnabled)
+                next_btn.setEnabled(page.is_ready())
                 btn_layout.addWidget(next_btn)
 
             layout.addLayout(btn_layout)
