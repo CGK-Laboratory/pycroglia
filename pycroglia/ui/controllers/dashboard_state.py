@@ -358,20 +358,7 @@ class ResultsDashboardState(QtCore.QObject):
 
     @staticmethod
     def _make_default_per_cell() -> List[CellAnalysis]:
-        return [
-            CellAnalysis(
-                cell_territory_volume=0,
-                cell_volume=0,
-                ramification_index=0,
-                number_of_endpoints=0,
-                number_of_branches=0,
-                avg_branch_length=0,
-                max_branch_length=0,
-                min_branch_length=0,
-                full_cell_analysis={},
-                branch_analysis={},
-            )
-        ]
+        return []
 
     def __init__(
         self,
