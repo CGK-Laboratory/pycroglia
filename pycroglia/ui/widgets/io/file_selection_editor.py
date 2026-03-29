@@ -56,6 +56,7 @@ class FileSelectionEditor(QtWidgets.QWidget):
 
         # Connections
         self.file_selector.fileSelected.connect(self._on_file_added)
+        self.file_list.dataChanged.connect(self._update_button_state)
 
         # Layout
         layout = QtWidgets.QVBoxLayout()
@@ -80,3 +81,8 @@ class FileSelectionEditor(QtWidgets.QWidget):
         if path:
             self.file_list.add_item(Path(path).suffix, path)
             self.dataChanged.emit()
+
+    # TODO: This is not definitive. We should allow multiple files to be selected when the multitheading is validated.
+    def _update_button_state(self):
+        """Update the open button state based on the file list."""
+        self.file_selector.button.setDisabled(len(self.get_files()) > 0)

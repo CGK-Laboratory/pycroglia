@@ -20,6 +20,7 @@ class MultiChImgEditorState(QtCore.QObject):
 
     imageChanged = QtCore.pyqtSignal()
     grayImageChanged = QtCore.pyqtSignal()
+    smallObjectsImageChanged = QtCore.pyqtSignal()
 
     def __init__(self, file_path: str, parent: Optional[QtWidgets.QWidget] = None):
         """Initialize the multi-channel image editor state.
@@ -140,7 +141,10 @@ class MultiChImgEditorState(QtCore.QObject):
 
             masked_img = remove_small_objects(self._gray_filtered_img, threshold)
             self._small_objects_img = masked_img
+            
+            self.smallObjectsImageChanged.emit()
 
             return self._small_objects_img
+            
         finally:
             self._mutex.unlock()
