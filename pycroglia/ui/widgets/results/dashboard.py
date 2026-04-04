@@ -341,5 +341,17 @@ class ResultsDashboard(QtWidgets.QWidget):
         summary = self._state.get_summary()
         cells = self._state.get_per_cell()
         if cells:
-            for writer in writers:
-                writer().write(os.path.join(folder, path), FullAnalysis(summary, cells))
+            try:
+                for writer in writers:
+                    writer().write(os.path.join(folder, path), FullAnalysis(summary, cells))
+                QtWidgets.QMessageBox.information(
+                    self,
+                    "Success",
+                    "File saved successfully."
+                )
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"An error occurred while saving:\n{str(e)}"
+                )
