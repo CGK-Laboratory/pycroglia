@@ -36,52 +36,66 @@ class EndpointsCellPlot:
 
         for i, mask in enumerate(self.fullmask_list, start=1):
             plotter = pv.Plotter(off_screen=False)
+            has_geometry = False
 
             # --- Full skeleton (blue, translucent) ---
             if np.any(mask):
-                verts, faces, _, _ = measure.marching_cubes(
-                    mask.astype(float), level=0.5
-                )
-                verts = verts[:, [2, 1, 0]]
-                verts[:, 0] *= scale
-                verts[:, 1] *= scale
-                verts[:, 2] *= zscale
-                faces = np.hstack([np.full((faces.shape[0], 1), 3), faces]).astype(
-                    np.int32
-                )
-                mesh = pv.PolyData(verts, faces)
-                plotter.add_mesh(
-                    mesh,
-                    color="#0000FF",  # Blue
-                    opacity=self.opacity,
-                    smooth_shading=True,
-                    specular=0.3,
-                    specular_power=10,
-                    show_edges=False,
-                )
+                try:
+                    verts, faces, _, _ = measure.marching_cubes(
+                        mask.astype(float), level=0.5
+                    )
+                    verts = verts[:, [2, 1, 0]]
+                    verts[:, 0] *= scale
+                    verts[:, 1] *= scale
+                    verts[:, 2] *= zscale
+                    faces = np.hstack([np.full((faces.shape[0], 1), 3), faces]).astype(
+                        np.int32
+                    )
+                    mesh = pv.PolyData(verts, faces)
+                    plotter.add_mesh(
+                        mesh,
+                        color="#0000FF",  # Blue
+                        opacity=self.opacity,
+                        smooth_shading=True,
+                        specular=0.3,
+                        specular_power=10,
+                        show_edges=False,
+                    )
+                    has_geometry = True
+                except (ValueError, RuntimeError):
+                    pass
 
             # --- Endpoints (red, solid) ---
             if np.any(endpoints):
-                verts2, faces2, _, _ = measure.marching_cubes(
-                    endpoints.astype(float), level=0.5
-                )
-                verts2 = verts2[:, [2, 1, 0]]
-                verts2[:, 0] *= scale
-                verts2[:, 1] *= scale
-                verts2[:, 2] *= zscale
-                faces2 = np.hstack([np.full((faces2.shape[0], 1), 3), faces2]).astype(
-                    np.int32
-                )
-                mesh2 = pv.PolyData(verts2, faces2)
-                plotter.add_mesh(
-                    mesh2,
-                    color="#FF0000",  # Red
-                    opacity=1.0,
-                    smooth_shading=True,
-                    specular=0.4,
-                    specular_power=12,
-                    show_edges=False,
-                )
+                try:
+                    verts2, faces2, _, _ = measure.marching_cubes(
+                        endpoints.astype(float), level=0.5
+                    )
+                    verts2 = verts2[:, [2, 1, 0]]
+                    verts2[:, 0] *= scale
+                    verts2[:, 1] *= scale
+                    verts2[:, 2] *= zscale
+                    faces2 = np.hstack([np.full((faces2.shape[0], 1), 3), faces2]).astype(
+                        np.int32
+                    )
+                    mesh2 = pv.PolyData(verts2, faces2)
+                    plotter.add_mesh(
+                        mesh2,
+                        color="#FF0000",  # Red
+                        opacity=1.0,
+                        smooth_shading=True,
+                        specular=0.4,
+                        specular_power=12,
+                        show_edges=False,
+                    )
+                    has_geometry = True
+                except (ValueError, RuntimeError):
+                    pass
+
+            if not has_geometry:
+                # Cell has no plotteable geometry — skip it
+                plotter.close()
+                continue
 
             # --- Visualization setup ---
             plotter.camera_position = "xy"  # Top-down (view(0,270))

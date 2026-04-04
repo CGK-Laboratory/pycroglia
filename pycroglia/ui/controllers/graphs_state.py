@@ -92,5 +92,8 @@ class DashboardGraphsGenerator(QtCore.QObject):
         for i in range(len(masks)):
             for plot_name, plot_factory in per_cell_plot_map.items():
                 if plot_name in selected_plots:
-                    plotter = plot_factory(i)
-                    plotter.show_all()
+                    try:
+                        plotter = plot_factory(i)
+                        plotter.show_all()
+                    except Exception as e:
+                        print(f"[Warning] Could not plot '{plot_name}' for cell {i + 1}: {e}")
