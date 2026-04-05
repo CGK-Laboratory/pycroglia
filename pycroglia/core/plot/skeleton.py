@@ -60,14 +60,12 @@ class SkeletonCellPlot:
                 if not np.any(mask):
                     continue
 
-                try:
-                    # Compute isosurface for this branch level
-                    verts, faces, _, _ = measure.marching_cubes(
-                        mask.astype(float), level=0.5
-                    )
-                except (ValueError, RuntimeError):
-                    # marching_cubes can fail on very small or degenerate regions
-                    continue
+              
+                # Compute isosurface for this branch level
+                verts, faces, _, _ = measure.marching_cubes(
+                    mask.astype(float), level=0.5
+                )
+                
 
                 verts = verts[:, [2, 1, 0]]  # (z, y, x) → (x, y, z)
                 verts[:, 0] *= self.scale
