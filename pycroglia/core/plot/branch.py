@@ -36,8 +36,9 @@ class BranchpointsCellPlot:
         self.branchpoints = allbranch
         self.plotters: list[pv.Plotter] = []
 
-        for i, mask in enumerate(self.fullmask_list, start=1):
+        for mask in self.fullmask_list:
             plotter = pv.Plotter(off_screen=False)
+            has_geometry = False
 
             # --- Full skeleton (blue translucent surface) ---
             if np.any(mask):
@@ -60,6 +61,8 @@ class BranchpointsCellPlot:
                     specular=0.3,
                     specular_power=10,
                 )
+                has_geometry = True
+                
 
             # --- Branchpoints (red solid surface) ---
             if np.any(self.branchpoints):
@@ -82,6 +85,12 @@ class BranchpointsCellPlot:
                     specular=0.4,
                     specular_power=12,
                 )
+                has_geometry = True
+
+            if not has_geometry:
+                # Cell has no plotteable geometry — skip it
+                plotter.close()
+                continue
 
             # --- Visualization setup ---
             plotter.camera_position = "xy"  # equivalent to MATLAB view(0,270)

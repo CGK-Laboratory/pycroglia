@@ -34,11 +34,12 @@ class EndpointsCellPlot:
         self.fullmask_list = fullmask
         self.plotters: list[pv.Plotter] = []
 
-        for i, mask in enumerate(self.fullmask_list, start=1):
+        for mask in self.fullmask_list:
             plotter = pv.Plotter(off_screen=False)
+            has_geometry = False
 
             # --- Full skeleton (blue, translucent) ---
-            if np.any(mask):
+            if np.any(mask):   
                 verts, faces, _, _ = measure.marching_cubes(
                     mask.astype(float), level=0.5
                 )
@@ -59,6 +60,8 @@ class EndpointsCellPlot:
                     specular_power=10,
                     show_edges=False,
                 )
+                has_geometry = True
+                
 
             # --- Endpoints (red, solid) ---
             if np.any(endpoints):
@@ -82,6 +85,13 @@ class EndpointsCellPlot:
                     specular_power=12,
                     show_edges=False,
                 )
+                has_geometry = True
+                
+
+            if not has_geometry:
+                # Cell has no plotteable geometry — skip it
+                plotter.close()
+                continue
 
             # --- Visualization setup ---
             plotter.camera_position = "xy"  # Top-down (view(0,270))

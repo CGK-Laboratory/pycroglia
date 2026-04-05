@@ -51,18 +51,22 @@ class SkeletonCellPlot:
         }
 
         # Create one plotter per skeleton volume
-        for mask_index, fullmask_volume in enumerate(self.fullmask_list, start=1):
+        for fullmask_volume in self.fullmask_list:
             plotter = pv.Plotter(off_screen=False)
+            has_geometry = False
 
             for level, color in self.branch_colors.items():
                 mask = fullmask_volume == level
                 if not np.any(mask):
                     continue
 
+              
                 # Compute isosurface for this branch level
                 verts, faces, _, _ = measure.marching_cubes(
                     mask.astype(float), level=0.5
                 )
+                
+
                 verts = verts[:, [2, 1, 0]]  # (z, y, x) → (x, y, z)
                 verts[:, 0] *= self.scale
                 verts[:, 1] *= self.scale
@@ -81,6 +85,12 @@ class SkeletonCellPlot:
                     specular_power=10,
                     show_edges=False,
                 )
+                has_geometry = True
+
+            if not has_geometry:
+                # Cell has no plotteable skeleton branches — skip it
+                plotter.close()
+                continue
 
             # Configure visualization
             plotter.camera_position = "xy"  # Equivalent to MATLAB view(0,270)
