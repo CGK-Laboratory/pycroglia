@@ -1,8 +1,17 @@
+import sys
+if getattr(sys, 'frozen', False):
+    print("Loading Pycroglia... Please wait a moment.")
+
 import os
 from PyQt6 import QtWidgets, QtGui
 
 from pycroglia.ui.widgets.wizard.config import DEFAULT_CONFIG
 from pycroglia.ui.widgets.wizard.wizard import ConfigurableMainStack
+
+def get_resource_path(relative_path):
+    """ Gets the absolute path to the resource, compatible with PyInstaller """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 def main():
     app = QtWidgets.QApplication([])
