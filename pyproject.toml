@@ -3,7 +3,7 @@ name = "pycroglia"
 version = "0.0.5"
 description = "Software for isolating and analyzing microglial morphology."
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = "~=3.11.0"
 dependencies = [
     "numpy>=2.2.6",
     "opencv-python>=4.11.0.86",
@@ -16,6 +16,8 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pyvista>=0.46.4",
     "vtk>=9.5.2",
+    "pyinstaller>=6.19.0",
+
 ]
 
 [dependency-groups]
