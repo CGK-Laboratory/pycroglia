@@ -87,19 +87,19 @@ class OutputConfigurator(QtWidgets.QWidget):
             "Skeleton (surface mesh)",
             ("sk_obj", "sk_ply", "sk_vtp", "sk_vtk"),
         )
-        self._geometry_mask = QtWidgets.QGroupBox("Cell mask (VTK only)", parent=self)
-        mask_layout = QtWidgets.QVBoxLayout()
-        self._geometry_mask_surface = QtWidgets.QCheckBox(
-            "Surface mesh (marching cubes → PolyData .vtk)", parent=self._geometry_mask
+        self._geometry_mask_surface = self._make_format_row(
+            "Cell surfaces (surface mesh)",
+            ("mk_obj", "mk_ply", "mk_vtp", "mk_vtk"),
         )
-        self._geometry_mask_vol = QtWidgets.QCheckBox(
-            "Binary mask volume (ImageData .vtk, no polygon mesh)", parent=self._geometry_mask
-        )
-        self._geometry_mask_surface.stateChanged.connect(self._on_status_changed)
-        self._geometry_mask_vol.stateChanged.connect(self._on_status_changed)
-        mask_layout.addWidget(self._geometry_mask_surface)
-        mask_layout.addWidget(self._geometry_mask_vol)
-        self._geometry_mask.setLayout(mask_layout)
+        self._geometry_mask_vol_group = QtWidgets.QGroupBox("Cell boolean masks", parent=self)
+        vol_layout = QtWidgets.QHBoxLayout()
+        self._geometry_mask_vol_vti = QtWidgets.QCheckBox(".vti (ImageData)", parent=self._geometry_mask_vol_group)
+        self._geometry_mask_vol_vtk = QtWidgets.QCheckBox(".vtk (ImageData)", parent=self._geometry_mask_vol_group)
+        self._geometry_mask_vol_vti.stateChanged.connect(self._on_status_changed)
+        self._geometry_mask_vol_vtk.stateChanged.connect(self._on_status_changed)
+        vol_layout.addWidget(self._geometry_mask_vol_vti)
+        vol_layout.addWidget(self._geometry_mask_vol_vtk)
+        self._geometry_mask_vol_group.setLayout(vol_layout)
 
         # Layout
         layout = QtWidgets.QVBoxLayout()
@@ -107,7 +107,8 @@ class OutputConfigurator(QtWidgets.QWidget):
         layout.addWidget(self.folder_selector)
         layout.addWidget(self.filename_input)
         layout.addWidget(self._geometry_skeleton["group"])
-        layout.addWidget(self._geometry_mask)
+        layout.addWidget(self._geometry_mask_surface["group"])
+        layout.addWidget(self._geometry_mask_vol_group)
         layout.addWidget(self.button)
         self.setLayout(layout)
 
@@ -134,24 +135,35 @@ class OutputConfigurator(QtWidgets.QWidget):
         for _, cb in self._geometry_skeleton["checks"]:
             if cb.isChecked():
                 return True
-        if self._geometry_mask_surface.isChecked():
-            return True
-        return self._geometry_mask_vol.isChecked()
+        for _, cb in self._geometry_mask_surface["checks"]:
+            if cb.isChecked():
+                return True
+        return self._geometry_mask_vol_vti.isChecked() or self._geometry_mask_vol_vtk.isChecked()
 
     def get_geometry_export_selection(self) -> GeometryExportSelection:
-        def _get(aname: str) -> bool:
+        def _get_sk(aname: str) -> bool:
             for name, cb in self._geometry_skeleton["checks"]:
                 if name == aname:
                     return cb.isChecked()
             return False
 
+        def _get_mk(aname: str) -> bool:
+            for name, cb in self._geometry_mask_surface["checks"]:
+                if name == aname:
+                    return cb.isChecked()
+            return False
+
         return GeometryExportSelection(
-            skeleton_obj=_get("sk_obj"),
-            skeleton_ply=_get("sk_ply"),
-            skeleton_vtp=_get("sk_vtp"),
-            skeleton_vtk=_get("sk_vtk"),
-            mask_vtk=self._geometry_mask_surface.isChecked(),
-            mask_vtk_volume=self._geometry_mask_vol.isChecked(),
+            skeleton_obj=_get_sk("sk_obj"),
+            skeleton_ply=_get_sk("sk_ply"),
+            skeleton_vtp=_get_sk("sk_vtp"),
+            skeleton_vtk=_get_sk("sk_vtk"),
+            mask_obj=_get_mk("mk_obj"),
+            mask_ply=_get_mk("mk_ply"),
+            mask_vtp=_get_mk("mk_vtp"),
+            mask_vtk=_get_mk("mk_vtk"),
+            mask_volume_vti=self._geometry_mask_vol_vti.isChecked(),
+            mask_volume_vtk=self._geometry_mask_vol_vtk.isChecked(),
         )
 
     def _on_status_changed(self):
