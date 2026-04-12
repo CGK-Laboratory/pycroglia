@@ -16,6 +16,7 @@ from pycroglia.ui.widgets.results.graphs import GraphSelectionWidget
 from pycroglia.ui.widgets.results.output import OutputConfigurator
 from pycroglia.ui.widgets.results.scale import ScaleConfigWidget
 from pycroglia.ui.widgets.results.viewers import FullAnalysisViewer
+from pycroglia.core.io.geometry_export import export_geometry
 from pycroglia.core.io.output import OutputWriter, FullAnalysis
 
 
@@ -340,18 +341,46 @@ class ResultsDashboard(QtWidgets.QWidget):
     ):
         summary = self._state.get_summary()
         cells = self._state.get_per_cell()
-        if cells:
+        if not cells:
+            return
+
+        geo_sel = self.configurator.get_geometry_export_selection()
+        writer_list = list(writers)
+
+        try:
+            for writer in writer_list:
+                writer().write(
+                    os.path.join(folder, path), FullAnalysis(summary, cells)
+                )
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Error",
+                f"An error occurred while saving:\n{str(e)}",
+            )
+            return
+
+        geo_msgs: list[str] = []
+        if geo_sel.any_geometry_selected():
             try:
-                for writer in writers:
-                    writer().write(os.path.join(folder, path), FullAnalysis(summary, cells))
-                QtWidgets.QMessageBox.information(
-                    self,
-                    "Success",
-                    "File saved successfully."
+                geo_msgs = export_geometry(
+                    folder,
+                    self.cell_masks,
+                    cells,
+                    self.scales.get_scale(),
+                    self.scales.get_z_scale(),
+                    geo_sel,
                 )
             except Exception as e:
                 QtWidgets.QMessageBox.critical(
                     self,
-                    "Error",
-                    f"An error occurred while saving:\n{str(e)}"
+                    "Geometry export error",
+                    f"Geometry export failed:\n{str(e)}",
                 )
+                return
+
+        if writer_list or geo_sel.any_geometry_selected():
+            detail = "Save completed."
+            if geo_msgs:
+                detail += "\n\n" + "\n".join(geo_msgs)
+            QtWidgets.QMessageBox.information(self, "Success", detail)

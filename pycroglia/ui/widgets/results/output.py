@@ -1,6 +1,7 @@
 from PyQt6 import QtWidgets, QtCore
 from typing import Optional, Type
 
+from pycroglia.core.io.geometry_export import GeometryExportSelection
 from pycroglia.core.io.output import OutputWriter
 from pycroglia.ui.widgets.common.labeled_widgets import LabeledLineEdit
 from pycroglia.ui.widgets.io.folder_selector import FolderSelector
@@ -8,14 +9,12 @@ from pycroglia.ui.widgets.results.writer import OutputWriterSelector
 
 
 class OutputConfigurator(QtWidgets.QWidget):
-    """Widget that groups selection of an output writer and a destination folder.
-
-    Provides two sub-widgets: one to choose the writer implementation and another
-    to select the target folder where output will be written.
+    """Widget for tabular writers, destination folder, filename, and geometry export.
 
     Attributes:
-        writer_selector (OutputWriterSelector): Widget for selecting an output writer.
-        folder_selector (FolderSelector): Widget for selecting the destination folder.
+        writer_selector (OutputWriterSelector): Tabular output format checkboxes.
+        folder_selector (FolderSelector): Destination folder.
+        filename_input (LabeledLineEdit): Base name for tabular files (required if a writer is selected).
     """
 
     DEFAULT_SAVE_BUTTON_TXT = "Save"
@@ -84,11 +83,31 @@ class OutputConfigurator(QtWidgets.QWidget):
         self.writer_selector.itemChanged.connect(self._on_status_changed)
         self.filename_input.valueChanged.connect(self._on_status_changed)
 
+        self._geometry_skeleton = self._make_format_row(
+            "Skeleton (surface mesh)",
+            ("sk_obj", "sk_ply", "sk_vtp", "sk_vtk"),
+        )
+        self._geometry_mask = QtWidgets.QGroupBox("Cell mask (VTK only)", parent=self)
+        mask_layout = QtWidgets.QVBoxLayout()
+        self._geometry_mask_surface = QtWidgets.QCheckBox(
+            "Surface mesh (marching cubes → PolyData .vtk)", parent=self._geometry_mask
+        )
+        self._geometry_mask_vol = QtWidgets.QCheckBox(
+            "Binary mask volume (ImageData .vtk, no polygon mesh)", parent=self._geometry_mask
+        )
+        self._geometry_mask_surface.stateChanged.connect(self._on_status_changed)
+        self._geometry_mask_vol.stateChanged.connect(self._on_status_changed)
+        mask_layout.addWidget(self._geometry_mask_surface)
+        mask_layout.addWidget(self._geometry_mask_vol)
+        self._geometry_mask.setLayout(mask_layout)
+
         # Layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.writer_selector)
         layout.addWidget(self.folder_selector)
         layout.addWidget(self.filename_input)
+        layout.addWidget(self._geometry_skeleton["group"])
+        layout.addWidget(self._geometry_mask)
         layout.addWidget(self.button)
         self.setLayout(layout)
 
@@ -96,11 +115,54 @@ class OutputConfigurator(QtWidgets.QWidget):
         self.results_ready = ready
         self._on_status_changed()
 
+    def _make_format_row(
+        self, title: str, attr_names: tuple[str, str, str, str]
+    ) -> dict:
+        group = QtWidgets.QGroupBox(title, parent=self)
+        row = QtWidgets.QHBoxLayout()
+        labels = ("OBJ", "PLY", "VTP", "VTK")
+        checks = []
+        for label, aname in zip(labels, attr_names):
+            cb = QtWidgets.QCheckBox(label, parent=group)
+            cb.stateChanged.connect(self._on_status_changed)
+            row.addWidget(cb)
+            checks.append((aname, cb))
+        group.setLayout(row)
+        return {"group": group, "checks": checks}
+
+    def _geometry_any_checked(self) -> bool:
+        for _, cb in self._geometry_skeleton["checks"]:
+            if cb.isChecked():
+                return True
+        if self._geometry_mask_surface.isChecked():
+            return True
+        return self._geometry_mask_vol.isChecked()
+
+    def get_geometry_export_selection(self) -> GeometryExportSelection:
+        def _get(aname: str) -> bool:
+            for name, cb in self._geometry_skeleton["checks"]:
+                if name == aname:
+                    return cb.isChecked()
+            return False
+
+        return GeometryExportSelection(
+            skeleton_obj=_get("sk_obj"),
+            skeleton_ply=_get("sk_ply"),
+            skeleton_vtp=_get("sk_vtp"),
+            skeleton_vtk=_get("sk_vtk"),
+            mask_vtk=self._geometry_mask_surface.isChecked(),
+            mask_vtk_volume=self._geometry_mask_vol.isChecked(),
+        )
+
     def _on_status_changed(self):
+        writers_on = self.writer_selector.has_selected_writers()
+        filename_ok = self.filename_input.has_text()
+        tabular_ok = (not writers_on) or filename_ok
+        output_ok = writers_on or self._geometry_any_checked()
         if (
-            self.writer_selector.has_selected_writers()
-            and self.folder_selector.has_folder_selected()
-            and self.filename_input.has_text()
+            self.folder_selector.has_folder_selected()
+            and tabular_ok
+            and output_ok
             and self.results_ready
         ):
             self.button.setEnabled(True)

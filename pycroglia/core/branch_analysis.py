@@ -17,6 +17,8 @@ KEY_AVG_BRANCH_LENGTH = "avg_branch_length"
 KEY_BRANCH_POINTS = "branch_points"
 KEY_ALLBRANCH = "allbranch"
 KEY_FULLMASKS = "fullmasks"
+KEY_BOUNDING_LEFT = "bounding_left"
+KEY_BOUNDING_BOTTOM = "bounding_bottom"
 
 
 class EmptySkeleton(Exception):
@@ -56,6 +58,8 @@ def get_empty_branch_analysis() -> dict[str, Any]:
         "min_branch_length": 0.0,
         "avg_branch_length": 0.0,
         "branch_points": 0.0,
+        KEY_BOUNDING_LEFT: 0,
+        KEY_BOUNDING_BOTTOM: 0,
     }
 
 
@@ -216,4 +220,6 @@ class BranchAnalysis:
             KEY_MIN_BRANCH_LENGTH: min_branch_length,
             KEY_AVG_BRANCH_LENGTH: avg_branch_length,
             KEY_BRANCH_POINTS: branch_points,
+            KEY_BOUNDING_LEFT: int(left),
+            KEY_BOUNDING_BOTTOM: int(bottom),
         }
