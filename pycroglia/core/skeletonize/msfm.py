@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.typing as npt
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Tuple
 import heapq
 
@@ -87,8 +87,8 @@ def roots(coeffs: np.ndarray) -> np.ndarray:
 class DerivativeResult:
     """Container for derivative results in MSFM2D."""
 
-    tm: np.ndarray = np.zeros(4)
-    order: BoolArray = np.zeros(4, dtype=np.uint8)
+    tm: np.ndarray = field(default_factory=lambda: np.zeros(4))
+    order: BoolArray = field(default_factory=lambda: np.zeros(4, dtype=np.uint8))
 
 
 def _tpatch(t: np.ndarray, i: int, j: int, frozen: BoolArray) -> F64:

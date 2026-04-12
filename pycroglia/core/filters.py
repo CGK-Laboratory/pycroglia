@@ -59,7 +59,7 @@ def remove_small_objects(
             message="Only one label was provided to `remove_small_objects`"
         )
         filtered = skimage.morphology.remove_small_objects(
-            labeled_img, min_size=min_size, connectivity=connectivity.value
+            labeled_img, max_size=min_size-1, connectivity=connectivity.value
         )
     result = filtered > 0
     return result.astype(img.dtype)
