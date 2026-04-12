@@ -36,12 +36,21 @@ _SURFACE_FORMATS = frozenset({"obj", "ply", "vtp", "vtk"})
 
 @dataclass
 class GeometryExportSelection:
+    # Skeleton surface mesh formats
     skeleton_obj: bool = False
     skeleton_ply: bool = False
     skeleton_vtp: bool = False
     skeleton_vtk: bool = False
+
+    # Cell mask surface mesh formats (marching-cubes PolyData)
+    mask_obj: bool = False
+    mask_ply: bool = False
+    mask_vtp: bool = False
     mask_vtk: bool = False
-    mask_vtk_volume: bool = False
+
+    # Cell boolean mask volume formats (ImageData)
+    mask_volume_vtk: bool = False  # saves as .vtk ImageData
+    mask_volume_vti: bool = False  # saves as .vti ImageData
 
     def any_geometry_selected(self) -> bool:
         return any(
@@ -50,8 +59,12 @@ class GeometryExportSelection:
                 self.skeleton_ply,
                 self.skeleton_vtp,
                 self.skeleton_vtk,
+                self.mask_obj,
+                self.mask_ply,
+                self.mask_vtp,
                 self.mask_vtk,
-                self.mask_vtk_volume,
+                self.mask_volume_vtk,
+                self.mask_volume_vti,
             )
         )
 
@@ -68,8 +81,26 @@ class GeometryExportSelection:
         return s
 
     def mask_surface_formats(self) -> set[str]:
-        """Cell mask surface mesh: VTK PolyData only (.vtk)."""
-        return {"vtk"} if self.mask_vtk else set()
+        """Cell mask surface mesh (marching-cubes PolyData): obj/ply/vtp/vtk."""
+        s: set[str] = set()
+        if self.mask_obj:
+            s.add("obj")
+        if self.mask_ply:
+            s.add("ply")
+        if self.mask_vtp:
+            s.add("vtp")
+        if self.mask_vtk:
+            s.add("vtk")
+        return s
+
+    def mask_volume_formats(self) -> set[str]:
+        """Boolean mask ImageData volumes: vtk and/or vti."""
+        s: set[str] = set()
+        if self.mask_volume_vtk:
+            s.add("vtk")
+        if self.mask_volume_vti:
+            s.add("vti")
+        return s
 
 
 def _triangulate_faces(faces: NDArray) -> NDArray:
@@ -191,10 +222,18 @@ def _write_surface(mesh: pv.PolyData, out_root: str, fmt: str, relative_stem: st
     mesh.save(path)
 
 
-def _write_vtk_volume(grid: pv.ImageData, out_root: str, relative_stem: str) -> None:
-    folder = os.path.join(out_root, "vtk")
+def _write_image_data(
+    grid: pv.ImageData,
+    out_root: str,
+    fmt: str,
+    relative_stem: str,
+) -> None:
+    """Write *grid* as ImageData into ``out_root/{fmt}/{relative_stem}.{fmt}``."""
+    if fmt not in {"vtk", "vti"}:
+        raise ValueError(f"Unsupported ImageData format: {fmt}")
+    folder = os.path.join(out_root, fmt)
     os.makedirs(folder, exist_ok=True)
-    path = os.path.join(folder, f"{relative_stem}.vtk")
+    path = os.path.join(folder, f"{relative_stem}.{fmt}")
     grid.save(path)
 
 
@@ -208,6 +247,27 @@ def _branch_dict_for_cell(cells: list[CellAnalysis], index: int) -> dict:
     return br if isinstance(br, dict) else {}
 
 
+def _ndarray_to_image_data(
+    arr: NDArray,
+    scale: float,
+    zscale: float,
+) -> pv.ImageData:
+    """Wrap an arbitrary (Z, Y, X) array as a pyvista ImageData volume.
+
+    The data is stored in the ``point_data['values']`` field with the spacing
+    derived from *scale* (XY) and *zscale* (Z).
+    """
+    a = np.asarray(arr)
+    nz, ny, nx = a.shape
+    grid = pv.ImageData(
+        dimensions=(nx, ny, nz),
+        spacing=(float(scale), float(scale), float(zscale)),
+        origin=(0.0, 0.0, 0.0),
+    )
+    grid.point_data["values"] = a.transpose(2, 1, 0).ravel(order="F")
+    return grid
+
+
 def export_geometry(
     out_root: str,
     cells_masks: list[NDArray],
@@ -218,6 +278,16 @@ def export_geometry(
 ) -> list[str]:
     """Write selected geometry under ``out_root/{fmt}/``.
 
+    Directory layout
+    ----------------
+    out_root/
+      obj/   cell_000_skeleton.obj,  cell_000_surface.obj,  …
+      ply/   cell_000_skeleton.ply,  cell_000_surface.ply,  …
+      vtp/   cell_000_skeleton.vtp,  cell_000_surface.vtp,  …
+      vtk/   cell_000_skeleton.vtk,  cell_000_surface.vtk,  …
+             cell_000_boolean_mask.vtk
+      vti/   cell_000_boolean_mask.vti
+
     Returns:
         List of human-readable messages for skipped cells or failures (non-fatal).
     """
@@ -227,17 +297,22 @@ def export_geometry(
 
     sk_fmt = selection.skeleton_formats() & _SURFACE_FORMATS
     mk_fmt = selection.mask_surface_formats() & _SURFACE_FORMATS
+    vol_fmt = selection.mask_volume_formats()  # "vtk" and/or "vti"
 
+    # ------------------------------------------------------------------
+    # Per-cell loop: skeleton, mask surface, mask volume
+    # ------------------------------------------------------------------
     for i, mask in enumerate(cells_masks):
         stem_skel = f"cell_{i:03d}_skeleton"
-        stem_mask = f"cell_{i:03d}_mask"
-        stem_vol = f"cell_{i:03d}_mask_volume"
+        stem_mask = f"cell_{i:03d}_surface"
+        stem_vol = f"cell_{i:03d}_boolean_mask"
 
         branch = _branch_dict_for_cell(cells, i)
         left = int(branch.get(KEY_BOUNDING_LEFT, 0))
         bottom = int(branch.get(KEY_BOUNDING_BOTTOM, 0))
         vol_shape = tuple(int(x) for x in np.asarray(cells_masks[i]).shape)
 
+        # ---- skeleton surface ----
         if sk_fmt:
             fullmasks = branch.get(KEY_FULLMASKS)
             if not fullmasks or not isinstance(fullmasks, (list, tuple)):
@@ -267,6 +342,7 @@ def export_geometry(
                                 f"Cell {i}: write skeleton {fmt} failed: {exc}"
                             )
 
+        # ---- mask surface (marching cubes) ----
         if mk_fmt:
             try:
                 surf = _mask_to_polydata(mask, scale, zscale)
@@ -280,13 +356,20 @@ def export_geometry(
                     try:
                         _write_surface(surf, out_root, fmt, stem_mask)
                     except Exception as exc:  # noqa: BLE001
-                        messages.append(f"Cell {i}: write mask {fmt} failed: {exc}")
+                        messages.append(f"Cell {i}: write mask surface {fmt} failed: {exc}")
 
-        if selection.mask_vtk_volume:
+        # ---- per-cell boolean mask volume (ImageData) ----
+        if vol_fmt:
             try:
-                vol = _binary_mask_to_image_data(mask, scale, zscale)
-                _write_vtk_volume(vol, out_root, stem_vol)
+                cell_vol = _binary_mask_to_image_data(mask, scale, zscale)
             except Exception as exc:  # noqa: BLE001
-                messages.append(f"Cell {i}: VTK volume export failed: {exc}")
+                messages.append(f"Cell {i}: binary mask ImageData failed: {exc}")
+                cell_vol = None
+            if cell_vol is not None:
+                for fmt in vol_fmt:
+                    try:
+                        _write_image_data(cell_vol, out_root, fmt, stem_vol)
+                    except Exception as exc:  # noqa: BLE001
+                        messages.append(f"Cell {i}: write mask volume {fmt} failed: {exc}")
 
     return messages
