@@ -42,13 +42,13 @@ def test_export_mask_surface_and_volume(tmp_path):
     ]
     sel = GeometryExportSelection(
         mask_vtk=True,
-        mask_vtk_volume=True,
+        mask_volume_vtk=True,
     )
     msgs = export_geometry(
         str(tmp_path), [mask], cells, scale=0.5, zscale=1.0, selection=sel
     )
-    assert (tmp_path / "vtk" / "cell_000_mask.vtk").is_file()
-    vol_path = tmp_path / "vtk" / "cell_000_mask_volume.vtk"
+    assert (tmp_path / "vtk" / "cell_000_surface.vtk").is_file()
+    vol_path = tmp_path / "vtk" / "cell_000_boolean_mask.vtk"
     assert vol_path.is_file()
     grid = pv.read(vol_path)
     assert grid.n_points == 10 * 10 * 10
