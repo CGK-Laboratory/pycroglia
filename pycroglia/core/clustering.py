@@ -57,14 +57,10 @@ def gaussian_mixture_predict(
     clusters = []
     for i in range(n_clusters):
         cluster_points = points[gmm_index == i]
-
-        flat_indexes = np.ravel_multi_index(
-            (cluster_points[:, 0], cluster_points[:, 1], cluster_points[:, 2]),
-            img.shape,
-        )
         cluster_map = np.zeros(img.shape, dtype=np.uint8)
-        cluster_map.flat[flat_indexes] = 1
-
+        cluster_map[
+            cluster_points[:, 0], cluster_points[:, 1], cluster_points[:, 2]
+        ] = 1
         clusters.append(cluster_map)
 
     return clusters
