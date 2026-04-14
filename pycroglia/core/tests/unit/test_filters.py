@@ -29,7 +29,7 @@ def test_otsu_mask_all_white():
     mask = calculate_otsu_threshold(img, adjust=1.0)
 
     assert mask.shape == img.shape
-    assert np.all(mask == 1)
+    assert np.all(mask == 0)
 
 
 def test_otsu_mask_mixed_values():

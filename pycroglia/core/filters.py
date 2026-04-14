@@ -1,11 +1,53 @@
 import warnings
-import cv2
 import skimage
 import numpy as np
 
 from numpy.typing import NDArray
 
 from pycroglia.core.enums import SkimageCellConnectivity
+from skimage.exposure import histogram
+
+
+def _threshold_otsu(image):
+    """Return otsu threshold, using matlab's criteria about repeated values.
+
+    Parameters
+    ----------
+    image : (M, N[, ...]) ndarray.
+        Input image.
+
+    Returns
+    -------
+    threshold : float
+        Pixels higher than this are assumed to be foreground.
+
+    References
+    ----------
+    .. [1] Wikipedia, https://en.wikipedia.org/wiki/Otsu's_Method
+
+    """
+
+    unique_value = image.reshape(-1)[0]
+    
+    if np.all(image == unique_value):
+        return unique_value
+
+    counts, bin_centers = histogram(
+                image.reshape(-1), source_range='image', normalize=False
+            )
+    counts = counts.astype('float32', copy=False)
+
+    weight1 = np.cumsum(counts)
+    weight2 = np.cumsum(counts[::-1])[::-1]
+
+    mean1 = np.cumsum(counts * bin_centers) / weight1
+    mean2 = (np.cumsum((counts * bin_centers)[::-1]) / weight2[::-1])[::-1]
+
+    variance12 = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
+
+    idx = max(np.where(variance12 == max(variance12))[0])  # In case of multiple max, take the last one
+
+    return bin_centers[idx]
 
 
 def calculate_otsu_threshold(img: NDArray, adjust: float) -> NDArray:
@@ -22,16 +64,13 @@ def calculate_otsu_threshold(img: NDArray, adjust: float) -> NDArray:
     binary_stack = np.zeros((zs, height, width), dtype=np.uint8)
 
     for i in range(zs):
-        z_slice = img[i, :, :].astype(np.uint8)
+        z_slice = img[i, :, :]
         # Otsu method for obtaining the threshold
-        level, _ = cv2.threshold(z_slice, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        adjusted_level = min(255.0, level * adjust)
+        level = _threshold_otsu(z_slice)
+        adjusted_level = level * adjust
 
         # Apply the adjusted level
-        _, obtained_slice = cv2.threshold(
-            z_slice, adjusted_level, 255, cv2.THRESH_BINARY
-        )
-        binary_stack[i, :, :] = obtained_slice > 0
+        binary_stack[i, :, :] = z_slice > adjusted_level
 
     return binary_stack
 
