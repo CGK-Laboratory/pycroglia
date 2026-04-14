@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = "~=3.11.0"
 dependencies = [
     "numpy>=2.2.6",
-    "opencv-python>=4.11.0.86",
     "pyqt6>=6.9.1",
     "pyqtgraph>=0.13.7",
     "scipy>=1.15.3",
@@ -17,13 +16,11 @@ dependencies = [
     "pyvista>=0.46.4",
     "vtk>=9.5.2",
     "pyinstaller>=6.19.0",
-
 ]
 
 [dependency-groups]
 core = [
     "numpy>=2.2.6",
-    "opencv-python>=4.11.0.86",
     "scikit-image>=0.25.2",
     "scikit-learn>=1.7.1",
     "tifffile>=2025.5.10",
@@ -41,6 +38,7 @@ dev = [
     "pytest>=8.4.1",
     "pytest-qt>=4.5.0",
     "ruff>=0.12.4",
+    "ipykernel>=6.0.0",
 ]
 
 [project.optional-dependencies]
