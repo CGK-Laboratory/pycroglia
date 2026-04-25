@@ -61,11 +61,13 @@ def test_segmentation_editor_stack_add_tabs_creates_editors(
     mock_result1.small_object_filtered_img = Mock()
     mock_result1.min_size = 100
     mock_result1.file_path = "/path/to/file1.tif"
+    mock_result1.erosion_radius = 3
 
     mock_result2 = Mock(spec=FilterResults)
     mock_result2.small_object_filtered_img = Mock()
     mock_result2.min_size = 150
     mock_result2.file_path = "/path/to/file2.tif"
+    mock_result2.erosion_radius = 3
 
     results = [mock_result1, mock_result2]
 
@@ -86,6 +88,7 @@ def test_segmentation_editor_stack_add_tabs_creates_editors(
         img=mock_result1.small_object_filtered_img,
         labeling_strategy=mock_labeling_strategy,
         min_size=mock_result1.min_size,
+        erosion_radius=mock_result1.erosion_radius,
         with_progress_bar=True,
         headers=["Cell Number", "Cell Size"],
         rollback_button_text="Rollback",
@@ -115,6 +118,7 @@ def test_segmentation_editor_stack_add_tabs_clears_existing_tabs(
         mock_result.small_object_filtered_img = Mock()
         mock_result.min_size = 100
         mock_result.file_path = "/path/to/file.tif"
+        mock_result.erosion_radius = 3
 
         segmentation_editor_stack.add_tabs([mock_result])
 
@@ -134,6 +138,7 @@ def test_segmentation_editor_stack_add_tabs_sets_correct_tab_names(
     mock_result.small_object_filtered_img = Mock()
     mock_result.min_size = 100
     mock_result.file_path = "/path/to/test_file.tif"
+    mock_result.erosion_radius = 3
 
     mock_path = Mock()
     mock_path.name = "test_file.tif"

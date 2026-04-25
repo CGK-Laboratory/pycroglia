@@ -3,6 +3,8 @@ from typing import Optional
 from PyQt6 import QtWidgets
 from numpy.typing import NDArray
 
+from pycroglia.core.errors.errors import PycrogliaException
+
 from pycroglia.core.labeled_cells import LabelingStrategy, LabeledCells
 from pycroglia.ui.controllers.segmentation_state import SegmentationEditorState
 from pycroglia.ui.widgets.cells.cells_panel import CellsPanel
@@ -97,6 +99,7 @@ class SegmentationEditor(QtWidgets.QWidget):
         img: NDArray,
         labeling_strategy: LabelingStrategy,
         min_size: int,
+        erosion_radius: int = 3,
         with_progress_bar: bool = False,
         headers: Optional[list[str]] = None,
         rollback_button_text: Optional[str] = None,
@@ -111,6 +114,7 @@ class SegmentationEditor(QtWidgets.QWidget):
             img (NDArray): 3D binary image to segment.
             labeling_strategy (LabelingStrategy): Strategy for labeling connected components.
             min_size (int): Minimum size for objects to keep after noise removal.
+            erosion_radius (int): Radius for the diamond erosion footprint. Default is 3.
             with_progress_bar (bool, optional): Whether to show a progress bar during segmentation.
             headers (Optional[list[str]], optional): Column headers for the cell list.
             rollback_button_text (Optional[str], optional): Text for the rollback button.
@@ -135,7 +139,7 @@ class SegmentationEditor(QtWidgets.QWidget):
         )
 
         # Properties
-        self.state = SegmentationEditorState(img, labeling_strategy, min_size)
+        self.state = SegmentationEditorState(img, labeling_strategy, min_size, erosion_radius)
         self.with_progress_bar = with_progress_bar
 
         # Widgets
@@ -210,6 +214,18 @@ class SegmentationEditor(QtWidgets.QWidget):
             self.state.segment_cell(
                 selected_cell_info[0], selected_cell_info[1], progress_bar
             )
+        except PycrogliaException as e:
+            if e.error_code == 2001:
+                if progress_bar:
+                    progress_bar.close()
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Segmentation Error",
+                    "The program finds 0 nuclei to segment your object into. "
+                    "Adjust Erosion in the previous window to a lower number.",
+                )
+                return
+            raise
         finally:
             if progress_bar:
                 progress_bar.close()

@@ -79,6 +79,7 @@ class SegmentationEditorStack(QtWidgets.QWidget):
                 img=elem.small_object_filtered_img,
                 labeling_strategy=SkimageImgLabeling(SkimageCellConnectivity.CORNERS),
                 min_size=elem.min_size,
+                erosion_radius=elem.erosion_radius,
                 with_progress_bar=True,
                 headers=self.headers_text,
                 rollback_button_text=self.rollback_button_text,
