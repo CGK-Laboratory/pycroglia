@@ -22,14 +22,12 @@ class SegmentationEditorState(QtCore.QObject):
 
     Attributes:
         ARRAY_ELEMENTS_TYPE (type): Data type for output arrays.
-        DEFAULT_EROSION_FOOTPRINT (FootprintShape): Default structuring element for erosion.
         DEFAULT_SKIMAGE_CONNECTIVITY (SkimageCellConnectivity): Default connectivity for labeling.
         DEFAULT_PROGRESS_BAR_TEXT (str): Default text for the progress bar.
     """
 
     ARRAY_ELEMENTS_TYPE = np.uint8
 
-    DEFAULT_EROSION_FOOTPRINT = Diamond2DFootprint(r=3)
     DEFAULT_SKIMAGE_CONNECTIVITY = SkimageCellConnectivity.CORNERS
 
     DEFAULT_PROGRESS_BAR_TEXT = "Processing cells..."
@@ -54,6 +52,7 @@ class SegmentationEditorState(QtCore.QObject):
         img: NDArray,
         labeling_strategy: LabelingStrategy,
         min_size: int,
+        erosion_radius: int = 3,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initializes the segmentation editor state.
@@ -62,6 +61,7 @@ class SegmentationEditorState(QtCore.QObject):
             img (NDArray): 3D binary image.
             labeling_strategy (LabelingStrategy): Strategy for labeling connected components.
             min_size (int): Minimum size for objects to keep after noise removal.
+            erosion_radius (int): Radius for the diamond erosion footprint. Default is 3.
             parent (Optional[QtWidgets.QWidget], optional): Parent widget. Defaults to None.
         """
         super().__init__(parent=parent)
@@ -71,6 +71,7 @@ class SegmentationEditorState(QtCore.QObject):
         self._actual_state = LabeledCells(img, labeling_strategy)
         self._prev_state: Optional[LabeledCells] = None
         self._min_size = min_size
+        self._erosion_footprint = Diamond2DFootprint(r=erosion_radius)
 
     def get_state(self) -> LabeledCells:
         """Returns the current segmentation state.
@@ -134,7 +135,7 @@ class SegmentationEditorState(QtCore.QObject):
             if cell_index == i:
                 segmented_cell = segment_single_cell(
                     cell_matrix=self._actual_state.get_cell(i),
-                    footprint=self.DEFAULT_EROSION_FOOTPRINT,
+                    footprint=self._erosion_footprint,
                     config=SegmentationConfig(
                         cut_off_size=cell_size,
                         min_size=self._min_size,
