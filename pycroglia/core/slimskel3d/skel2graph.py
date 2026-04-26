@@ -67,6 +67,46 @@ class Link:
     label: int
 
 
+def _extract_nodes_from_labels(
+    labeled_img: NDArray,
+    lm_flat: NDArray,
+    is_endpoint: bool,
+    nodes_list: list[Node],
+    skel2_flat: NDArray,
+) -> None:
+    """Helper to group clusters of voxels into Node objects without full-volume scans."""
+    flat_labels = labeled_img.ravel()
+    valid_mask = flat_labels > 0
+    valid_indices = np.flatnonzero(valid_mask)
+
+    if len(valid_indices) == 0:
+        return
+
+    valid_labels = flat_labels[valid_indices]
+
+    sort_idx = np.argsort(valid_labels)
+    sorted_labels = valid_labels[sort_idx]
+    sorted_indices = valid_indices[sort_idx]
+
+    splits = np.nonzero(sorted_labels[1:] != sorted_labels[:-1])[0] + 1
+    grouped_indices = np.split(sorted_indices, splits)
+
+    shape = labeled_img.shape
+    for indices in grouped_indices:
+        z, y, x = np.unravel_index(indices, shape)
+        node = Node(
+            id=len(nodes_list),
+            indices=indices,
+            center_of_mass=CenterOfMass(
+                x=float(np.mean(x)), y=float(np.mean(y)), z=float(np.mean(z))
+            ),
+            label=int(lm_flat[indices[0]]),
+            is_endpoint=is_endpoint,
+        )
+        nodes_list.append(node)
+        skel2_flat[indices] = len(nodes_list)
+
+
 def _follow_link(
     skel: np.ndarray,
     nodes: list[Node],
@@ -224,23 +264,19 @@ def skel2graph(
     endpoints = list_canal[neighbourhood_sum == 2]
 
     # all canal voxels with exactly 2 neighbors (canal voxels)
-    canals = list_canal[neighbourhood_sum == 3]
+    canal_mask = neighbourhood_sum == 3
+    canals = list_canal[canal_mask]
 
     # Nx3 matrix with the 2 neighbors of each canal voxel
-    canal_neighbourhood_indices = _get_neighbourhood_indices(skel, canals)
-    canals_neighbourhood = _get_neighbourhood(skel, canals)
+    canal_neighbourhood_indices = neighbourhood_indices[canal_mask]
+    canals_neighbourhood = neighbourhood[canal_mask]
 
     # remove center of 3x3x3 cube (col=13 in Python 0-based)
     canal_neighbourhood_indices = np.delete(canal_neighbourhood_indices, 13, axis=1)
     canals_neighbourhood = np.delete(canals_neighbourhood, 13, axis=1)
 
     # keep only the two existing foreground voxels
-    canals_nb = np.sort(
-        canals_neighbourhood.astype(int) * canal_neighbourhood_indices, axis=1
-    )
-
-    # remove zeros: keep last two nonzero entries per row
-    canals_nb = canals_nb[:, -2:]
+    canals_nb = canal_neighbourhood_indices[canals_neighbourhood].reshape(-1, 2)
 
     # add neighbors to canal voxel list (shape: (N, 3))
     canals = np.column_stack([canals, canals_nb])
@@ -248,48 +284,26 @@ def skel2graph(
     nodes: list[Node] = []
     links: list[Link] = []
 
+    lm_flat = lm.ravel()
+    skel2_flat = skel2.ravel()
+
     # group clusters of node voxels into nodes
-    tmp = np.zeros(skel.shape, dtype=bool)
+    tmp = np.zeros(skel.size, dtype=bool)
     if len(node_voxels) > 0:
-        tmp[np.unravel_index(np.array(node_voxels, dtype=np.intp), skel.shape)] = True
+        tmp[node_voxels] = True
+    tmp = tmp.reshape(skel.shape)
 
-    labeled_nodes, num_realnodes = sklabel(tmp, connectivity=3, return_num=True)
-
-    for i in range(1, num_realnodes + 1):
-        indices = np.flatnonzero(labeled_nodes == i)
-        z, y, x = np.unravel_index(indices, skel.shape)
-        node = Node(
-            id=len(nodes),
-            indices=indices,
-            center_of_mass=CenterOfMass(
-                x=float(np.mean(x)), y=float(np.mean(y)), z=float(np.mean(z))
-            ),
-            label=int(lm.ravel()[indices[0]]),
-        )
-        nodes.append(node)
-        skel2.ravel()[indices] = len(nodes)
+    labeled_nodes = sklabel(tmp, connectivity=3)
+    _extract_nodes_from_labels(labeled_nodes, lm_flat, False, nodes, skel2_flat)
 
     # group endpoint voxels into nodes
-    tmp = np.zeros(skel.shape, dtype=bool)
+    tmp = np.zeros(skel.size, dtype=bool)
     if len(endpoints) > 0:
-        tmp[np.unravel_index(np.array(endpoints, dtype=np.intp), skel.shape)] = True
+        tmp[endpoints] = True
+    tmp = tmp.reshape(skel.shape)
 
-    labeled_endpoints, num_endpoints = sklabel(tmp, connectivity=3, return_num=True)
-
-    for i in range(1, num_endpoints + 1):
-        indices = np.flatnonzero(labeled_endpoints == i)
-        z, y, x = np.unravel_index(indices, skel.shape)
-        node = Node(
-            id=len(nodes),
-            indices=indices,
-            center_of_mass=CenterOfMass(
-                x=float(np.mean(x)), y=float(np.mean(y)), z=float(np.mean(z))
-            ),
-            label=int(lm.ravel()[indices[0]]),
-            is_endpoint=True,
-        )
-        nodes.append(node)
-        skel2.ravel()[indices] = len(nodes)
+    labeled_endpoints = sklabel(tmp, connectivity=3)
+    _extract_nodes_from_labels(labeled_endpoints, lm_flat, True, nodes, skel2_flat)
 
     # Map: linear index of a canal voxel → row index in `canals`
     canal_index_map = np.full(skel.size, -1, dtype=int)
@@ -298,9 +312,7 @@ def skel2graph(
 
     # Map: linear index of a skeleton voxel → row index in `neighbourhood_indices`
     skeleton_index_map = np.zeros(skel.size, dtype=int)
-    skeleton_index_map[neighbourhood_indices[:, 13]] = np.arange(
-        len(neighbourhood_indices), dtype=int
-    )
+    skeleton_index_map[list_canal] = np.arange(len(list_canal), dtype=int)
 
     # Follow links between nodes
     for node in nodes:
@@ -394,50 +406,35 @@ def skel2graph(
 
 def _get_neighbourhood(img: NDArray, indices: NDArray) -> NDArray:
     """Return the 3x3x3 neighborhood of given voxels in a 3D binary image.
-    This function mimics the MATLAB `pk_get_nh` behavior, collecting the values
-    of all 27 neighbors (including the voxel itself) around each input voxel
-    index. Out-of-bounds neighbors are treated as `False`.
+
+    This function collects the values of all 27 neighbors (including the voxel
+    itself) around each input voxel index. The input `img` must be padded such
+    that none of the `indices` lie on the real boundary, ensuring safe index
+    offsets.
+
     Args:
         img (NDArray):
-            A 3D binary image (bool or int).
+            A padded 3D binary image (bool or int).
         indices (NDArray):
-            Linear indices (0-based, flattened order, i.e. as from `img.ravel()`).
+            Linear indices (0-based, flattened order) of the target voxels.
+
     Returns:
         NDArray:
-            A boolean array of shape ``(len(indices), 27)``, where each row
-            corresponds to the 27-neighborhood of a voxel in row-major order.
+            A boolean array of shape ``(len(indices), 27)`` with the
+            27-neighborhood of each voxel in row-major order.
     """
-    shape = img.shape  # (z, y, x)
-    z, y, x = np.unravel_index(indices, shape)
-
-    neighbourhood = np.zeros((len(indices), 27), dtype=bool)
-    w = 0
-    for dz in range(3):
-        for dy in range(3):
-            for dx in range(3):
-                zn = z + dz - 1
-                yn = y + dy - 1
-                xn = x + dx - 1
-                inside = (
-                    (zn >= 0)
-                    & (zn < shape[0])
-                    & (yn >= 0)
-                    & (yn < shape[1])
-                    & (xn >= 0)
-                    & (xn < shape[2])
-                )
-                vals = np.zeros(len(indices), dtype=bool)
-                if np.any(inside):
-                    vals[inside] = img[zn[inside], yn[inside], xn[inside]]
-                neighbourhood[:, w] = vals
-                w += 1
-    return neighbourhood
+    shape = img.shape
+    Z, Y, X = shape
+    dz, dy, dx = np.meshgrid([-1, 0, 1], [-1, 0, 1], [-1, 0, 1], indexing="ij")
+    offsets = dz.ravel() * (Y * X) + dy.ravel() * X + dx.ravel()
+    return img.ravel()[indices[:, np.newaxis] + offsets[np.newaxis, :]].astype(bool)
 
 
 def _get_neighbourhood_indices(img: NDArray, indices: NDArray) -> NDArray:
     """Return linear indices of the 3x3x3 neighborhood around given voxels.
 
-    This is the Python equivalent of the MATLAB function `pk_get_nh_idx`.
+    This avoids dynamic multi-index conversion by broadcasting a precomputed
+    27-element offset kernel against the 1D flat indices. `img` must be padded.
 
     Args:
         img (NDArray):
@@ -450,22 +447,8 @@ def _get_neighbourhood_indices(img: NDArray, indices: NDArray) -> NDArray:
             Array of shape (len(indices), 27) with the linear indices of each
             voxel’s 3x3x3 neighborhood, in row-major order.
     """
-    shape = img.shape  # (z, y, x)
-    z, y, x = np.unravel_index(indices, shape)
-
-    neighbourhood = np.zeros((len(indices), 27), dtype=int)
-
-    w = 0
-    for dz in range(3):
-        for dy in range(3):
-            for dx in range(3):
-                zn = z + dz - 1
-                yn = y + dy - 1
-                xn = x + dx - 1
-                # convert (zn,yn,xn) → linear index
-                neighbourhood[:, w] = np.ravel_multi_index(
-                    (zn, yn, xn), shape, mode="clip"
-                )
-                w += 1
-
-    return neighbourhood
+    shape = img.shape
+    Z, Y, X = shape
+    dz, dy, dx = np.meshgrid([-1, 0, 1], [-1, 0, 1], [-1, 0, 1], indexing="ij")
+    offsets = dz.ravel() * (Y * X) + dy.ravel() * X + dx.ravel()
+    return indices[:, np.newaxis] + offsets[np.newaxis, :]
