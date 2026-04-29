@@ -211,11 +211,7 @@ class LabeledCells:
         if not self._is_valid_index(index):
             raise PycrogliaException(error_code=2000)
 
-        cell_matrix = np.zeros((self.z, self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE)
-        cell_matrix[self.labels == index] = 1
-        flatten = cell_matrix.sum(axis=0)
-
-        return flatten
+        return (self.labels == index).sum(axis=0).astype(self.ARRAY_ELEMENTS_TYPE)
 
     def all_cells_to_2d(self) -> NDArray:
         """Projects all labeled cells to 2D and stacks them along a new axis.
@@ -223,15 +219,15 @@ class LabeledCells:
         Returns:
             NDArray: 3D array where each slice is the 2D projection of a cell.
         """
-        all_cells_matrix = np.zeros(
-            (self.len(), self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE
-        )
-
-        for i in range(1, self.len() + 1):
-            cell_array = self.cell_to_2d(i)
-            all_cells_matrix[i - 1, :, :] = cell_array
-
-        return all_cells_matrix
+        n = self.len()
+        if n == 0:
+            return np.zeros((0, self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE)
+        
+        result = np.zeros((n, self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE)
+        for i in range(1, n + 1):
+            result[i - 1] = (self.labels == i).sum(axis=0)
+            
+        return result
 
     def get_border_cells(self) -> Set[int]:
         """Detects cells that touch the image borders in any Z slice.

@@ -152,17 +152,18 @@ class BranchAnalysis:
         endpoints_list = np.argwhere(endpoints == 1)
         n_endpoints = endpoints_list.shape[0]
 
-        masklist = np.zeros((*bounded_skel.shape, n_endpoints), dtype=bool)
+        fullmask = np.zeros(bounded_skel.shape, dtype=np.int32)
         arclength_of_each_branch = np.zeros(n_endpoints, dtype=float)
         for j, i1 in enumerate(endpoints_list):
             # Connect current endpoint to centroid
             start = connection.Point(z=i1[0], y=i1[1], x=i1[2])
             end = connection.Point(z=i2_local[0], y=i2_local[1], x=i2_local[2])
             path_coords = connection.connect_points_along_path(bounded_skel, start, end)
-            masklist[..., j] = path_coords
+            
+            fullmask += path_coords.astype(np.int32)
 
             # Reorder pixels by connectivity (stub; implement graph-ordering if needed)
-            pxlist = np.flatnonzero(masklist[..., j] == 1)
+            pxlist = np.flatnonzero(path_coords == 1)
             distpoint = reorder_pixel_list(pxlist, bounded_skel.shape, i1, i2_local)
 
             # Convert voxel coordinates to microns
@@ -186,8 +187,7 @@ class BranchAnalysis:
         else:
             max_branch_length = min_branch_length = avg_branch_length = 0.0
 
-        # Combine all branch masks
-        fullmask = np.sum(masklist.astype(int), axis=3)
+        # fullmask is already computed incrementally
         fullmask[fullmask > 3] = 4  # cap at quaternary connectivity
         quaternary = fullmask == 1
 
