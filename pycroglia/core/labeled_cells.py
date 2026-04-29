@@ -126,6 +126,7 @@ class LabeledCells:
     def _get_buffer(self) -> NDArray:
         if self._buffer is None:
             self._buffer = np.empty(self.labels.shape, dtype=self.ARRAY_ELEMENTS_TYPE)
+        return self._buffer
 
     def len(self) -> int:
         """Returns the number of labeled cells.
