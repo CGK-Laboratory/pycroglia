@@ -240,26 +240,20 @@ class LabeledCells:
         Returns:
             Set[int]: Set of cell IDs that touch the image borders.
         """
-        border_cells = set()
-        border_labels = set()
-        z, y, x = self.labels.shape
+        # Concatenate all border pixels and find unique labels in one go
+        border_labels = np.concatenate(
+            [
+                np.unique(self.labels[:, 0, :].ravel()),
+                np.unique(self.labels[:, -1, :].ravel()),
+                np.unique(self.labels[:, :, 0].ravel()),
+                np.unique(self.labels[:, :, -1].ravel()),
+            ]
+        )
 
-        for z_slice in range(z):
-            # Top and bottom borders for this Z slice
-            border_labels.update(np.unique(self.labels[z_slice, 0, :]))
-            border_labels.update(np.unique(self.labels[z_slice, y - 1, :]))
-
-            # Left and right borders for this Z slice
-            border_labels.update(np.unique(self.labels[z_slice, :, 0]))
-            border_labels.update(np.unique(self.labels[z_slice, :, x - 1]))
-
-        # Remove background (label 0)
-        border_labels.discard(0)
-
-        # Filter to only include valid cell IDs
-        for label in border_labels:
-            if 1 <= label <= self.len():
-                border_cells.add(label)
+        # Filter out background (0) and include only valid cell IDs
+        border_cells = {
+            int(label) for label in border_labels if 1 <= label <= self.len()
+        }
 
         return border_cells
 
