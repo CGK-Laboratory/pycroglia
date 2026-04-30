@@ -111,47 +111,51 @@ class SegmentationEditorState(QtCore.QObject):
             cell_size (int): Minimum size for segmentation.
             progress_bar (Optional[QtWidgets.QProgressDialog], optional): Progress dialog to update. Defaults to None.
         """
-        list_of_cells: list[NDArray] = []
-        number_of_cells = self._actual_state.len()
+        from pycroglia.core.labeled_cells import PrecomputedLabeling
 
         # If progress bar was passed
         if progress_bar:
-            progress_bar.setMaximum(number_of_cells)
+            progress_bar.setMaximum(100)
             progress_bar.setValue(0)
-            progress_bar.setLabelText(self.DEFAULT_PROGRESS_BAR_TEXT)
+            progress_bar.setLabelText(f"Segmenting cell {cell_index}...")
             QtCore.QCoreApplication.processEvents()
 
-        for i in range(1, number_of_cells + 1):
-            if progress_bar:
-                progress_bar.setValue(i)
-                progress_bar.setLabelText(
-                    self.DEFAULT_PROGRESS_BAR_TEXT_GENERATOR(i, number_of_cells)
-                )
-                QtCore.QCoreApplication.processEvents()
 
-                if progress_bar.wasCanceled():
-                    return
 
-            if cell_index == i:
-                segmented_cell = segment_single_cell(
-                    cell_matrix=self._actual_state.get_cell(i),
-                    footprint=self._erosion_footprint,
-                    config=SegmentationConfig(
-                        cut_off_size=cell_size,
-                        min_size=self._min_size,
-                        connectivity=self.DEFAULT_SKIMAGE_CONNECTIVITY,
-                    ),
-                )
-                list_of_cells.extend(segmented_cell)
+        # Step 1: Segment the requested cell into multiple new sub-cells
+        segmented_cells = segment_single_cell(
+            cell_matrix=self._actual_state.get_cell(cell_index),
+            footprint=self._erosion_footprint,
+            config=SegmentationConfig(
+                cut_off_size=cell_size,
+                min_size=self._min_size,
+                connectivity=self.DEFAULT_SKIMAGE_CONNECTIVITY,
+            ),
+        )
+        # Step 2: Copy existing labels and remove the cell we are segmenting
+        new_labels = self._actual_state.labels.copy()
+        new_labels[new_labels == cell_index] = 0
+
+        if progress_bar and progress_bar.wasCanceled():
+            return
+
+        # Step 3: Insert the new sub-cells into the label array
+        # Reuse the original cell_index for the first sub-cell to avoid gaps.
+        # Assign new sequential labels for the rest.
+        max_label = new_labels.max()
+        for idx, mask in enumerate(segmented_cells):
+            if idx == 0:
+                new_labels[mask > 0] = cell_index
             else:
-                list_of_cells.append(self._actual_state.get_cell(i))
+                max_label += 1
+                new_labels[mask > 0] = max_label
 
         if progress_bar:
-            progress_bar.setValue(number_of_cells)
+            progress_bar.setValue(100)
 
         new_state = LabeledCells(
             np.zeros(self._shape, dtype=self.ARRAY_ELEMENTS_TYPE),
-            MaskListLabeling(list_of_cells),
+            PrecomputedLabeling(new_labels),
         )
         self._update_state(new_state)
         self.stateChanged.emit()

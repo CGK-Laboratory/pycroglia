@@ -92,6 +92,27 @@ class MaskListLabeling(LabelingStrategy):
         return relabeled
 
 
+class PrecomputedLabeling(LabelingStrategy):
+    """Labeling strategy using a precomputed integer label array."""
+
+    def __init__(self, labels: NDArray):
+        """
+        Args:
+            labels (NDArray): Precomputed labeled array.
+        """
+        self.labels = labels
+
+    def label(self, img: NDArray) -> NDArray:
+        """
+        Args:
+            img (NDArray): Reference image (unused, as labels are precomputed).
+
+        Returns:
+            NDArray: Precomputed labeled array.
+        """
+        return self.labels
+
+
 class LabeledCells:
     """Represents labeled connected cell components in a 3D image.
 
