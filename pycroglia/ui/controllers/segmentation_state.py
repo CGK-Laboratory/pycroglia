@@ -6,11 +6,7 @@ from numpy.typing import NDArray
 
 from pycroglia.core.enums import SkimageCellConnectivity
 from pycroglia.core.erosion import Diamond2DFootprint
-from pycroglia.core.labeled_cells import (
-    LabelingStrategy,
-    LabeledCells,
-    MaskListLabeling,
-)
+from pycroglia.core.labeled_cells import LabelingStrategy, LabeledCells
 from pycroglia.core.segmentation import segment_single_cell, SegmentationConfig
 
 
@@ -119,8 +115,6 @@ class SegmentationEditorState(QtCore.QObject):
             progress_bar.setValue(0)
             progress_bar.setLabelText(f"Segmenting cell {cell_index}...")
             QtCore.QCoreApplication.processEvents()
-
-
 
         # Step 1: Segment the requested cell into multiple new sub-cells
         segmented_cells = segment_single_cell(
