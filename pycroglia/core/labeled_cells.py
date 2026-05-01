@@ -92,6 +92,27 @@ class MaskListLabeling(LabelingStrategy):
         return relabeled
 
 
+class PrecomputedLabeling(LabelingStrategy):
+    """Labeling strategy using a precomputed integer label array."""
+
+    def __init__(self, labels: NDArray):
+        """
+        Args:
+            labels (NDArray): Precomputed labeled array.
+        """
+        self.labels = labels
+
+    def label(self, img: NDArray) -> NDArray:
+        """
+        Args:
+            img (NDArray): Reference image (unused, as labels are precomputed).
+
+        Returns:
+            NDArray: Precomputed labeled array.
+        """
+        return self.labels
+
+
 class LabeledCells:
     """Represents labeled connected cell components in a 3D image.
 
@@ -126,6 +147,7 @@ class LabeledCells:
     def _get_buffer(self) -> NDArray:
         if self._buffer is None:
             self._buffer = np.empty(self.labels.shape, dtype=self.ARRAY_ELEMENTS_TYPE)
+        return self._buffer
 
     def len(self) -> int:
         """Returns the number of labeled cells.
@@ -211,11 +233,7 @@ class LabeledCells:
         if not self._is_valid_index(index):
             raise PycrogliaException(error_code=2000)
 
-        cell_matrix = np.zeros((self.z, self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE)
-        cell_matrix[self.labels == index] = 1
-        flatten = cell_matrix.sum(axis=0)
-
-        return flatten
+        return (self.labels == index).sum(axis=0).astype(self.ARRAY_ELEMENTS_TYPE)
 
     def all_cells_to_2d(self) -> NDArray:
         """Projects all labeled cells to 2D and stacks them along a new axis.
@@ -223,15 +241,15 @@ class LabeledCells:
         Returns:
             NDArray: 3D array where each slice is the 2D projection of a cell.
         """
-        all_cells_matrix = np.zeros(
-            (self.len(), self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE
-        )
-
-        for i in range(1, self.len() + 1):
-            cell_array = self.cell_to_2d(i)
-            all_cells_matrix[i - 1, :, :] = cell_array
-
-        return all_cells_matrix
+        n = self.len()
+        if n == 0:
+            return np.zeros((0, self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE)
+        
+        result = np.zeros((n, self.y, self.x), dtype=self.ARRAY_ELEMENTS_TYPE)
+        for i in range(1, n + 1):
+            result[i - 1] = (self.labels == i).sum(axis=0)
+            
+        return result
 
     def get_border_cells(self) -> Set[int]:
         """Detects cells that touch the image borders in any Z slice.
@@ -243,26 +261,20 @@ class LabeledCells:
         Returns:
             Set[int]: Set of cell IDs that touch the image borders.
         """
-        border_cells = set()
-        border_labels = set()
-        z, y, x = self.labels.shape
+        # Concatenate all border pixels and find unique labels in one go
+        border_labels = np.concatenate(
+            [
+                np.unique(self.labels[:, 0, :].ravel()),
+                np.unique(self.labels[:, -1, :].ravel()),
+                np.unique(self.labels[:, :, 0].ravel()),
+                np.unique(self.labels[:, :, -1].ravel()),
+            ]
+        )
 
-        for z_slice in range(z):
-            # Top and bottom borders for this Z slice
-            border_labels.update(np.unique(self.labels[z_slice, 0, :]))
-            border_labels.update(np.unique(self.labels[z_slice, y - 1, :]))
-
-            # Left and right borders for this Z slice
-            border_labels.update(np.unique(self.labels[z_slice, :, 0]))
-            border_labels.update(np.unique(self.labels[z_slice, :, x - 1]))
-
-        # Remove background (label 0)
-        border_labels.discard(0)
-
-        # Filter to only include valid cell IDs
-        for label in border_labels:
-            if 1 <= label <= self.len():
-                border_cells.add(label)
+        # Filter out background (0) and include only valid cell IDs
+        border_cells = {
+            int(label) for label in border_labels if 1 <= label <= self.len()
+        }
 
         return border_cells
 

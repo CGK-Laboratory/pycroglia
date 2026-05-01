@@ -357,11 +357,16 @@ def _get_neighbourhood(img: NDArray, indices: NDArray) -> NDArray:
 
     This function mimics the MATLAB `pk_get_nh` behavior, collecting the values
     of all 27 neighbors (including the voxel itself) around each input voxel
-    index. Out-of-bounds neighbors are treated as `False`.
+    index.
+
+    Uses vectorized offset broadcasting for performance. Since ``skeleton3D``
+    pads the input volume by 1 voxel on all sides before calling this function,
+    all candidate indices are guaranteed to be at least 1 away from the array
+    boundary, so bounds checking is unnecessary.
 
     Args:
         img (NDArray):
-            A 3D binary image (bool or int).
+            A padded 3D binary image (bool or int).
         indices (NDArray):
             Linear indices (0-based, flattened order, i.e. as from `img.ravel()`).
 
@@ -370,31 +375,10 @@ def _get_neighbourhood(img: NDArray, indices: NDArray) -> NDArray:
             A boolean array of shape ``(len(indices), 27)``, where each row
             corresponds to the 27-neighborhood of a voxel in row-major order.
     """
-    shape = img.shape  # (z, y, x)
-    z, y, x = np.unravel_index(indices, shape)
-
-    neighbourhood = np.zeros((len(indices), 27), dtype=bool)
-    w = 0
-    for dz in range(3):
-        for dy in range(3):
-            for dx in range(3):
-                zn = z + dz - 1
-                yn = y + dy - 1
-                xn = x + dx - 1
-                inside = (
-                    (zn >= 0)
-                    & (zn < shape[0])
-                    & (yn >= 0)
-                    & (yn < shape[1])
-                    & (xn >= 0)
-                    & (xn < shape[2])
-                )
-                vals = np.zeros(len(indices), dtype=bool)
-                if np.any(inside):
-                    vals[inside] = img[zn[inside], yn[inside], xn[inside]]
-                neighbourhood[:, w] = vals
-                w += 1
-    return neighbourhood
+    Z, Y, X = img.shape
+    dz, dy, dx = np.meshgrid([-1, 0, 1], [-1, 0, 1], [-1, 0, 1], indexing='ij')
+    offsets = dz.ravel() * (Y * X) + dy.ravel() * X + dx.ravel()
+    return img.ravel()[indices[:, np.newaxis] + offsets[np.newaxis, :]].astype(bool)
 
 
 def _compute_euler_invariant_mask(img: NDArray, lut: NDArray) -> NDArray:
