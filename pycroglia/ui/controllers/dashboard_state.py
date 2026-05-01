@@ -333,7 +333,7 @@ class MetricsDAG(QtCore.QObject):
                     max_branch_length=max_branch_length,
                     min_branch_length=min_branch_length,
                     full_cell_analysis=full_cell_analysis,
-                    branch_analysis=branch_results,
+                    branch_analysis=branch_results[i] if i < len(branch_results) else {},
                 )
             )
 

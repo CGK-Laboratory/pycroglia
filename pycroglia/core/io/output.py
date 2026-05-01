@@ -535,3 +535,70 @@ class JSONOutput(OutputWriter):
                 self.per_cell_config.min_branch_length_txt
             ): cell.min_branch_length,
         }
+
+
+class BranchLengthsXlsxOutput(OutputWriter):
+    """XLSX output writer for per-cell branch lengths.
+
+    Creates a simple XLSX file where each row represents a cell (by index)
+    and each column represents a branch length. No headers are written.
+    """
+
+    DEFAULT_FILE_EXTENSION = ".xlsx"
+    DEFAULT_NAME = "Branch Lengths XLSX"
+
+    @classmethod
+    def get_name(cls) -> str:
+        return cls.DEFAULT_NAME
+
+    def write(self, file_path: str, data: FullAnalysis):
+        """Write per-cell branch lengths to an XLSX file.
+
+        Args:
+            file_path: Path where the XLSX file should be saved.
+            data: Complete analysis results containing branch data.
+        """
+        complete_path = self._create_path(file_path)
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "BranchLengths"
+
+        for cell_idx, cell in enumerate(data.cells):
+            branch_lengths = self._extract_branch_lengths(cell)
+            if branch_lengths:
+                row_data = [float(length) for length in branch_lengths]
+                ws.append(row_data)
+            else:
+                ws.append([None])
+
+        wb.save(complete_path)
+
+    def _extract_branch_lengths(self, cell: CellAnalysis) -> list[float]:
+        """Extract branch lengths from a cell's branch analysis.
+
+        Args:
+            cell: Cell analysis data containing branch analysis dict.
+
+        Returns:
+            list[float]: Array of branch lengths for this cell.
+        """
+        branch_analysis = cell.branch_analysis
+        if not branch_analysis:
+            return []
+
+        branch_lengths = branch_analysis.get("branch_lengths", [])
+        return list(branch_lengths)
+
+    def _create_path(self, path: str) -> str:
+        """Ensure the file path has the correct XLSX extension with _branch_lengths suffix.
+
+        Args:
+            path: Original file path.
+
+        Returns:
+            str: File path with _branch_lengths.xlsx suffix.
+        """
+        if path.lower().endswith(".xlsx"):
+            path = path[:-5]
+        path += "_branch_lengths" + self.DEFAULT_FILE_EXTENSION
+        return path
