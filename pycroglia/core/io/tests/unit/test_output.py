@@ -10,6 +10,8 @@ from pycroglia.core.io.output import (
     FullAnalysis,
     ExcelOutput,
     JSONOutput,
+    BranchLengthsXlsxOutput,
+    OutputWriter,
 )
 
 
@@ -34,7 +36,9 @@ def sample_full_analysis():
             max_branch_length=15.0,
             min_branch_length=5.0,
             full_cell_analysis={},
-            branch_analysis={},
+            branch_analysis={
+                "branch_lengths": [8.5, 12.3, 9.2],  # 3 branches
+            },
         ),
         CellAnalysis(
             cell_territory_volume=110.0,
@@ -46,7 +50,9 @@ def sample_full_analysis():
             max_branch_length=16.0,
             min_branch_length=6.0,
             full_cell_analysis={},
-            branch_analysis={},
+            branch_analysis={
+                "branch_lengths": [10.1, 11.5, 9.8, 12.6],  # 4 branches
+            },
         ),
     ]
     return FullAnalysis(summary=summary, cells=cells)
@@ -232,3 +238,56 @@ def test_json_output_to_snake_case(input_txt, expected):
     """Test JSONOutput._to_snake_case converts strings to lowercase snake_case and removes accents."""
     json_writer = JSONOutput()
     assert json_writer._to_snake_case(input_txt) == expected
+
+
+def test_branch_lengths_xlsx_output_write(tmp_path, sample_full_analysis):
+    """Test that BranchLengthsXlsxOutput writes correct branch lengths."""
+    file_path = tmp_path / "branch_lengths_test"
+    writer = BranchLengthsXlsxOutput()
+    writer.write(str(file_path), sample_full_analysis)
+
+    # Check file exists
+    output_file = file_path.parent / (file_path.name + "_branch_lengths.xlsx")
+    assert output_file.exists()
+
+    # Check contents
+    wb = load_workbook(output_file)
+    ws = wb.active
+
+    # Should have 2 rows (one per cell)
+    rows = list(ws.iter_rows(values_only=True))
+    assert len(rows) == 2
+
+    # Cell 0 has 3 branches - filter out None values
+    row0 = [cell for cell in rows[0] if cell is not None]
+    assert len(row0) == 3
+    assert row0[0] == 8.5
+    assert row0[1] == 12.3
+    assert row0[2] == 9.2
+
+    # Cell 1 has 4 branches - filter out None values
+    row1 = [cell for cell in rows[1] if cell is not None]
+    assert len(row1) == 4
+    assert row1[0] == 10.1
+    assert row1[1] == 11.5
+    assert row1[2] == 9.8
+    assert row1[3] == 12.6
+
+def test_branch_lengths_xlsx_output_create_path():
+    """Test BranchLengthsXlsxOutput._create_path adds _branch_lengths.xlsx suffix."""
+    writer = BranchLengthsXlsxOutput()
+    assert writer._create_path("file") == "file_branch_lengths.xlsx"
+    assert writer._create_path("file.xlsx") == "file_branch_lengths.xlsx"
+    assert writer._create_path("file.txt") == "file.txt_branch_lengths.xlsx"
+
+
+def test_branch_lengths_xlsx_output_get_name():
+    """Test BranchLengthsXlsxOutput.get_name returns correct name."""
+    assert BranchLengthsXlsxOutput.get_name() == "Branch Lengths XLSX"
+
+
+def test_branch_lengths_xlsx_output_auto_discovery():
+    """Test that the new writer is automatically discovered."""
+    writers = OutputWriter.get_writers()
+    writer_names = [w.get_name() for w in writers]
+    assert "Branch Lengths XLSX" in writer_names

@@ -19,6 +19,7 @@ KEY_ALLBRANCH = "allbranch"
 KEY_FULLMASKS = "fullmasks"
 KEY_BOUNDING_LEFT = "bounding_left"
 KEY_BOUNDING_BOTTOM = "bounding_bottom"
+KEY_BRANCH_LENGTHS = "branch_lengths"
 
 
 class EmptySkeleton(Exception):
@@ -222,4 +223,5 @@ class BranchAnalysis:
             KEY_BRANCH_POINTS: branch_points,
             KEY_BOUNDING_LEFT: int(left),
             KEY_BOUNDING_BOTTOM: int(bottom),
+            KEY_BRANCH_LENGTHS: arclength_of_each_branch.tolist(),
         }
