@@ -305,20 +305,22 @@ class MetricsDAG(QtCore.QObject):
                 float(cell_complexities[i]) if i < len(cell_complexities) else 0.0
             )
 
-            number_of_branches = branch_results[i].get(
+            branch_result = branch_results.get(i, {})
+
+            number_of_branches = branch_result.get(
                 b_analysis.KEY_NUM_BRANCHPOINTS, 0
             )
             number_of_endpoints = np.sum(
-                branch_results[i].get(b_analysis.KEY_ENDPOINTS, 0)
+                branch_result.get(b_analysis.KEY_ENDPOINTS, 0)
             )
 
-            avg_branch_length = branch_results[i].get(
+            avg_branch_length = branch_result.get(
                 b_analysis.KEY_AVG_BRANCH_LENGTH, 0.0
             )
-            max_branch_length = branch_results[i].get(
+            max_branch_length = branch_result.get(
                 b_analysis.KEY_MAX_BRANCH_LENGTH, 0.0
             )
-            min_branch_length = branch_results[i].get(
+            min_branch_length = branch_result.get(
                 b_analysis.KEY_MIN_BRANCH_LENGTH, 0.0
             )
 
@@ -333,7 +335,7 @@ class MetricsDAG(QtCore.QObject):
                     max_branch_length=max_branch_length,
                     min_branch_length=min_branch_length,
                     full_cell_analysis=full_cell_analysis,
-                    branch_analysis=branch_results[i] if i < len(branch_results) else {},
+                    branch_analysis=branch_result,
                 )
             )
 

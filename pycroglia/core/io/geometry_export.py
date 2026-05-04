@@ -241,10 +241,7 @@ def _branch_dict_for_cell(cells: list[CellAnalysis], index: int) -> dict:
     if not cells or index >= len(cells):
         return {}
     ba = cells[index].branch_analysis
-    if not isinstance(ba, dict):
-        return {}
-    br = ba.get(index)
-    return br if isinstance(br, dict) else {}
+    return ba if isinstance(ba, dict) else {}
 
 
 def _ndarray_to_image_data(
