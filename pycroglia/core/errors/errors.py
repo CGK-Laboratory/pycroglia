@@ -1,19 +1,19 @@
 custom_error_codes = {
     # File reading errors
-    1000: {"message": "Invalid file, path doesn't exists"},
+    1000: {"message": "Invalid file, path doesn't exist"},
     1001: {"message": "Invalid file, expected TIFF file with suffix .tif or .tiff"},
     1002: {"message": "Invalid file, expected LSM file with suffix .lsm"},
     1003: {"message": "Invalid channel passed, must be higher or equal to 0"},
     1004: {
-        "message": "Invalid channel of interest passed, must be a number  lower to the number of channels"
+        "message": "Invalid channel of interest passed, must be a number lower than the number of channels"
     },
     1005: {"message": "Invalid file, the file passed isn't supported"},
     # Image processing errors
     2000: {
-        "message": "Invalid label value, must be greater than 0 and lower or equal to the max number or components"
+        "message": "Invalid label value, must be greater than 0 and lower or equal to the max number of components"
     },
     2001: {
-        "message": "No nuclei found were found after cell segmentation. Adjust the erosion parameter."
+        "message": "No nuclei were found after cell segmentation. Adjust the erosion parameter."
     },
 }
 
