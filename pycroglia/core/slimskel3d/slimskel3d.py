@@ -13,10 +13,10 @@ def slimskel3d(vol: NDArray, threshold: int) -> NDArray:
     the network length stabilizes.
 
     Args:
-        cell_to_skel (np.ndarray):
+        vol (np.ndarray):
             3D binary array representing the object (True/1 = foreground).
-        thr (int):
-            Minimum branch length (in voxels). Branches shorter than `thr`
+        threshold (int):
+            Minimum branch length (in voxels). Branches shorter than `threshold`
             are removed during skeleton-to-graph conversion.
 
     Returns:
@@ -31,10 +31,10 @@ def slimskel3d(vol: NDArray, threshold: int) -> NDArray:
 
     Example:
         >>> import numpy as np
-        >>> from pycroglia.core.slimSkel3D.slim_skel import slim_skel_3d
-        >>> vol = np.zeros((30, 30, 30), dtype=ool)
+        >>> from pycroglia.core.slimskel3d.slimskel3d import slimskel3d
+        >>> vol = np.zeros((30, 30, 30), dtype=bool)
         >>> vol[5:25, 15, 15] = 1   # simple line
-        >>> slim = slim_skel_3d(vol, thr=5)
+        >>> slim = slimskel3d(vol, threshold=5)
         >>> slim.sum()  # number of skeleton voxels
         20
     """

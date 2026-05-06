@@ -18,7 +18,7 @@ def _sample_cell_with_branch(branch: dict) -> CellAnalysis:
         avg_branch_length=0.0,
         max_branch_length=0.0,
         min_branch_length=0.0,
-        branch_analysis={0: branch},
+        branch_analysis=branch,
         full_cell_analysis={},
     )
 
@@ -101,8 +101,6 @@ def test_skip_skeleton_without_fullmasks(tmp_path):
     ]
     mask = np.ones((4, 4, 4), dtype=np.uint8)
     sel = GeometryExportSelection(skeleton_ply=True)
-    msgs = export_geometry(
-        str(tmp_path), [mask], cells, 1.0, 1.0, sel
-    )
+    msgs = export_geometry(str(tmp_path), [mask], cells, 1.0, 1.0, sel)
     assert not (tmp_path / "ply").exists()
     assert any("skip skeleton" in m.lower() for m in msgs)

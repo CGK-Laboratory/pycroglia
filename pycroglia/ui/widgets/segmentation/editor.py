@@ -221,8 +221,8 @@ class SegmentationEditor(QtWidgets.QWidget):
                 QtWidgets.QMessageBox.warning(
                     self,
                     "Segmentation Error",
-                    "The program finds 0 nuclei to segment your object into. "
-                    "Adjust Erosion in the previous window to a lower number.",
+                    "The program found 0 nuclei to segment your object into. "
+                    "Adjust the erosion parameter in the previous window to a lower value.",
                 )
                 return
             raise
