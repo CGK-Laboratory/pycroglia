@@ -5,6 +5,7 @@ import os
 from typing import Optional, Iterable, Type, List
 from numpy.typing import NDArray
 from PyQt6 import QtWidgets, QtCore
+from sklearn.preprocessing import scale
 
 
 from pycroglia.ui.controllers.dashboard_state import (
@@ -17,7 +18,7 @@ from pycroglia.ui.widgets.results.output import OutputConfigurator
 from pycroglia.ui.widgets.results.scale import ScaleConfigWidget
 from pycroglia.ui.widgets.results.viewers import FullAnalysisViewer
 from pycroglia.core.io.geometry_export import export_geometry
-from pycroglia.core.io.output import OutputWriter, FullAnalysis
+from pycroglia.core.io.output import OutputWriter, FullAnalysis, AnalysisMetadata
 
 
 class ResultsDashboard(QtWidgets.QWidget):
@@ -40,6 +41,7 @@ class ResultsDashboard(QtWidgets.QWidget):
         file: str,
         img: NDArray,
         cells_masks: List[NDArray],
+        metadata: dict,
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         """Initialize the ResultsDashboard.
@@ -64,7 +66,7 @@ class ResultsDashboard(QtWidgets.QWidget):
         self._graphs_generator = DashboardGraphsGenerator(
             img=img, cells=cells_masks, parent=self
         )
-
+        self.metadata = metadata
         # Widgets
         self.table: Optional[FullAnalysisViewer] = None
         self.graphs: Optional[GraphSelectionWidget] = None
@@ -350,7 +352,10 @@ class ResultsDashboard(QtWidgets.QWidget):
         try:
             for writer in writer_list:
                 writer().write(
-                    os.path.join(folder, path), FullAnalysis(summary, cells)
+                    os.path.join(folder, path), FullAnalysis(summary, cells), AnalysisMetadata(
+                        scale=self.scales.get_scale(),
+                        z_scale=self.scales.get_z_scale(),**self.metadata,file_path=self._state._file
+                    )
                 )
         except Exception as e:
             QtWidgets.QMessageBox.critical(

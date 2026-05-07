@@ -53,7 +53,7 @@ class SegmentationEditorStack(QtWidgets.QWidget):
         self.segmentation_button_text = segmentation_button_text
         self.progress_title = progress_title
         self.progress_cancel_text = progress_cancel_text
-
+        self.filter_metadata = None
         # Widgets
         self.tabs = QtWidgets.QTabWidget(self)
 
@@ -80,6 +80,7 @@ class SegmentationEditorStack(QtWidgets.QWidget):
                 labeling_strategy=SkimageImgLabeling(SkimageCellConnectivity.CORNERS),
                 min_size=elem.min_size,
                 erosion_radius=elem.erosion_radius,
+                gray_filter_value=elem.gray_filter_value,
                 with_progress_bar=True,
                 headers=self.headers_text,
                 rollback_button_text=self.rollback_button_text,
@@ -94,11 +95,12 @@ class SegmentationEditorStack(QtWidgets.QWidget):
         """Collect segmentation results from all editor tabs.
 
         Iterates through all tabs and collects the segmentation results from
-        each SegmentationEditor widget.
+        each SegmentationEditor widget. Includes cell indices from the labeled image.
 
         Returns:
             list[SegmentationResults]: List containing segmentation results from
-                all editor tabs. Each result includes the file path and labeled cells.
+                all editor tabs. Each result includes the file path, labeled cells,
+                and a list of cell indices.
         """
         list_of_results = []
 
@@ -107,7 +109,14 @@ class SegmentationEditorStack(QtWidgets.QWidget):
             file_path = self.tabs.tabText(i)
             if hasattr(editor, "get_results"):
                 list_of_results.append(
-                    SegmentationResults(file_path, editor.get_results())
+                    SegmentationResults(
+                        file_path=file_path,
+                        img=editor.get_results(),
+                        min_size=editor.min_size,
+                        erosion_radius=editor.state._erosion_footprint.r,
+                        gray_filter_value=editor.gray_filter_value,
+                        segmented_cell_indices=[4567, 678] # Empty - will be filled by SegmentationEditor
+                    )
                 )
 
         return list_of_results

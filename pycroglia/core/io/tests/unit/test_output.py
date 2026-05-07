@@ -12,6 +12,7 @@ from pycroglia.core.io.output import (
     JSONOutput,
     BranchLengthsXlsxOutput,
     OutputWriter,
+    AnalysisMetadata
 )
 
 
@@ -62,7 +63,17 @@ def test_excel_output_write(tmp_path, sample_full_analysis):
     """Test that ExcelOutput.write creates a valid Excel file with correct data."""
     file_path = tmp_path / "output_test"
     excel_writer = ExcelOutput()
-    excel_writer.write(str(file_path), sample_full_analysis)
+    excel_writer.write(str(file_path), sample_full_analysis,AnalysisMetadata(
+        file_path='test_path',
+        gray_filter_value=2.5, 
+        min_size=2,
+        erosion_radius=4,
+        scale=4, 
+        z_scale=2,
+        segmented_cell_indices=[2,6],
+        selected_cell_indices=[2,7],
+        rejected_cell_indices=[2,22]
+    ))
 
     # Check file exists
     output_file = file_path.with_suffix(".xlsx")
@@ -110,7 +121,17 @@ def test_excel_otuput_write_custom_config(tmp_path, sample_full_analysis):
         summary_title="Summary",
         per_cell_title="PerCell",
     )
-    excel_writer.write(str(file_path), sample_full_analysis)
+    excel_writer.write(str(file_path), sample_full_analysis,AnalysisMetadata(
+        file_path='test_path',
+        gray_filter_value=2.5, 
+        min_size=2,
+        erosion_radius=4,
+        scale=4, 
+        z_scale=2,
+        segmented_cell_indices=[2,6],
+        selected_cell_indices=[2,7],
+        rejected_cell_indices=[2,22]
+    ))
     output_file = file_path.with_suffix(".xlsx")
     wb = load_workbook(output_file)
     ws_summary = wb["Summary"]
@@ -125,7 +146,17 @@ def test_json_output_write(tmp_path, sample_full_analysis):
     """Test that JSONOutput.write creates a valid JSON file with correct data and snake_case keys."""
     file_path = tmp_path / "output_json"
     json_writer = JSONOutput()
-    json_writer.write(str(file_path), sample_full_analysis)
+    json_writer.write(str(file_path), sample_full_analysis,AnalysisMetadata(
+        file_path='test_path',
+        gray_filter_value=2.5, 
+        min_size=2,
+        erosion_radius=4,
+        scale=4, 
+        z_scale=2,
+        segmented_cell_indices=[2,6],
+        selected_cell_indices=[2,7],
+        rejected_cell_indices=[2,22]
+    ))
     output_file = file_path.with_suffix(".json")
     assert output_file.exists()
     with open(output_file, "r") as f:
