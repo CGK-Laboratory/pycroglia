@@ -100,6 +100,7 @@ class SegmentationEditor(QtWidgets.QWidget):
         labeling_strategy: LabelingStrategy,
         min_size: int,
         erosion_radius: int = 3,
+        gray_filter_value: Optional[float] = None,
         with_progress_bar: bool = False,
         headers: Optional[list[str]] = None,
         rollback_button_text: Optional[str] = None,
@@ -141,7 +142,8 @@ class SegmentationEditor(QtWidgets.QWidget):
         # Properties
         self.state = SegmentationEditorState(img, labeling_strategy, min_size, erosion_radius)
         self.with_progress_bar = with_progress_bar
-
+        self.gray_filter_value = gray_filter_value
+        self.min_size = min_size
         # Widgets
         self.control_panel = SegmentationControlPanel(
             rollback_button_text=self.rollback_button_text,
@@ -250,3 +252,7 @@ class SegmentationEditor(QtWidgets.QWidget):
                 segmentation results.
         """
         return self.state.get_state()
+
+    def get_metadata(self) -> dict:
+
+        return self.state.get_metadata()

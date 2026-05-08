@@ -139,6 +139,10 @@ class CellSelector(QtWidgets.QWidget):
         preview_button_text: Optional[str] = None,
         border_checkbox_text: Optional[str] = None,
         parent: Optional[QtWidgets.QWidget] = None,
+        min_size: int = 0,
+        erosion_radius: int = 0,
+        gray_filter_value: float = 0.0,
+        segmented_cell_indices: Optional[List[int]] = None,
     ):
         """Initializes the CellSelector widget.
 
@@ -172,7 +176,10 @@ class CellSelector(QtWidgets.QWidget):
         self._size_filter_unselected_cells: Set[int] = set()  # cells unselected by last size filter
         self.border_cells = self.img.get_border_cells()
         self._cell_to_row_cache: Dict[int, int] = {}
-
+        self.min_size = min_size
+        self.erosion_radius = erosion_radius
+        self.gray_filter_value = gray_filter_value
+        self.segmented_cell_indices = segmented_cell_indices or []
         # Widgets
         self.control_panel = CellSelectorControlPanel(
             max_cell_size=max(img.get_cell_size(i) for i in range(1, img.len() + 1)),

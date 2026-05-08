@@ -6,9 +6,10 @@ import numbers
 import numpy as np
 
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from openpyxl import Workbook
 from typing import Any, Optional, List
+from ... import __version__
 
 
 @dataclass
@@ -135,6 +136,32 @@ class CellAnalysisConfig:
 
 
 @dataclass
+class AnalysisMetadata:
+    """Metadata about the analysis pipeline parameters and cell indices.
+
+    Attributes:
+        file_path: Path to the source image file.
+        gray_filter_value: Threshold value used for the gray filter.
+        min_size: Minimum size for small object removal (pixels).
+        erosion_radius: Radius for the diamond erosion footprint.
+        scale: XY scale in μm.
+        z_scale: Z scale in μm.
+        segmented_cell_indices: List of all cell indices from segmentation.
+        final_cell_indices: List of cell indices not rejected (kept after selection).
+    """
+
+    file_path: str
+    gray_filter_value: float
+    min_size: int
+    erosion_radius: int
+    scale: float
+    z_scale: float
+    segmented_cell_indices: List[int]
+    selected_cell_indices: List[int]
+    rejected_cell_indices: List[int]
+
+
+@dataclass
 class FullAnalysis:
     """Complete analysis results containing summary and per-cell data.
 
@@ -150,12 +177,13 @@ class FullAnalysis:
 class OutputWriter(ABC):
     """Abstract base class for writing analysis results to files."""
 
-    def write(self, file_path: str, data: FullAnalysis):
+    def write(self, file_path: str, data: FullAnalysis, meta: AnalysisMetadata):
         """Write analysis data to a file.
 
         Args:
             file_path: Path where the output file should be saved.
             data: Complete analysis results to write.
+            meta: Metadata associated with the analysis.
         """
         raise NotImplementedError
 
@@ -222,7 +250,7 @@ class ExcelOutput(OutputWriter):
         """
         return cls.DEFAULT_NAME
 
-    def write(self, file_path: str, data: FullAnalysis):
+    def write(self, file_path: str, data: FullAnalysis, meta: AnalysisMetadata):
         """Write analysis data to an Excel file.
 
         Args:
@@ -234,6 +262,7 @@ class ExcelOutput(OutputWriter):
 
         self._write_summary_sheet(wb, data.summary)
         self._write_per_cell_sheet(wb, data.cells)
+        self._write_metadata_sheet(wb, meta)
 
         wb.save(complete_path)
 
@@ -321,6 +350,44 @@ class ExcelOutput(OutputWriter):
                 ]
             )
 
+    def _write_metadata_sheet(self, wb: Workbook, metadata: AnalysisMetadata):
+        """Write pipeline metadata to a dedicated sheet.
+
+        Contains three sections:
+        - Parameters: filter/scale settings from the analysis pipeline.
+        - Segmented Cell Indices: all cell indices produced by segmentation.
+        - Final Cell Indices: cell indices kept after the selection step.
+
+        Args:
+            wb: Excel workbook to write to.
+            metadata: Pipeline metadata to write.
+        """
+        ws = wb.create_sheet(title="Reproducibility")
+        ws.append(["Pycroglia_version:", __version__])
+        ws.append([])
+        # --- Parameters section ---
+        ws.append(["Parameters"])
+        ws.append(["File", metadata.file_path])
+        ws.append(["Gray Filter Value", float(metadata.gray_filter_value)])
+        ws.append(["Min Size (pixels)", int(metadata.min_size)])
+        ws.append(["Erosion Radius (pixels)", int(metadata.erosion_radius)])
+        ws.append(["Scale (μm)", float(metadata.scale)])
+        ws.append(["Z Scale (μm)", float(metadata.z_scale)])
+        ws.append([])  # blank separator row
+
+        # --- Segmented Cell Indices section ---
+        ws.append(["Segmented Cell Indices"])
+        ws.append([int(idx) for idx in metadata.segmented_cell_indices])
+        ws.append([])  # blank separator row
+
+        # --- Selected Cell Indices section ---
+        ws.append(["Selected Cell Indices (not rejected)"])
+        ws.append([int(idx) for idx in metadata.selected_cell_indices])
+        ws.append([])  # blank separator row
+        # --- Rejected Cell Indices section ---
+        ws.append(["Rejected Cell Indices"])
+        ws.append([int(idx) for idx in metadata.rejected_cell_indices])
+
 
 class JSONOutput(OutputWriter):
     """JSON output writer for microglia analysis results.
@@ -359,7 +426,7 @@ class JSONOutput(OutputWriter):
         """
         return cls.DEFAULT_NAME
 
-    def write(self, file_path: str, data: FullAnalysis):
+    def write(self, file_path: str, data: FullAnalysis, meta: AnalysisMetadata):
         """Write analysis data to a JSON file.
 
         Args:
@@ -368,7 +435,7 @@ class JSONOutput(OutputWriter):
         """
         complete_path = self._create_path(file_path)
         json_data = self._convert_to_dict(data)
-
+        json_data['reproducibility']=self._convert_metadata_to_dict(meta)
         # Normalize any non-native JSON types (e.g. numpy.uint64, numpy arrays)
         json_data = self._normalize_json_compatible(json_data)
 
@@ -536,6 +603,30 @@ class JSONOutput(OutputWriter):
             ): cell.min_branch_length,
         }
 
+    def _convert_metadata_to_dict(self, metadata: AnalysisMetadata) -> dict:
+        """Convert AnalysisMetadata to dictionary.
+
+        Args:
+            metadata: Pipeline metadata to convert.
+
+        Returns:
+            dict: Dictionary representation of metadata.
+        """
+        return {
+            "file_path": metadata.file_path,
+            "parameters": {
+                "gray_filter_value": metadata.gray_filter_value,
+                "min_size": metadata.min_size,
+                "erosion_radius": metadata.erosion_radius,
+                "scale": metadata.scale,
+                "z_scale": metadata.z_scale,
+            },
+            "pycroglia_version": __version__,
+            "segmented_cell_indices": metadata.segmented_cell_indices,
+            "selected_cell_indices": metadata.selected_cell_indices,
+            "rejected_cell_indices": metadata.rejected_cell_indices,
+        }
+
 
 class BranchLengthsXlsxOutput(OutputWriter):
     """XLSX output writer for per-cell branch lengths.
@@ -551,7 +642,7 @@ class BranchLengthsXlsxOutput(OutputWriter):
     def get_name(cls) -> str:
         return cls.DEFAULT_NAME
 
-    def write(self, file_path: str, data: FullAnalysis):
+    def write(self, file_path: str, data: FullAnalysis, meta: AnalysisMetadata):
         """Write per-cell branch lengths to an XLSX file.
 
         Args:

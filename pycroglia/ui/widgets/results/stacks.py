@@ -108,7 +108,13 @@ class ResultsDashboardStack(QtWidgets.QWidget):
         # TODO - Add scale text
         for elem in results:
             dashboard = ResultsDashboard(
-                file=elem.file_path, img=elem.img, cells_masks=elem.cells_masks
+                file=elem.file_path, img=elem.img, cells_masks=elem.cells_masks,
+                metadata= { "segmented_cell_indices": elem.segmented_cell_indices,
+                    "selected_cell_indices": elem.selected_cell_indices,
+                    "rejected_cell_indices": elem.rejected_cell_indices,
+                    "gray_filter_value": elem.gray_filter_value,
+                    "min_size": elem.min_size,
+                    "erosion_radius": elem.erosion_radius}
             )
             dashboard.add_results_table(
                 summary_headers=self.summary_headers, cell_headers=self.cell_headers

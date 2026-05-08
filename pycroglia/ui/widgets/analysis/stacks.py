@@ -98,6 +98,10 @@ class CellSelectorStack(QtWidgets.QWidget):
             selector = CellSelector(
                 img=elem.img,
                 headers=self.headers_text,
+                min_size=elem.min_size,
+                erosion_radius=elem.erosion_radius,
+                gray_filter_value=elem.gray_filter_value,
+                segmented_cell_indices=elem.segmented_cell_indices,
                 remove_button_text=self.remove_button_text,
                 size_label_text=self.size_label_text,
                 size_button_text=self.size_button_text,
@@ -131,6 +135,12 @@ class CellSelectorStack(QtWidgets.QWidget):
                         file_path=file_path,
                         img=selector.get_selected_cells_3d(),
                         cells_masks=selector.get_cells_masks(),
+                        segmented_cell_indices = selector.segmented_cell_indices,
+                        selected_cell_indices = selector.get_selected_cells(), 
+                        rejected_cell_indices = selector.get_unselected_cells(),
+                        min_size=selector.min_size,
+                        erosion_radius=selector.erosion_radius,
+                        gray_filter_value=selector.gray_filter_value
                     )
                 )
 
