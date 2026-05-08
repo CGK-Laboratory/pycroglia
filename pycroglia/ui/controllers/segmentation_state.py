@@ -139,12 +139,15 @@ class SegmentationEditorState(QtCore.QObject):
         # Reuse the original cell_index for the first sub-cell to avoid gaps.
         # Assign new sequential labels for the rest.
         max_label = new_labels.max()
-        for idx, mask in enumerate(segmented_cells):
-            if idx == 0:
-                new_labels[mask > 0] = cell_index
-            else:
-                max_label += 1
-                new_labels[mask > 0] = max_label
+        if len(segmented_cells) == 0: # No new cells were created, keep the original cell as is
+            new_labels[self._actual_state.get_cell(max_label)] = cell_index
+        else:
+            for idx, mask in enumerate(segmented_cells):
+                if idx == 0:
+                    new_labels[mask > 0] = cell_index
+                else:
+                    max_label += 1
+                    new_labels[mask > 0] = max_label
 
         if progress_bar:
             progress_bar.setValue(100)
