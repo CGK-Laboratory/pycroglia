@@ -66,6 +66,8 @@ class SegmentationEditorState(QtCore.QObject):
 
         self._actual_state = LabeledCells(img, labeling_strategy)
         self._prev_state: Optional[LabeledCells] = None
+        self._prev_segmented_cells_list = []
+        self._segmented_cells_list = []
         self._min_size = min_size
         self._erosion_footprint = Diamond2DFootprint(r=erosion_radius)
 
@@ -152,6 +154,8 @@ class SegmentationEditorState(QtCore.QObject):
             PrecomputedLabeling(new_labels),
         )
         self._update_state(new_state)
+        self._prev_segmented_cells_list = self._segmented_cells_list.copy()
+        self._segmented_cells_list.append(cell_index)
         self.stateChanged.emit()
 
     def rollback(self):
@@ -160,5 +164,7 @@ class SegmentationEditorState(QtCore.QObject):
             return
 
         self._actual_state = self._prev_state
+        self._segmented_cells_list = self._prev_segmented_cells_list
+        self._prev_segmented_cells_list = []
         self._prev_state = None
         self.stateChanged.emit()
