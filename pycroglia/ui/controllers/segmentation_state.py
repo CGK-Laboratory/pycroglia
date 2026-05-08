@@ -66,6 +66,8 @@ class SegmentationEditorState(QtCore.QObject):
 
         self._actual_state = LabeledCells(img, labeling_strategy)
         self._prev_state: Optional[LabeledCells] = None
+        self._prev_segmented_cells_list = []
+        self._segmented_cells_list = []
         self._min_size = min_size
         self._erosion_footprint = Diamond2DFootprint(r=erosion_radius)
 
@@ -137,12 +139,15 @@ class SegmentationEditorState(QtCore.QObject):
         # Reuse the original cell_index for the first sub-cell to avoid gaps.
         # Assign new sequential labels for the rest.
         max_label = new_labels.max()
-        for idx, mask in enumerate(segmented_cells):
-            if idx == 0:
-                new_labels[mask > 0] = cell_index
-            else:
-                max_label += 1
-                new_labels[mask > 0] = max_label
+        if len(segmented_cells) == 0: # No new cells were created, keep the original cell as is
+            new_labels[self._actual_state.get_cell(max_label)] = cell_index
+        else:
+            for idx, mask in enumerate(segmented_cells):
+                if idx == 0:
+                    new_labels[mask > 0] = cell_index
+                else:
+                    max_label += 1
+                    new_labels[mask > 0] = max_label
 
         if progress_bar:
             progress_bar.setValue(100)
@@ -152,6 +157,8 @@ class SegmentationEditorState(QtCore.QObject):
             PrecomputedLabeling(new_labels),
         )
         self._update_state(new_state)
+        self._prev_segmented_cells_list = self._segmented_cells_list.copy()
+        self._segmented_cells_list.append(cell_index)
         self.stateChanged.emit()
 
     def rollback(self):
@@ -160,5 +167,7 @@ class SegmentationEditorState(QtCore.QObject):
             return
 
         self._actual_state = self._prev_state
+        self._segmented_cells_list = self._prev_segmented_cells_list
+        self._prev_segmented_cells_list = []
         self._prev_state = None
         self.stateChanged.emit()

@@ -115,7 +115,7 @@ class SegmentationEditorStack(QtWidgets.QWidget):
                         min_size=editor.min_size,
                         erosion_radius=editor.state._erosion_footprint.r,
                         gray_filter_value=editor.gray_filter_value,
-                        segmented_cell_indices=[4567, 678] # Empty - will be filled by SegmentationEditor
+                        segmented_cell_indices=editor.state._segmented_cells_list # Empty - will be filled by SegmentationEditor
                     )
                 )
 
