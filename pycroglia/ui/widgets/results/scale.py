@@ -5,17 +5,14 @@ from pycroglia.ui.widgets.common.labeled_widgets import LabeledFloatSpinBox
 
 
 class ScaleConfigWidget(QtWidgets.QWidget):
+    skeletonizationChanged = QtCore.pyqtSignal()
+
     """Widget that exposes scale controls, skeletonization method, and a calculate button.
 
     The widget provides two LabeledFloatSpinBox controls (scale and z-scale),
     a skeletonization method radio group, and a QPushButton to trigger
     computation. Consumers can read scale values and skeletonization method
     and enable/disable the button via the provided helpers.
-
-    Attributes:
-        _scale (LabeledFloatSpinBox): Control for primary scale.
-        _z_scale (LabeledFloatSpinBox): Control for z-scale.
-        _button (QPushButton): Button to trigger calculation.
     """
 
     DEFAULT_SCALE_TXT = "Scale (μm)"
@@ -55,7 +52,9 @@ class ScaleConfigWidget(QtWidgets.QWidget):
         skel_layout = QtWidgets.QHBoxLayout()
         self._skel_radio_slim = QtWidgets.QRadioButton("slimskel3d", parent=self._skeletonization_group)
         self._skel_radio_slim.setChecked(True)
+        self._skel_radio_slim.toggled.connect(self.skeletonizationChanged)
         self._skel_radio_scikit = QtWidgets.QRadioButton("slimskel3d_scikit", parent=self._skeletonization_group)
+        self._skel_radio_scikit.toggled.connect(self.skeletonizationChanged)
         skel_layout.addWidget(self._skel_radio_slim)
         skel_layout.addWidget(self._skel_radio_scikit)
         self._skeletonization_group.setLayout(skel_layout)
