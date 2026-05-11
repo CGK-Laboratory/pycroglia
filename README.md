@@ -2,97 +2,131 @@
 
 # Pycroglia
 
-**A Python-based toolkit for quantitative 3D microglia morphology analysis**
+[![PyPI version](https://img.shields.io/pypi/v/pycroglia)](https://pypi.org/project/pycroglia/)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Pycroglia is a modern, open-source port of **CellSelect-3DMorph**, a
-MATLAB-based tool originally designed to isolate and analyze cell
-morphology from 3D fluorescence microscopy images.  By reconstructing
-individual cells voxel by voxel, Pycroglia enables researchers to
-extract quantitative morphological descriptors such as **cell
-volume**, **territorial volume**, **ramification index**, **branch
-length**, **number of branches**, and **endpoints**, among others.  It
-builds upon the logic of the original MATLAB scripts but introduces a
-robust and extensible Python architecture, supporting both GUI and
-library modes for interactive and automated workflows.
+**A Python-based toolkit for quantitative 3D morphology analysis of cells from fluorescence microscopy images.**
+
+Originally based on the MATLAB tool **CellSelect-3DMorph**, Pycroglia reconstructs individual cells voxel-by-voxel and extracts quantitative morphological descriptors. It is built with a robust, extensible Python architecture and supports both a **PyQt6 graphical interface** and a **library mode** for automated/scripted workflows.
 
 ---
 
-## Installation and Usage
-Pycroglia is available on [PyPI](https://pypi.org/project/pycroglia/)
-and can be installed or executed using
-[uv](https://github.com/astral-sh/uv) or the standard `pip` tool.
+## Features
 
-### Prerequisites
+### Morphological Analysis
+- **Cell volume** – Voxel-accurate 3D cell volume computation
+- **Territorial volume** – Convex-hull based territorial volume and coverage statistics
+- **Ramification index** – Complexity ratio comparing cell volume to territorial volume
+- **Branch analysis** – Branch length (with linear, PCHIP, and spline interpolation), branch count, branch order classification (primary to quaternary), end point detection
+- **Centroid analysis** – 3D centroid coordinates and mean pairwise distances in physical units
+- **Convex hull metrics** – Hull volume, surface area, solidity, and compactness ratios
 
-* [uv](https://docs.astral.sh/uv/getting-started/installation/) (Recommended): 
-* Python 3.10 or later
+### Image Processing Pipeline
+- **Multi-channel reader** – TIFF and LSM file format support with automatic channel extraction
+- **Otsu thresholding** – Per-slice MATLAB-compatible Otsu thresholding with interactive adjustment
+- **Small object removal** – Minimum-size filtering to eliminate noise artifacts
+- **Morphological erosion** – Configurable 2D/3D structuring elements (disk, diamond, ball, octahedron, rectangle)
+- **GMM clustering** – Gaussian Mixture Model-based nucleus separation for splitting merged cells
+- **Interactive segmentation** – Per-cell segmentation with undo/rollback support
 
+### 3D Skeletonization
+- **Lee-Kashyap-Chu algorithm** – Full implementation of the 3D thinning algorithm with based Skeleton3D method used by **CellSelect-3DMorph**.
+- **Scikit-image fallback** – Alternative skeletonization backend via `skimage.morphology.skeletonize`
+- **Skeleton-to-graph conversion** – Convert binary skeletons to graph representations to prune short branches and back.
 
-### Option 1 — Install with pip
+### Visualization & Export
+- **3D rendering** – PyVista-powered visualizations: original cell surfaces, skeleton branch order coloring, end points, branch points, convex hulls
+- **Geometry export** – Export skeleton surfaces, cell mask surfaces, and boolean mask volumes in **OBJ, PLY, VTP, VTK, VTI** formats
+- **Results export** – Structured output to **Excel (XLSX)** and **JSON**
+- **Branch lengths export** – Specialized branch-lengths XLSX output for downstream analysis
 
-You can install Pycroglia using pip directly from PyPI:
+### Workflow & Performance
+- **Wizard-based GUI** – Step-by-step workflow: file selection → filtering → segmentation → cell selection → analysis dashboard
+- **Library mode** – Import `pycroglia.core` directly for automated batch processing
+- **Parallel computation** – Qt thread pool and multiprocessing backends via a unified `Pool` facade; metrics computed concurrently via a DAG-based orchestrator
+- **Interactive dashboards** – Per-file tabs throughout the pipeline, summary tables, per-cell viewers, and graph preview before export
 
-```bash
-pip install pycroglia
-```
-and to run it 
+---
 
-```bash
-pycroglia
-```
+## Installation
 
-### Option 2 — Install with uv
+### Option 1
 
-If you prefer to use `uv`, which provides faster and isolated package management:
+Download executable files already packages.
 
-```bash
-uv pip install pycroglia
-```
-and to run it 
+### Option 2 — Run using uvx
 
-```bash
-pycroglia
-```
+#### Prerequisites
 
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
-### Option 3 — Run directly (recommended)
-
-You can run Pycroglia without installing it globally, using `uvx`:
+#### Install/Update and Run
 
 ```bash
 uvx pycroglia
 ```
-This automatically downloads and runs the latest released version from PyPI in an isolated environment.
 
-You can also specify a particular version:
+### Option 3 — Install with pip
+
+- **Python 3.11 or later**
+- pip
+
 ```bash
-uvx pycroglia==0.0.2
+pip install pycroglia
+pycroglia
 ```
 
 ### Option 4 — From source
 
-If you cloned the repository and want to run it locally:
-
 ```bash
-git clone https://github.com/CGK-Laboratory/pycroglia/pycroglia.git
+git clone https://github.com/CGK-Laboratory/pycroglia.git
 cd pycroglia
-uv run main.py
+uv run python -m pycroglia
 ```
-and for running the test suite
 
+Run the test suite:
 ```bash
 uv run pytest
 ```
 
-#### Use Pycroglia from a Jupyter Notebook
+### Jupyter Notebook
 
-If you want to work within a *Jupyter Notebook*, launch a notebook
-server connected to the project’s virtual environment:
+Launch a notebook server connected to the project environment:
 
 ```bash
 uv run --with jupyter jupyter lab
 ```
 
+---
+
+## Usage
+
+### GUI Mode
+
+Launch the application and follow the wizard:
+
+1. **File Selection** – Select TIFF or LSM image files
+2. **Filter Editor** – Adjust Otsu threshold per slice, remove small objects, configure erosion
+3. **Segmentation Editor** – View labeled cells by size, split merged cells via GMM
+4. **Cell Selection** – Filter cells by size, remove border cells, preview selections
+5. **Results Dashboard** – Set physical scale, compute all metrics, preview 3D visualizations, export results
+
+---
+
+## Documentation
+
+Full documentation is available at [CGK-Laboratory.github.io/pycroglia](https://CGK-Laboratory.github.io/pycroglia) (or locally via `docs/`).
+
+
+---
+
 ## Contributing
-If you are interested in contributing to the project follow the following guidelines
-[CONTRIBUTING](https://github.com/CGK-Laboratory/pycroglia/blob/main/docs/CONTRIBUTING.md)
+
+We welcome contributions! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
+
+---
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

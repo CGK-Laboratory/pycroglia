@@ -159,6 +159,7 @@ class AnalysisMetadata:
     segmented_cell_indices: List[int]
     selected_cell_indices: List[int]
     rejected_cell_indices: List[int]
+    skeletonization_method: str = "slimskel3d"
 
 
 @dataclass
@@ -373,6 +374,7 @@ class ExcelOutput(OutputWriter):
         ws.append(["Erosion Radius (pixels)", int(metadata.erosion_radius)])
         ws.append(["Scale (μm)", float(metadata.scale)])
         ws.append(["Z Scale (μm)", float(metadata.z_scale)])
+        ws.append(["Skeletonization Method", metadata.skeletonization_method])
         ws.append([])  # blank separator row
 
         # --- Segmented Cell Indices section ---
@@ -620,6 +622,7 @@ class JSONOutput(OutputWriter):
                 "erosion_radius": metadata.erosion_radius,
                 "scale": metadata.scale,
                 "z_scale": metadata.z_scale,
+                "skeletonization_method": metadata.skeletonization_method,
             },
             "pycroglia_version": __version__,
             "segmented_cell_indices": metadata.segmented_cell_indices,

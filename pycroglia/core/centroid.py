@@ -75,7 +75,10 @@ class Centroids:
         scaled[:, 2] *= self.scale  # x
         scaled[:, 0] *= self.zscale  # z
 
-        dists = pdist(scaled)
-        avg_dist = dists.mean()
+        if scaled.shape[0] < 2:
+            avg_dist = 0.0 
+        else:
+            dists = pdist(scaled)
+            avg_dist = dists.mean()
 
         return {KEY_AVG_CENTROIDS_DISTANCE: avg_dist, KEY_CENTROIDS: self.centroids}

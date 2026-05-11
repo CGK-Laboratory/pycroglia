@@ -59,11 +59,10 @@ def sample_full_analysis():
     return FullAnalysis(summary=summary, cells=cells)
 
 
-def test_excel_output_write(tmp_path, sample_full_analysis):
-    """Test that ExcelOutput.write creates a valid Excel file with correct data."""
-    file_path = tmp_path / "output_test"
-    excel_writer = ExcelOutput()
-    excel_writer.write(str(file_path), sample_full_analysis,AnalysisMetadata(
+@pytest.fixture
+def analysis_metadata():
+    """Fixture that returns a sample AnalysisMetadata object for testing."""
+    return AnalysisMetadata(
         file_path='test_path',
         gray_filter_value=2.5, 
         min_size=2,
@@ -73,7 +72,14 @@ def test_excel_output_write(tmp_path, sample_full_analysis):
         segmented_cell_indices=[2,6],
         selected_cell_indices=[2,7],
         rejected_cell_indices=[2,22]
-    ))
+    )
+
+
+def test_excel_output_write(tmp_path, sample_full_analysis, analysis_metadata):
+    """Test that ExcelOutput.write creates a valid Excel file with correct data."""
+    file_path = tmp_path / "output_test"
+    excel_writer = ExcelOutput()
+    excel_writer.write(str(file_path), sample_full_analysis, analysis_metadata)
 
     # Check file exists
     output_file = file_path.with_suffix(".xlsx")
@@ -95,7 +101,7 @@ def test_excel_output_write(tmp_path, sample_full_analysis):
     assert per_cell_rows[2][2] == sample_full_analysis.cells[1].cell_volume
 
 
-def test_excel_otuput_write_custom_config(tmp_path, sample_full_analysis):
+def test_excel_otuput_write_custom_config(tmp_path, sample_full_analysis, analysis_metadata):
     """Test that ExcelOutput.write with custom config writes correct headers."""
     summary_config = AnalysisSummaryConfig(
         file_txt="file",
@@ -121,17 +127,7 @@ def test_excel_otuput_write_custom_config(tmp_path, sample_full_analysis):
         summary_title="Summary",
         per_cell_title="PerCell",
     )
-    excel_writer.write(str(file_path), sample_full_analysis,AnalysisMetadata(
-        file_path='test_path',
-        gray_filter_value=2.5, 
-        min_size=2,
-        erosion_radius=4,
-        scale=4, 
-        z_scale=2,
-        segmented_cell_indices=[2,6],
-        selected_cell_indices=[2,7],
-        rejected_cell_indices=[2,22]
-    ))
+    excel_writer.write(str(file_path), sample_full_analysis, analysis_metadata)
     output_file = file_path.with_suffix(".xlsx")
     wb = load_workbook(output_file)
     ws_summary = wb["Summary"]
@@ -142,21 +138,11 @@ def test_excel_otuput_write_custom_config(tmp_path, sample_full_analysis):
     assert per_cell_rows[0][0] == "Index"
     assert per_cell_rows[0][1] == "cell_territory"
 
-def test_json_output_write(tmp_path, sample_full_analysis):
+def test_json_output_write(tmp_path, sample_full_analysis, analysis_metadata):
     """Test that JSONOutput.write creates a valid JSON file with correct data and snake_case keys."""
     file_path = tmp_path / "output_json"
     json_writer = JSONOutput()
-    json_writer.write(str(file_path), sample_full_analysis,AnalysisMetadata(
-        file_path='test_path',
-        gray_filter_value=2.5, 
-        min_size=2,
-        erosion_radius=4,
-        scale=4, 
-        z_scale=2,
-        segmented_cell_indices=[2,6],
-        selected_cell_indices=[2,7],
-        rejected_cell_indices=[2,22]
-    ))
+    json_writer.write(str(file_path), sample_full_analysis, analysis_metadata)
     output_file = file_path.with_suffix(".json")
     assert output_file.exists()
     with open(output_file, "r") as f:
@@ -192,7 +178,7 @@ def test_json_output_write(tmp_path, sample_full_analysis):
     )
 
 
-def test_json_output_write_custom_config(tmp_path, sample_full_analysis):
+def test_json_output_write_custom_config(tmp_path, sample_full_analysis, analysis_metadata):
     """Test that JSONOutput.write with custom config writes correct snake_case keys."""
     summary_config = AnalysisSummaryConfig(
         file_txt="File",
@@ -217,7 +203,7 @@ def test_json_output_write_custom_config(tmp_path, sample_full_analysis):
         per_cell_config=per_cell_config,
         indent=2,
     )
-    json_writer.write(str(file_path), sample_full_analysis)
+    json_writer.write(str(file_path), sample_full_analysis, analysis_metadata)
     output_file = file_path.with_suffix(".json")
     with open(output_file, "r") as f:
         data = json.load(f)
@@ -271,11 +257,11 @@ def test_json_output_to_snake_case(input_txt, expected):
     assert json_writer._to_snake_case(input_txt) == expected
 
 
-def test_branch_lengths_xlsx_output_write(tmp_path, sample_full_analysis):
+def test_branch_lengths_xlsx_output_write(tmp_path, sample_full_analysis, analysis_metadata):
     """Test that BranchLengthsXlsxOutput writes correct branch lengths."""
     file_path = tmp_path / "branch_lengths_test"
     writer = BranchLengthsXlsxOutput()
-    writer.write(str(file_path), sample_full_analysis)
+    writer.write(str(file_path), sample_full_analysis, analysis_metadata)
 
     # Check file exists
     output_file = file_path.parent / (file_path.name + "_branch_lengths.xlsx")
