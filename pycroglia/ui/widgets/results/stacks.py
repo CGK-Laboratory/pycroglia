@@ -114,7 +114,8 @@ class ResultsDashboardStack(QtWidgets.QWidget):
                     "rejected_cell_indices": elem.rejected_cell_indices,
                     "gray_filter_value": elem.gray_filter_value,
                     "min_size": elem.min_size,
-                    "erosion_radius": elem.erosion_radius}
+                    "erosion_radius": elem.erosion_radius,
+                    "skeletonization_method": "slimskel3d"}
             )
             dashboard.add_results_table(
                 summary_headers=self.summary_headers, cell_headers=self.cell_headers

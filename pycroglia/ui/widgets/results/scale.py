@@ -5,10 +5,11 @@ from pycroglia.ui.widgets.common.labeled_widgets import LabeledFloatSpinBox
 
 
 class ScaleConfigWidget(QtWidgets.QWidget):
-    """Widget that exposes scale controls and a calculate button.
+    """Widget that exposes scale controls, skeletonization method, and a calculate button.
 
-    The widget provides two LabeledFloatSpinBox controls (scale and z-scale)
-    and a QPushButton to trigger computation. Consumers can read scale values
+    The widget provides two LabeledFloatSpinBox controls (scale and z-scale),
+    a skeletonization method radio group, and a QPushButton to trigger
+    computation. Consumers can read scale values and skeletonization method
     and enable/disable the button via the provided helpers.
 
     Attributes:
@@ -50,6 +51,15 @@ class ScaleConfigWidget(QtWidgets.QWidget):
         self._z_scale.valueChanged.connect(self._update_button_state)
         self._update_button_state()
 
+        self._skeletonization_group = QtWidgets.QGroupBox("Skeletonization Method", parent=self)
+        skel_layout = QtWidgets.QHBoxLayout()
+        self._skel_radio_slim = QtWidgets.QRadioButton("slimskel3d", parent=self._skeletonization_group)
+        self._skel_radio_slim.setChecked(True)
+        self._skel_radio_scikit = QtWidgets.QRadioButton("slimskel3d_scikit", parent=self._skeletonization_group)
+        skel_layout.addWidget(self._skel_radio_slim)
+        skel_layout.addWidget(self._skel_radio_scikit)
+        self._skeletonization_group.setLayout(skel_layout)
+
         # Layout
         layout = QtWidgets.QVBoxLayout()
         first_row = QtWidgets.QHBoxLayout()
@@ -57,6 +67,7 @@ class ScaleConfigWidget(QtWidgets.QWidget):
         first_row.addWidget(self._z_scale)
 
         layout.addLayout(first_row)
+        layout.addWidget(self._skeletonization_group)
         layout.addWidget(self._button)
 
         self.setLayout(layout)
@@ -76,6 +87,11 @@ class ScaleConfigWidget(QtWidgets.QWidget):
             float: The value from the z-scale control.
         """
         return self._z_scale.get_value()
+
+    def get_skeletonization_method(self) -> str:
+        if self._skel_radio_slim.isChecked():
+            return "slimskel3d"
+        return "slimskel3d_scikit"
 
     def get_vox_scale(self) -> float:
         """Compute and return the voxel-scale approximation.

@@ -102,6 +102,7 @@ class MetricsDAG(QtCore.QObject):
         scale: float = 1.0,
         z_scale: float = 1.0,
         vox_scale: float = 1.0,
+        skeletonization_method: str = "slimskel3d",
         parent: Optional[QtWidgets.QWidget] = None,
     ):
         super().__init__(parent=parent)
@@ -132,6 +133,7 @@ class MetricsDAG(QtCore.QObject):
         self._scale = scale
         self._z_scale = z_scale
         self._vox_scale = vox_scale
+        self._skeletonization_method = skeletonization_method
         self._n_cells = len(self._masks)
         if self._n_cells == 0:
             raise ValueError("No image to process")
@@ -164,6 +166,7 @@ class MetricsDAG(QtCore.QObject):
                 scale=self._scale,
                 zscale=self._z_scale,
                 zslices=self._z_planes,
+                skeletonization_method=self._skeletonization_method,
             )
 
             # count branch tasks and provide a finished callback so we can track progress
@@ -385,13 +388,15 @@ class ResultsDashboardState(QtCore.QObject):
         self._execution: Optional[MetricsDAG] = None
 
     def calculate_results(
-        self, scale: float = 1.0, z_scale: float = 1.0, vox_scale: float = 1.0
+        self, scale: float = 1.0, z_scale: float = 1.0, vox_scale: float = 1.0,
+        skeletonization_method: str = "slimskel3d",
     ):
         self._execution = MetricsDAG(
             masks=self._cells_masks,
             scale=scale,
             z_scale=z_scale,
             vox_scale=vox_scale,
+            skeletonization_method=skeletonization_method,
             parent=self.parent(),
         )
 

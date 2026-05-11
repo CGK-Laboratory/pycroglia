@@ -281,6 +281,7 @@ class ResultsDashboard(QtWidgets.QWidget):
             scale=self.scales.get_scale(),
             z_scale=self.scales.get_z_scale(),
             vox_scale=self.scales.get_vox_scale(),
+            skeletonization_method=self.scales.get_skeletonization_method(),
         )
 
     def _preview_clicked(self, selected_plots: List[str]):
@@ -349,14 +350,15 @@ class ResultsDashboard(QtWidgets.QWidget):
         geo_sel = self.configurator.get_geometry_export_selection()
         writer_list = list(writers)
 
+        self.metadata["skeletonization_method"] = self.scales.get_skeletonization_method()
         try:
             for writer in writer_list:
-                writer().write(
-                    os.path.join(folder, path), FullAnalysis(summary, cells), AnalysisMetadata(
-                        scale=self.scales.get_scale(),
-                        z_scale=self.scales.get_z_scale(),**self.metadata,file_path=self._state._file
+                    writer().write(
+                        os.path.join(folder, path), FullAnalysis(summary, cells), AnalysisMetadata(
+                            scale=self.scales.get_scale(),
+                            z_scale=self.scales.get_z_scale(),**self.metadata,file_path=self._state._file,
+                        )
                     )
-                )
         except Exception as e:
             QtWidgets.QMessageBox.critical(
                 self,
