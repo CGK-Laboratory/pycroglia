@@ -79,6 +79,7 @@ class TwoColumnList(QtWidgets.QWidget):
         second_row.setEditable(False)
 
         self.model.appendRow([first_row, second_row])
+        self.table_view.resizeColumnsToContents()
         self.dataChanged.emit()
 
     def get_column(self, column_index: int) -> List[str]:

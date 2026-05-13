@@ -270,6 +270,7 @@ class SmallObjectsFilterEditor(QtWidgets.QWidget):
         img = self.state.get_small_objects_img()
         if img is not None:
             self.viewer.set_image(self.state.get_midslice(img))
+            self.spin_box.set_max(img.size)
 
 
 class FilterResults:

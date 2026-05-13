@@ -142,6 +142,7 @@ class ResultsDashboard(QtWidgets.QWidget):
 
         # Connections
         self.scales.clicked.connect(self._compute_on_demand)
+        self.scales.skeletonizationChanged.connect(self._on_skeletonization_changed)
 
         return self
 
@@ -283,6 +284,9 @@ class ResultsDashboard(QtWidgets.QWidget):
             vox_scale=self.scales.get_vox_scale(),
             skeletonization_method=self.scales.get_skeletonization_method(),
         )
+
+    def _on_skeletonization_changed(self):
+        self.configurator.set_results_ready(False)
 
     def _preview_clicked(self, selected_plots: List[str]):
         """Handle preview requests coming from the GraphSelectionWidget.
