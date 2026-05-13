@@ -24,7 +24,7 @@ def main():
     wizard.setWindowTitle("Pycroglia — 3D Cell Morphology Analyzer")
     screen = app.primaryScreen().availableGeometry()
     wizard.resize(int(screen.width() * 0.75), int(screen.height() * 0.75))
-    wizard.show()
+    wizard.showMaximized()
     app.exec()
 
 if __name__ == "__main__":
