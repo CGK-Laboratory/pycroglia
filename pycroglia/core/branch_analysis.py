@@ -1,6 +1,7 @@
 from typing import Any
 from numpy.typing import NDArray
 from pycroglia.core.slimskel3d.slimskel3d import slimskel3d
+from pycroglia.core.slimskel3d.slimskel3d_scikit import slimskel3d_scikit
 from scipy.ndimage import convolve
 from pycroglia.core.reorder import reorder_pixel_list
 from pycroglia.core.arclength import arclength
@@ -93,6 +94,7 @@ class BranchAnalysis:
         scale: float,
         zscale: float,
         zslices: int,
+        skeletonization_method: str = "slimskel3d",
     ) -> None:
         """Initialize the BranchAnalysis instance.
 
@@ -102,12 +104,15 @@ class BranchAnalysis:
             scale (float): XY pixel size in microns.
             zscale (float): Z pixel size in microns.
             zslices (int): Total number of Z slices in the volume.
+            skeletonization_method (str): Which skeletonization algorithm to use.
+                Either "slimskel3d" or "slimskel3d_scikit".
         """
         self.cell = cell
         self.centroid = centroid
         self.scale = scale
         self.zscale = zscale
         self.zslices = zslices
+        self.skeletonization_method = skeletonization_method
 
     def compute(self) -> dict[str, Any]:
         """Perform 3D branch analysis on the input cell skeleton.
@@ -134,7 +139,10 @@ class BranchAnalysis:
                 - **branch_points (NDArray)**: (N, 3) array of branch-point coordinates `(z, y, x)`.
         """
         # TODO - Check hardcoded value
-        whole_skel = slimskel3d(self.cell, 100)
+        if self.skeletonization_method == "slimskel3d_scikit":
+            whole_skel = slimskel3d_scikit(self.cell, 100)
+        else:
+            whole_skel = slimskel3d(self.cell, 100)
         if np.all(whole_skel == 0):
             raise EmptySkeleton
         bounding_box_result = bounding_box.compute(whole_skel)
@@ -160,7 +168,7 @@ class BranchAnalysis:
             start = connection.Point(z=i1[0], y=i1[1], x=i1[2])
             end = connection.Point(z=i2_local[0], y=i2_local[1], x=i2_local[2])
             path_coords = connection.connect_points_along_path(bounded_skel, start, end)
-            
+
             fullmask += path_coords.astype(np.int32)
 
             # Reorder pixels by connectivity (stub; implement graph-ordering if needed)
@@ -207,7 +215,7 @@ class BranchAnalysis:
         fullrep[fullrep < 4] = 0
         qbpts = fullrep + quat_brpts.astype(int)
         qbpts1 = convolve(qbpts, np.ones((3, 3, 3), dtype=int), mode="constant")
-        branch_points[..., 0] = quat_brpts & (qbpts1 >= 5)
+        branch_points[..., 0] = (quat_brpts * qbpts1) >= 5
         allbranch = np.sum(branch_points, axis=3)
         branch_points = np.argwhere(allbranch == 1)
         num_branchpoints = branch_points.shape[0]
