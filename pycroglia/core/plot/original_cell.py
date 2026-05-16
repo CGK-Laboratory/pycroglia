@@ -79,9 +79,9 @@ class OriginalCellPlot:
                 specular_power=10,
             )
             plotter.show_grid(
-                xtitle="X (µm)",
-                ytitle="Y (µm)",
-                ztitle="Z (µm)",
+                xtitle="X (um)",
+                ytitle="Y (um)",
+                ztitle="Z (um)",
                 color="gray",
             )
             plotter.add_axes()

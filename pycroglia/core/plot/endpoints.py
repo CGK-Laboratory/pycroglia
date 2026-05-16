@@ -97,7 +97,7 @@ class EndpointsCellPlot:
             plotter.camera_position = "xy"  # Top-down (view(0,270))
             plotter.add_axes()
             plotter.show_grid(
-                xtitle="X (µm)", ytitle="Y (µm)", ztitle="Z (µm)", color="gray"
+                xtitle="X (um)", ytitle="Y (um)", ztitle="Z (um)", color="gray"
             )
             plotter.set_background("white")
             plotter.enable_eye_dome_lighting()
