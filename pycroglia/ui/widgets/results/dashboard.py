@@ -303,8 +303,8 @@ class ResultsDashboard(QtWidgets.QWidget):
             self._graphs_generator.generate_plots(
                 selected_plots,
                 self.cell_masks,
-                cells[0].branch_analysis,
-                cells[0].full_cell_analysis,
+                {i: cell.branch_analysis for i, cell in enumerate(cells)},
+                {i: cell.full_cell_analysis for i, cell in enumerate(cells)},
                 self.scales.get_scale(),
                 self.scales.get_z_scale(),
             )
