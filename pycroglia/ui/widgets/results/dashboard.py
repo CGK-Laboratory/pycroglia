@@ -5,8 +5,6 @@ import os
 from typing import Optional, Iterable, Type, List
 from numpy.typing import NDArray
 from PyQt6 import QtWidgets, QtCore
-from sklearn.preprocessing import scale
-
 
 from pycroglia.ui.controllers.dashboard_state import (
     ResultsDashboardState,
@@ -354,15 +352,21 @@ class ResultsDashboard(QtWidgets.QWidget):
         geo_sel = self.configurator.get_geometry_export_selection()
         writer_list = list(writers)
 
-        self.metadata["skeletonization_method"] = self.scales.get_skeletonization_method()
+        self.metadata["skeletonization_method"] = (
+            self.scales.get_skeletonization_method()
+        )
         try:
             for writer in writer_list:
-                    writer().write(
-                        os.path.join(folder, path), FullAnalysis(summary, cells), AnalysisMetadata(
-                            scale=self.scales.get_scale(),
-                            z_scale=self.scales.get_z_scale(),**self.metadata,file_path=self._state._file,
-                        )
-                    )
+                writer().write(
+                    os.path.join(folder, path),
+                    FullAnalysis(summary, cells),
+                    AnalysisMetadata(
+                        scale=self.scales.get_scale(),
+                        z_scale=self.scales.get_z_scale(),
+                        **self.metadata,
+                        file_path=self._state._file,
+                    ),
+                )
         except Exception as e:
             QtWidgets.QMessageBox.critical(
                 self,

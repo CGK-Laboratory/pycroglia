@@ -21,6 +21,7 @@ KEY_FULLMASKS = "fullmasks"
 KEY_BOUNDING_LEFT = "bounding_left"
 KEY_BOUNDING_BOTTOM = "bounding_bottom"
 KEY_BRANCH_LENGTHS = "branch_lengths"
+MIN_BRANCH_LENGTH_VOXELS = 100
 
 
 class EmptySkeleton(Exception):
@@ -138,11 +139,10 @@ class BranchAnalysis:
                 - **avg_branch_length (float)**: Mean branch length (µm).
                 - **branch_points (NDArray)**: (N, 3) array of branch-point coordinates `(z, y, x)`.
         """
-        # TODO - Check hardcoded value
         if self.skeletonization_method == "slimskel3d_scikit":
-            whole_skel = slimskel3d_scikit(self.cell, 100)
+            whole_skel = slimskel3d_scikit(self.cell, MIN_BRANCH_LENGTH_VOXELS)
         else:
-            whole_skel = slimskel3d(self.cell, 100)
+            whole_skel = slimskel3d(self.cell, MIN_BRANCH_LENGTH_VOXELS)
         if np.all(whole_skel == 0):
             raise EmptySkeleton
         bounding_box_result = bounding_box.compute(whole_skel)

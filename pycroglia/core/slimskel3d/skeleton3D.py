@@ -1,6 +1,8 @@
 from numpy.typing import NDArray
 import numpy as np
 
+from .utils import _get_neighbourhood
+
 
 def _border_candidates(skel: NDArray, current_border: int) -> NDArray:
     """Compute border-deletion candidates for one sweep direction.
@@ -351,34 +353,6 @@ def skeleton3D(volume: NDArray) -> NDArray:
     skel = skel[1:-1, 1:-1, 1:-1]
     return skel.astype(orig_dtype, copy=False)
 
-
-def _get_neighbourhood(img: NDArray, indices: NDArray) -> NDArray:
-    """Return the 3x3x3 neighborhood of given voxels in a 3D binary image.
-
-    This function mimics the MATLAB `pk_get_nh` behavior, collecting the values
-    of all 27 neighbors (including the voxel itself) around each input voxel
-    index.
-
-    Uses vectorized offset broadcasting for performance. Since ``skeleton3D``
-    pads the input volume by 1 voxel on all sides before calling this function,
-    all candidate indices are guaranteed to be at least 1 away from the array
-    boundary, so bounds checking is unnecessary.
-
-    Args:
-        img (NDArray):
-            A padded 3D binary image (bool or int).
-        indices (NDArray):
-            Linear indices (0-based, flattened order, i.e. as from `img.ravel()`).
-
-    Returns:
-        NDArray:
-            A boolean array of shape ``(len(indices), 27)``, where each row
-            corresponds to the 27-neighborhood of a voxel in row-major order.
-    """
-    Z, Y, X = img.shape
-    dz, dy, dx = np.meshgrid([-1, 0, 1], [-1, 0, 1], [-1, 0, 1], indexing='ij')
-    offsets = dz.ravel() * (Y * X) + dy.ravel() * X + dx.ravel()
-    return img.ravel()[indices[:, np.newaxis] + offsets[np.newaxis, :]].astype(bool)
 
 
 def _compute_euler_invariant_mask(img: NDArray, lut: NDArray) -> NDArray:

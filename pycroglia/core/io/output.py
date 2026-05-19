@@ -5,7 +5,7 @@ import inspect
 import numbers
 import numpy as np
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from openpyxl import Workbook
 from typing import Any, Optional, List
@@ -178,6 +178,7 @@ class FullAnalysis:
 class OutputWriter(ABC):
     """Abstract base class for writing analysis results to files."""
 
+    @abstractmethod
     def write(self, file_path: str, data: FullAnalysis, meta: AnalysisMetadata):
         """Write analysis data to a file.
 
@@ -186,16 +187,15 @@ class OutputWriter(ABC):
             data: Complete analysis results to write.
             meta: Metadata associated with the analysis.
         """
-        raise NotImplementedError
 
     @classmethod
+    @abstractmethod
     def get_name(cls) -> str:
         """Return the display name of the writer.
 
         Returns:
             str: Name of the writer.
         """
-        raise NotImplementedError
 
     @classmethod
     def get_writers(cls):

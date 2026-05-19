@@ -173,7 +173,9 @@ class CellSelector(QtWidgets.QWidget):
         # State
         self.img = img
         self.unselected_cells = set()
-        self._size_filter_unselected_cells: Set[int] = set()  # cells unselected by last size filter
+        self._size_filter_unselected_cells: Set[int] = (
+            set()
+        )  # cells unselected by last size filter
         self.border_cells = self.img.get_border_cells()
         self._cell_to_row_cache: Dict[int, int] = {}
         self.min_size = min_size
@@ -260,17 +262,25 @@ class CellSelector(QtWidgets.QWidget):
         palette = self.palette()
         if color_type == ColorType.UNSELECTED:
             bg_color = QtGui.QBrush(
-                palette.color(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Base)
+                palette.color(
+                    QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Base
+                )
             )
             text_color = QtGui.QBrush(
-                palette.color(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text)
+                palette.color(
+                    QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text
+                )
             )
         else:  # ColorType.SELECTED — use normal (original) palette colors
             bg_color = QtGui.QBrush(
-                palette.color(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Base)
+                palette.color(
+                    QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Base
+                )
             )
             text_color = QtGui.QBrush(
-                palette.color(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Text)
+                palette.color(
+                    QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Text
+                )
             )
 
         for col in range(model.columnCount()):
@@ -317,7 +327,9 @@ class CellSelector(QtWidgets.QWidget):
         # Revert previous size filter: remove those cells from unselected and restore color
         if self._size_filter_unselected_cells:
             self.unselected_cells.difference_update(self._size_filter_unselected_cells)
-            self._update_colors_batch(self._size_filter_unselected_cells, ColorType.SELECTED)
+            self._update_colors_batch(
+                self._size_filter_unselected_cells, ColorType.SELECTED
+            )
 
         cells_to_unselect = set()
         cells_to_select = set()
@@ -357,16 +369,10 @@ class CellSelector(QtWidgets.QWidget):
         and displays it in a preview dialog.
         """
         selected_cells = self.get_selected_cells()
-
-        if not selected_cells:
-            preview_2d = np.zeros(
-                (self.img.y, self.img.x), dtype=self.img.ARRAY_ELEMENTS_TYPE
-            )
-        else:
-            preview_2d = np.zeros(
-                (self.img.y, self.img.x), dtype=self.img.ARRAY_ELEMENTS_TYPE
-            )
-            # Iterate through selected cells and combine their 2D projections
+        preview_2d = np.zeros(
+            (self.img.y, self.img.x), dtype=self.img.ARRAY_ELEMENTS_TYPE
+        )
+        if selected_cells:
             for cell_id in selected_cells:
                 cell_2d = self.img.cell_to_2d(cell_id)
                 preview_2d += cell_2d
