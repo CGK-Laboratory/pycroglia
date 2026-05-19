@@ -106,87 +106,6 @@ class TiffReader(MultiChReader):
         return np.stack(data, axis=0)
 
 
-class LsmReader(MultiChReader):
-    """Reader for LSM image files.
-
-    Attributes:
-        VALID_EXTENSIONS (list): Valid file extensions [".lsm"].
-        EXTENSION_ERROR_CODE (int): Error code for invalid extensions (1002).
-        path (str): Path of the file.
-
-    Raises:
-        PycrogliaException(1000): If the path doesn't exist.
-        PycrogliaException(1002): If the file doesn't have the expected extension.
-    """
-
-    VALID_EXTENSIONS = [".lsm"]
-    EXTENSION_ERROR_CODE = 1002
-
-    def __init__(self, path: str) -> None:
-        """Initializes LsmReader with file path.
-
-        Args:
-            path: Path to TIFF file
-        """
-        self.path = Path(path)
-        self.validate_path()
-
-    def validate_path(self) -> None:
-        """Validates the path of the file.
-
-        Raises:
-            PycrogliaException(1000): If the path doesn't exist.
-            PycrogliaException(1002): If the file doesn't have the expected extension.
-        """
-        if not self.path.exists():
-            raise PycrogliaException(1000)
-
-        if self.path.suffix not in self.VALID_EXTENSIONS:
-            raise PycrogliaException(self.EXTENSION_ERROR_CODE)
-
-    def validate_channels(self, ch: int, ch_interest: int) -> None:
-        """Validates the channel and channel of interest values.
-
-        Args:
-            ch (int): The number of channels.
-            ch_interest (int): The channel extracted from the file.
-
-        Raises:
-            PycrogliaException(1003): If the channel value is invalid.
-            PycrogliaException(1004): If the channel of interest is out of range.
-        """
-        if ch < 0:
-            raise PycrogliaException(1003)
-
-        if ch_interest - 1 >= ch:
-            raise PycrogliaException(1004)
-
-    def read(self, ch: int, ch_interest: int) -> NDArray:
-        """Reads the contents of the file and returns the specified channels.
-
-        Args:
-            ch (int): The number of channels.
-            ch_interest (int): The channel extracted from the file.
-
-        Returns:
-            NDArray: The file data.
-
-        Raises:
-            PycrogliaException(1003): If the channel value is invalid.
-            PycrogliaException(1004): If the channel of interest is out of range.
-        """
-        self.validate_channels(ch, ch_interest)
-        data = []
-
-        with TiffFile(str(self.path)) as lsm_file:
-            number_of_images = len(lsm_file.pages)
-
-            for i in range(ch_interest - 1, number_of_images, ch):
-                data.append(lsm_file.pages[i].asarray())
-
-        return np.stack(data, axis=0)
-
-
 def create_channeled_reader(path: str) -> MultiChReader:
     """Creates a MultiChReader instance based on the file extension.
 
@@ -203,8 +122,5 @@ def create_channeled_reader(path: str) -> MultiChReader:
 
     if suffix in TiffReader.VALID_EXTENSIONS:
         return TiffReader(path)
-
-    if suffix in LsmReader.VALID_EXTENSIONS:
-        return LsmReader(path)
 
     raise PycrogliaException(1005)

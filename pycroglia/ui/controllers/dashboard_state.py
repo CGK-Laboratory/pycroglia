@@ -310,22 +310,12 @@ class MetricsDAG(QtCore.QObject):
 
             branch_result = branch_results.get(i, {})
 
-            number_of_branches = branch_result.get(
-                b_analysis.KEY_NUM_BRANCHPOINTS, 0
-            )
-            number_of_endpoints = np.sum(
-                branch_result.get(b_analysis.KEY_ENDPOINTS, 0)
-            )
+            number_of_branches = branch_result.get(b_analysis.KEY_NUM_BRANCHPOINTS, 0)
+            number_of_endpoints = np.sum(branch_result.get(b_analysis.KEY_ENDPOINTS, 0))
 
-            avg_branch_length = branch_result.get(
-                b_analysis.KEY_AVG_BRANCH_LENGTH, 0.0
-            )
-            max_branch_length = branch_result.get(
-                b_analysis.KEY_MAX_BRANCH_LENGTH, 0.0
-            )
-            min_branch_length = branch_result.get(
-                b_analysis.KEY_MIN_BRANCH_LENGTH, 0.0
-            )
+            avg_branch_length = branch_result.get(b_analysis.KEY_AVG_BRANCH_LENGTH, 0.0)
+            max_branch_length = branch_result.get(b_analysis.KEY_MAX_BRANCH_LENGTH, 0.0)
+            min_branch_length = branch_result.get(b_analysis.KEY_MIN_BRANCH_LENGTH, 0.0)
 
             per_cell.append(
                 CellAnalysis(
@@ -346,7 +336,6 @@ class MetricsDAG(QtCore.QObject):
 
 
 class ResultsDashboardState(QtCore.QObject):
-    resultsChanged = QtCore.pyqtSignal()
     progressChanged = QtCore.pyqtSignal(int, int)  # forwarded (completed, total)
 
     resultsChanged = QtCore.pyqtSignal()
@@ -388,7 +377,10 @@ class ResultsDashboardState(QtCore.QObject):
         self._execution: Optional[MetricsDAG] = None
 
     def calculate_results(
-        self, scale: float = 1.0, z_scale: float = 1.0, vox_scale: float = 1.0,
+        self,
+        scale: float = 1.0,
+        z_scale: float = 1.0,
+        vox_scale: float = 1.0,
         skeletonization_method: str = "slimskel3d",
     ):
         self._execution = MetricsDAG(
