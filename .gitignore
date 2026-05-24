@@ -3,3 +3,5 @@ build
 .venv
 dist
 .vscode/
+docs/_build
+docs/api/*.rst

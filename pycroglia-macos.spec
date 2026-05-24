@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller spec file for pycroglia.
-# Build with: uv run pyinstaller pycroglia.spec
+# PyInstaller spec file for pycroglia (macOS).
+# Build with: uv run pyinstaller pycroglia-macos.spec
 
 import sys
 from pathlib import Path
@@ -48,30 +48,34 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
     [],
+    exclude_binaries=True,
     name="pycroglia",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    upx_exclude=[],
-    # Embed the app icon on Windows/macOS when the file exists
-    icon=(
-        "pycroglia/assets/logo.png"
-        if sys.platform == "win32"
-        else (
-            "pycroglia/assets/logo.svg"
-            if sys.platform == "darwin"
-            else None
-        )
-    ),
-    console=False,   # No terminal window on Windows / macOS
+    console=False,
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    onefile=True,
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name="pycroglia",
+)
+
+app = BUNDLE(
+    coll,
+    name="Pycroglia.app",
+    icon="pycroglia/assets/logo.icns",
+    bundle_identifier="com.cgk.pycroglia",
 )

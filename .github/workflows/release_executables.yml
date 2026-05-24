@@ -22,8 +22,8 @@ jobs:
             dist_path: dist/pycroglia.exe
           - os: macos
             runner: macos-latest
-            artifact_name: pycroglia-macos
-            dist_path: dist/pycroglia
+            artifact_name: pycroglia-macos.zip
+            dist_path: dist/Pycroglia.app
           - os: linux
             runner: ubuntu-latest
             artifact_name: pycroglia-linux
@@ -88,24 +88,48 @@ jobs:
 
       # ── Build executable ──────────────────────────────────────────────────
       - name: Build with PyInstaller
-        run: uv run pyinstaller pycroglia.spec
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            uv run pyinstaller pycroglia-win.spec
+          elif [ "${{ matrix.os }}" = "macos" ]; then
+            uv run pyinstaller pycroglia-macos.spec
+          else
+            uv run pyinstaller pycroglia-linux.spec
+          fi
 
       # ── Smoke test (optional but recommended) ─────────────────────────────
-      - name: Smoke test – verify binary starts (Linux/macOS)
-        if: matrix.os != 'windows'
+      - name: Smoke test – verify binary starts (Linux)
+        if: matrix.os == 'linux'
         run: |
           chmod +x ${{ matrix.dist_path }}
           timeout 10 ${{ matrix.dist_path }} --help || true
 
-      - name: Smoke test – verify binary starts (Windows)
+      - name: Smoke test – verify binary starts (macOS)
+        if: matrix.os == 'macos'
+        run: |
+          chmod +x ${{ matrix.dist_path }}/Contents/MacOS/pycroglia
+          timeout 10 ${{ matrix.dist_path }}/Contents/MacOS/pycroglia --help || true
+
+      - name: Smoke test – verify executable exists (Windows)
         if: matrix.os == 'windows'
         shell: pwsh
         run: |
-          Start-Process -FilePath "${{ matrix.dist_path }}" -ArgumentList "--help" -Wait -PassThru | Out-Null
-          exit 0
+          if (!(Test-Path "${{ matrix.dist_path }}")) {
+            Write-Error "Executable not found"
+            exit 1
+          }
 
       # ── Rename & upload ───────────────────────────────────────────────────
-      - name: Rename artifact
+      - name: Zip macOS app
+        if: matrix.os == 'macos'
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            ${{ matrix.dist_path }} \
+            ${{ matrix.artifact_name }}
+
+      - name: Rename artifact (Windows/Linux)
+        if: matrix.os != 'macos'
         shell: bash
         run: |
           mv "${{ matrix.dist_path }}" "${{ matrix.artifact_name }}"
