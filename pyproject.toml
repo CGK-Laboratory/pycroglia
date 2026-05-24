@@ -15,10 +15,12 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pyvista>=0.46.4",
     "vtk>=9.5.2",
-    "pyinstaller>=6.19.0",
 ]
 
 [dependency-groups]
+build = [
+    "pyinstaller>=6.19.0",
+]
 core = [
     "numpy>=2.2.6",
     "scikit-image>=0.25.2",

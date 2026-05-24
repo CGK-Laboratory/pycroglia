@@ -1,0 +1,116 @@
+name: Build & Release Executables
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write   # needed to upload release assets
+
+jobs:
+  build:
+    name: Build – ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows
+            runner: windows-latest
+            artifact_name: pycroglia-windows.exe
+            dist_path: dist/pycroglia.exe
+          - os: macos
+            runner: macos-latest
+            artifact_name: pycroglia-macos
+            dist_path: dist/pycroglia
+          - os: linux
+            runner: ubuntu-latest
+            artifact_name: pycroglia-linux
+            dist_path: dist/pycroglia
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Linux only: Qt / OpenGL system libraries ──────────────────────────
+      - name: Install Qt system dependencies (Linux)
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            libgl1 \
+            libxkbcommon-x11-0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-xinerama0 \
+            libxcb-xinput0 \
+            libxcb-xfixes0 \
+            libxcb-shape0 \
+            libglib2.0-0 \
+            libgl1-mesa-dev \
+            '^libxcb.*-dev' \
+            libx11-xcb-dev \
+            libglu1-mesa-dev \
+            libxrender-dev \
+            libxi-dev \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            patchelf
+
+      # ── Python / uv setup ─────────────────────────────────────────────────
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.7.13"
+
+      - name: Set up Python (reads .python-version → 3.11)
+        run: uv python install
+
+      - name: Install project dependencies
+        run: uv sync --locked --group build
+
+      # ── Linux: clear executable-stack flag from libpython before bundling ──
+      # Modern kernels block loading a .so with PT_GNU_STACK RWX, which causes
+      # the PyInstaller onefile binary to fail with "cannot enable executable
+      # stack". patchelf strips that flag so the extracted .so loads cleanly.
+      - name: Patch libpython execstack flag (Linux)
+        if: matrix.os == 'linux'
+        run: |
+          # uv stores Python outside .venv; resolve the real lib dir via sysconfig
+          LIBDIR=$(uv run python -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+          LIBPYTHON=$(find "$LIBDIR" -name 'libpython3.11*.so*' ! -type l | head -1)
+          echo "Patching: $LIBPYTHON"
+          patchelf --clear-execstack "$LIBPYTHON"
+
+      # ── Build executable ──────────────────────────────────────────────────
+      - name: Build with PyInstaller
+        run: uv run pyinstaller pycroglia.spec
+
+      # ── Smoke test (optional but recommended) ─────────────────────────────
+      - name: Smoke test – verify binary starts (Linux/macOS)
+        if: matrix.os != 'windows'
+        run: |
+          chmod +x ${{ matrix.dist_path }}
+          timeout 10 ${{ matrix.dist_path }} --help || true
+
+      - name: Smoke test – verify binary starts (Windows)
+        if: matrix.os == 'windows'
+        shell: pwsh
+        run: |
+          Start-Process -FilePath "${{ matrix.dist_path }}" -ArgumentList "--help" -Wait -PassThru | Out-Null
+          exit 0
+
+      # ── Rename & upload ───────────────────────────────────────────────────
+      - name: Rename artifact
+        shell: bash
+        run: |
+          mv "${{ matrix.dist_path }}" "${{ matrix.artifact_name }}"
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact_name }}

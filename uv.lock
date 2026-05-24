@@ -843,12 +843,11 @@ wheels = [
 
 [[package]]
 name = "pycroglia"
-version = "0.0.5"
+version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "numpy" },
     { name = "openpyxl" },
-    { name = "pyinstaller" },
     { name = "pyqt6" },
     { name = "pyqtgraph" },
     { name = "pyvista" },
@@ -869,6 +868,9 @@ docs = [
 ]
 
 [package.dev-dependencies]
+build = [
+    { name = "pyinstaller" },
+]
 core = [
     { name = "numpy" },
     { name = "openpyxl" },
@@ -896,7 +898,6 @@ requires-dist = [
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=2.0" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "openpyxl", specifier = ">=3.1.5" },
-    { name = "pyinstaller", specifier = ">=6.19.0" },
     { name = "pyqt6", specifier = ">=6.9.1" },
     { name = "pyqtgraph", specifier = ">=0.13.7" },
     { name = "pyvista", specifier = ">=0.46.4" },
@@ -913,6 +914,7 @@ requires-dist = [
 provides-extras = ["docs"]
 
 [package.metadata.requires-dev]
+build = [{ name = "pyinstaller", specifier = ">=6.19.0" }]
 core = [
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "openpyxl", specifier = ">=3.1.5" },
