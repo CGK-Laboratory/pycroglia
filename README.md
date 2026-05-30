@@ -23,7 +23,7 @@ Originally based on the MATLAB tool **CellSelect-3DMorph**, Pycroglia reconstruc
 - **Convex hull metrics** – Hull volume, surface area, solidity, and compactness ratios
 
 ### Image Processing Pipeline
-- **Multi-channel reader** – TIFF and LSM file format support with automatic channel extraction
+- **Multi-channel reader** – TIFF file format support with automatic channel extraction
 - **Otsu thresholding** – Per-slice MATLAB-compatible Otsu thresholding with interactive adjustment
 - **Small object removal** – Minimum-size filtering to eliminate noise artifacts
 - **Morphological erosion** – Configurable 2D/3D structuring elements (disk, diamond, ball, octahedron, rectangle)
@@ -51,9 +51,19 @@ Originally based on the MATLAB tool **CellSelect-3DMorph**, Pycroglia reconstruc
 
 ## Installation
 
-### Option 1
+### Option 1 — Standalone Executables (No Python Installation Required)
 
-Download executable files already packages.
+For a quick setup without installing Python or any dependencies, you can download standalone pre-compiled executables from the [Latest Release](https://github.com/CGK-Laboratory/pycroglia/releases/latest):
+
+1. Go to the [Releases](https://github.com/CGK-Laboratory/pycroglia/releases) page.
+2. In the **Assets** section of the latest release, download the file matching your operating system:
+   - **Windows**: Download `pycroglia-windows.exe` and double-click to run.
+   - **macOS**: Download `pycroglia-macos.zip`, extract it to get `Pycroglia.app`, and run it. *(Note: Since the app is not signed, you may need to right-click it, select **Open**, and confirm).*
+   - **Linux**: Download `pycroglia-linux`, make it executable, and run it via terminal:
+     ```bash
+     chmod +x pycroglia-linux
+     ./pycroglia-linux
+     ```
 
 ### Option 2 — Run using uvx
 
