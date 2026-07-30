@@ -249,6 +249,25 @@ wheels = [
 ]
 
 [[package]]
+name = "eiko-skelfm"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3f/62/a7dde835a773dd4b290fe1f32bc54f4ea1a72083312f031eb4ed39342870/eiko_skelfm-0.1.0.tar.gz", hash = "sha256:b96754dad868891643504ada9b36c65d962399dd0bf80593f65766cc47cf5549", size = 24543, upload-time = "2026-07-09T21:19:06.678Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/90/5bbd7455148a2aedad3cabe10fcb50ad6fc6361119cf158765037128f6e4/eiko_skelfm-0.1.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:3001ab09333e6a0958292a66ff8e3f70fac2108244b68223e941e5f75d2a96e7", size = 26331, upload-time = "2026-07-09T21:18:35.972Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/ed/bb2d41db7528446743bb4cf75110e0ecc58d606af584b2f27a549b2fa79b/eiko_skelfm-0.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:b88fe786758a00a0740fdc7b1bb3867633c13b1ae011db0a423a85883abda9a4", size = 24436, upload-time = "2026-07-09T21:18:36.915Z" },
+    { url = "https://files.pythonhosted.org/packages/5a/22/92a4042e269803667caa1d345dde9578c88e4303cd5c4cf3c1c1b78fa854/eiko_skelfm-0.1.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:29bd3872f9a7ebc61f7d45de9908702d6afb52269629159b6fa0846a350723b6", size = 94459, upload-time = "2026-07-09T21:18:38.111Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/99/f29cb044828ac11d29607e65b6e5bb9e890085429b7dbacb729ae8403139/eiko_skelfm-0.1.0-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0357fe978f35805a2735cbc91aeb5ffa0db28395b0bdf58e8d71423890296c2e", size = 97476, upload-time = "2026-07-09T21:18:39.199Z" },
+    { url = "https://files.pythonhosted.org/packages/5c/42/377adb7eb0ed9608b9346e4382a284967224d8a52598e04e1ce53d7733f4/eiko_skelfm-0.1.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:a594f60f1f812f2ae1387651e5dd264a3eec4cadee2aa725ee9e3f922f11c286", size = 90596, upload-time = "2026-07-09T21:18:40.477Z" },
+    { url = "https://files.pythonhosted.org/packages/97/8c/8a215c16c18951a3ce1d5895a2c6e03ef2addaf9fa5b783612f9d7f0a693/eiko_skelfm-0.1.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:8c58a7074e7aa223d996df9cb926299fe29201bac1424f8a9a6cd5397b5c9439", size = 94322, upload-time = "2026-07-09T21:18:41.617Z" },
+    { url = "https://files.pythonhosted.org/packages/50/1f/bfe9cb8cc176b079930c6c675f1247251ef847cebfa0acdf9f35ca801834/eiko_skelfm-0.1.0-cp311-cp311-win_amd64.whl", hash = "sha256:8fd84dbdc96e4682740e314335a326ed0eaecac30fa5c9a25005b232283d942b", size = 28006, upload-time = "2026-07-09T21:18:42.693Z" },
+]
+
+[[package]]
 name = "et-xmlfile"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -843,9 +862,10 @@ wheels = [
 
 [[package]]
 name = "pycroglia"
-version = "1.0.0"
+version = "1.0.1"
 source = { virtual = "." }
 dependencies = [
+    { name = "eiko-skelfm" },
     { name = "numpy" },
     { name = "openpyxl" },
     { name = "pyqt6" },
@@ -895,6 +915,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "eiko-skelfm", specifier = ">=0.1.0" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=2.0" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "openpyxl", specifier = ">=3.1.5" },

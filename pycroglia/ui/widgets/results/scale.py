@@ -55,8 +55,11 @@ class ScaleConfigWidget(QtWidgets.QWidget):
         self._skel_radio_slim.toggled.connect(self.skeletonizationChanged)
         self._skel_radio_scikit = QtWidgets.QRadioButton("slimskel3d_scikit", parent=self._skeletonization_group)
         self._skel_radio_scikit.toggled.connect(self.skeletonizationChanged)
+        self._skel_radio_fastmarch = QtWidgets.QRadioButton("fastmarch_skel", parent=self._skeletonization_group)
+        self._skel_radio_fastmarch.toggled.connect(self.skeletonizationChanged)
         skel_layout.addWidget(self._skel_radio_slim)
         skel_layout.addWidget(self._skel_radio_scikit)
+        skel_layout.addWidget(self._skel_radio_fastmarch)
         self._skeletonization_group.setLayout(skel_layout)
 
         # Layout
@@ -90,7 +93,9 @@ class ScaleConfigWidget(QtWidgets.QWidget):
     def get_skeletonization_method(self) -> str:
         if self._skel_radio_slim.isChecked():
             return "slimskel3d"
-        return "slimskel3d_scikit"
+        elif self._skel_radio_scikit.isChecked():
+            return "slimskel3d_scikit"
+        return "fastmarch_skel"
 
     def get_vox_scale(self) -> float:
         """Compute and return the voxel-scale approximation.

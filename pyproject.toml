@@ -15,6 +15,7 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pyvista>=0.46.4",
     "vtk>=9.5.2",
+    "eiko-skelfm>=0.1.0",
 ]
 
 [dependency-groups]

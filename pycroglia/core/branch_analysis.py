@@ -2,6 +2,7 @@ from typing import Any
 from numpy.typing import NDArray
 from pycroglia.core.slimskel3d.slimskel3d import slimskel3d
 from pycroglia.core.slimskel3d.slimskel3d_scikit import slimskel3d_scikit
+from pycroglia.core.fastmarch.fastmarch_skel import fastmarch_skel
 from scipy.ndimage import convolve
 from pycroglia.core.reorder import reorder_pixel_list
 from pycroglia.core.arclength import arclength
@@ -141,6 +142,8 @@ class BranchAnalysis:
         """
         if self.skeletonization_method == "slimskel3d_scikit":
             whole_skel = slimskel3d_scikit(self.cell, MIN_BRANCH_LENGTH_VOXELS)
+        elif self.skeletonization_method == "fastmarch_skel":
+            whole_skel = fastmarch_skel(self.cell)
         else:
             whole_skel = slimskel3d(self.cell, MIN_BRANCH_LENGTH_VOXELS)
         if np.all(whole_skel == 0):
