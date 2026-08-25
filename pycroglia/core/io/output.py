@@ -89,7 +89,6 @@ class CellAnalysis:
     max_branch_length: float
     min_branch_length: float
     branch_analysis: dict[str, Any]
-    full_cell_analysis: dict[str, Any]
 
 
 @dataclass()

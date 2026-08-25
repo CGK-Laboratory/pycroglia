@@ -302,7 +302,7 @@ class ResultsDashboard(QtWidgets.QWidget):
                 selected_plots,
                 self.cell_masks,
                 {i: cell.branch_analysis for i, cell in enumerate(cells)},
-                cells[0].full_cell_analysis,
+                self._state.get_full_cell_analysis(),
                 self.scales.get_scale(),
                 self.scales.get_z_scale(),
             )

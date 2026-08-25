@@ -36,7 +36,6 @@ def sample_full_analysis():
             avg_branch_length=10.0,
             max_branch_length=15.0,
             min_branch_length=5.0,
-            full_cell_analysis={},
             branch_analysis={
                 "branch_lengths": [8.5, 12.3, 9.2],  # 3 branches
             },
@@ -50,7 +49,6 @@ def sample_full_analysis():
             avg_branch_length=11.0,
             max_branch_length=16.0,
             min_branch_length=6.0,
-            full_cell_analysis={},
             branch_analysis={
                 "branch_lengths": [10.1, 11.5, 9.8, 12.6],  # 4 branches
             },

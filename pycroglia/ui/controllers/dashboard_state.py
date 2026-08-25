@@ -327,12 +327,16 @@ class MetricsDAG(QtCore.QObject):
                     avg_branch_length=avg_branch_length,
                     max_branch_length=max_branch_length,
                     min_branch_length=min_branch_length,
-                    full_cell_analysis=full_cell_analysis,
                     branch_analysis=branch_result,
                 )
             )
 
         return per_cell
+
+    def get_full_cell_analysis(self) -> dict[str, Any]:
+        if self._full_cell_analysis and isinstance(self._full_cell_analysis, dict):
+            return self._full_cell_analysis
+        return {}
 
 
 class ResultsDashboardState(QtCore.QObject):
@@ -372,6 +376,7 @@ class ResultsDashboardState(QtCore.QObject):
         self._summary_state = self._make_default_summary()
         self._summary_state.file = self._file
         self._per_cell_state = self._make_default_per_cell()
+        self._full_cell_analysis_state: dict[str, Any] = {}
 
         # Executions
         self._execution: Optional[MetricsDAG] = None
@@ -404,6 +409,7 @@ class ResultsDashboardState(QtCore.QObject):
     def _handle_available_results(self):
         self._summary_state = self._execution.get_analysis_summary(self._file)
         self._per_cell_state = self._execution.get_per_cell_analysis()
+        self._full_cell_analysis_state = self._execution.get_full_cell_analysis()
 
         self._execution.cancel()
         self._execution = None
@@ -415,3 +421,6 @@ class ResultsDashboardState(QtCore.QObject):
 
     def get_per_cell(self) -> List[CellAnalysis]:
         return self._per_cell_state
+
+    def get_full_cell_analysis(self) -> dict[str, Any]:
+        return self._full_cell_analysis_state

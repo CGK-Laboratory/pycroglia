@@ -19,7 +19,6 @@ def _sample_cell_with_branch(branch: dict) -> CellAnalysis:
         max_branch_length=0.0,
         min_branch_length=0.0,
         branch_analysis=branch,
-        full_cell_analysis={},
     )
 
 
@@ -36,7 +35,6 @@ def test_export_mask_surface_and_volume(tmp_path):
             0.0,
             0.0,
             0.0,
-            {},
             {},
         )
     ]
@@ -96,7 +94,6 @@ def test_skip_skeleton_without_fullmasks(tmp_path):
             0.0,
             0.0,
             {0: {"endpoints": []}},
-            {},
         )
     ]
     mask = np.ones((4, 4, 4), dtype=np.uint8)
