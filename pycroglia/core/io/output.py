@@ -89,6 +89,9 @@ class CellAnalysis:
     max_branch_length: float
     min_branch_length: float
     branch_analysis: dict[str, Any]
+    centroid_x: float = 0.0
+    centroid_y: float = 0.0
+    centroid_z: float = 0.0
 
 
 @dataclass()
@@ -104,6 +107,9 @@ class CellAnalysisConfig:
         avg_branch_length_txt: Header text for average branch length.
         max_branch_length_txt: Header text for maximum branch length.
         min_branch_length_txt: Header text for minimum branch length.
+        centroid_x_txt: Header text for centroid X coordinate (pixels).
+        centroid_y_txt: Header text for centroid Y coordinate (pixels).
+        centroid_z_txt: Header text for centroid Z coordinate (pixels).
     """
 
     cell_territory_volume_txt: str
@@ -114,6 +120,9 @@ class CellAnalysisConfig:
     avg_branch_length_txt: str
     max_branch_length_txt: str
     min_branch_length_txt: str
+    centroid_x_txt: str = "CentroidX(pixels)"
+    centroid_y_txt: str = "CentroidY(pixels)"
+    centroid_z_txt: str = "CentroidZ(pixels)"
 
     @classmethod
     def default(cls):
@@ -332,6 +341,9 @@ class ExcelOutput(OutputWriter):
             self.per_cell_config.avg_branch_length_txt,
             self.per_cell_config.max_branch_length_txt,
             self.per_cell_config.min_branch_length_txt,
+            self.per_cell_config.centroid_x_txt,
+            self.per_cell_config.centroid_y_txt,
+            self.per_cell_config.centroid_z_txt,
         ]
 
         ws_per_cell.append(headers)
@@ -347,6 +359,9 @@ class ExcelOutput(OutputWriter):
                     float(cell.avg_branch_length),
                     float(cell.max_branch_length),
                     float(cell.min_branch_length),
+                    float(cell.centroid_x),
+                    float(cell.centroid_y),
+                    float(cell.centroid_z),
                 ]
             )
 
@@ -602,6 +617,15 @@ class JSONOutput(OutputWriter):
             self._to_snake_case(
                 self.per_cell_config.min_branch_length_txt
             ): cell.min_branch_length,
+            self._to_snake_case(
+                self.per_cell_config.centroid_x_txt
+            ): cell.centroid_x,
+            self._to_snake_case(
+                self.per_cell_config.centroid_y_txt
+            ): cell.centroid_y,
+            self._to_snake_case(
+                self.per_cell_config.centroid_z_txt
+            ): cell.centroid_z,
         }
 
     def _convert_metadata_to_dict(self, metadata: AnalysisMetadata) -> dict:

@@ -39,6 +39,9 @@ def sample_full_analysis():
             branch_analysis={
                 "branch_lengths": [8.5, 12.3, 9.2],  # 3 branches
             },
+            centroid_x=12.5,
+            centroid_y=34.0,
+            centroid_z=7.0,
         ),
         CellAnalysis(
             cell_territory_volume=110.0,
@@ -52,6 +55,9 @@ def sample_full_analysis():
             branch_analysis={
                 "branch_lengths": [10.1, 11.5, 9.8, 12.6],  # 4 branches
             },
+            centroid_x=20.0,
+            centroid_y=45.5,
+            centroid_z=3.0,
         ),
     ]
     return FullAnalysis(summary=summary, cells=cells)
@@ -97,6 +103,18 @@ def test_excel_output_write(tmp_path, sample_full_analysis, analysis_metadata):
     assert per_cell_rows[0][1] == excel_writer.per_cell_config.cell_territory_volume_txt
     assert per_cell_rows[1][1] == sample_full_analysis.cells[0].cell_territory_volume
     assert per_cell_rows[2][2] == sample_full_analysis.cells[1].cell_volume
+    # Centroid headers (columns 9, 10, 11)
+    assert per_cell_rows[0][9] == excel_writer.per_cell_config.centroid_x_txt
+    assert per_cell_rows[0][10] == excel_writer.per_cell_config.centroid_y_txt
+    assert per_cell_rows[0][11] == excel_writer.per_cell_config.centroid_z_txt
+    # Centroid values for cell 0 (row index 1)
+    assert per_cell_rows[1][9] == sample_full_analysis.cells[0].centroid_x
+    assert per_cell_rows[1][10] == sample_full_analysis.cells[0].centroid_y
+    assert per_cell_rows[1][11] == sample_full_analysis.cells[0].centroid_z
+    # Centroid values for cell 1 (row index 2)
+    assert per_cell_rows[2][9] == sample_full_analysis.cells[1].centroid_x
+    assert per_cell_rows[2][10] == sample_full_analysis.cells[1].centroid_y
+    assert per_cell_rows[2][11] == sample_full_analysis.cells[1].centroid_z
 
 
 def test_excel_otuput_write_custom_config(tmp_path, sample_full_analysis, analysis_metadata):
@@ -166,6 +184,9 @@ def test_json_output_write(tmp_path, sample_full_analysis, analysis_metadata):
         "avgbranchlength",
         "maxbranchlength",
         "minbranchlength",
+        "centroidxpixels",
+        "centroidypixels",
+        "centroidzpixels",
     }
     assert expected_cell_keys.issubset(cell_keys)
     # Check values
@@ -174,6 +195,9 @@ def test_json_output_write(tmp_path, sample_full_analysis, analysis_metadata):
         data["cells"][1]["cellterritoryvol"]
         == sample_full_analysis.cells[1].cell_territory_volume
     )
+    assert data["cells"][0]["centroidxpixels"] == sample_full_analysis.cells[0].centroid_x
+    assert data["cells"][0]["centroidypixels"] == sample_full_analysis.cells[0].centroid_y
+    assert data["cells"][0]["centroidzpixels"] == sample_full_analysis.cells[0].centroid_z
 
 
 def test_json_output_write_custom_config(tmp_path, sample_full_analysis, analysis_metadata):

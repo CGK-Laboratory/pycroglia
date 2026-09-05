@@ -298,6 +298,13 @@ class MetricsDAG(QtCore.QObject):
             full_cell_analysis.get(f_cell.KEY_CELL_COMPLEXITIES, [0.0] * self._n_cells)
         )
 
+        # centroids array has shape (N, 3) in (z, y, x) voxel order
+        centroid_coords = (
+            self._centroids.get(centroids.KEY_CENTROIDS)
+            if isinstance(self._centroids, dict)
+            else None
+        )
+
         for i in range(self._n_cells):
             cell_territory_volume = (
                 float(cells_convex[i]) if i < len(cells_convex) else 0.0
@@ -317,6 +324,12 @@ class MetricsDAG(QtCore.QObject):
             max_branch_length = branch_result.get(b_analysis.KEY_MAX_BRANCH_LENGTH, 0.0)
             min_branch_length = branch_result.get(b_analysis.KEY_MIN_BRANCH_LENGTH, 0.0)
 
+            if centroid_coords is not None and i < len(centroid_coords):
+                c = centroid_coords[i]  # (z, y, x)
+                cx, cy, cz = float(c[2]), float(c[1]), float(c[0])
+            else:
+                cx, cy, cz = 0.0, 0.0, 0.0
+
             per_cell.append(
                 CellAnalysis(
                     cell_territory_volume=cell_territory_volume,
@@ -328,6 +341,9 @@ class MetricsDAG(QtCore.QObject):
                     max_branch_length=max_branch_length,
                     min_branch_length=min_branch_length,
                     branch_analysis=branch_result,
+                    centroid_x=cx,
+                    centroid_y=cy,
+                    centroid_z=cz,
                 )
             )
 
