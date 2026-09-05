@@ -6,7 +6,7 @@ import numbers
 import numpy as np
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from openpyxl import Workbook
 from typing import Any, Optional, List
 from ... import __version__
