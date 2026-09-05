@@ -857,7 +857,7 @@ wheels = [
 [[package]]
 name = "pycroglia"
 version = "1.0.3"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "numpy" },
     { name = "openpyxl" },
