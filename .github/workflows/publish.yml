@@ -22,6 +22,8 @@ jobs:
             libglib2.0-0 libgl1-mesa-dev '^libxcb.*-dev' libx11-xcb-dev \
             libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev \
             libxkbcommon-x11-dev
+      - name: Start virtual display
+        run: /usr/bin/Xvfb :99 -screen 0 1280x1024x24 &
       - name: Install uv
         uses: astral-sh/setup-uv@v6
       - name: Set up Python
@@ -31,6 +33,9 @@ jobs:
       - name: Lint
         run: uv run --no-sync ruff check
       - name: Run core tests
+        env:
+          DISPLAY: :99
+          QT_QPA_PLATFORM: offscreen
         run: uv run --no-sync pytest ./pycroglia/core/*/tests/unit ./pycroglia/core/tests/unit ./pycroglia/core/tests/integration
       - name: Run UI tests
         env:
